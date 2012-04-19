@@ -1,0 +1,34 @@
+Notes for Maven configuration of asimba-idp-profile-aselect
+===========================================================
+
+In this overview:
+- xalan dependencies fixed
+- xml-apis dependencies fixed
+
+
+
+* Dependency on xalan
+
+The artifacts rampart and rampart-core depend transitively on
+org.apache.xalan:xalan:pom:2.7.1
+This artifact is not available in the central Maven repository.
+
+On the other hand, the xalan:xalan:pom:2.7.1 artifact (note the
+different 'groupId') *is* available. There is a compile-time
+transitive dependency on this library (by opensaml).
+
+This conflicts with eachother, and as such, the non-resolving
+xalan dependency from rampart is explicitly excluded.
+
+
+
+
+* xml-apis 1.4.01 dependencies fixed
+
+Like the xalan problem, there was a dependency on
+xerces:xml-apis:pom:1.4.01
+from opensaml-2.5.1. The groupname is invalid.
+
+This is solved by changing in opensaml-2.5.1-1 (note the -1 version).
+
+

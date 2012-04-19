@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="http://java.sun.com/xml/ns/javaee"
+    xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+    id="WebApp_ID" version="2.5">
+    
+	<description>Asimba SSO Server</description>
+    <display-name>Asimba SSO Server</display-name>
+ 
+ 	<!-- Context listener: starts and stops Engine -->
+	<listener> 
+		<listener-class>com.alfaariss.oa.OAContextListener</listener-class> 
+	</listener> 
+ 
+	<!-- Asimba Core Manager -->
+	<servlet>
+		<servlet-name>ManagerServlet</servlet-name>
+		<servlet-class>com.alfaariss.oa.ManagerServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<!-- Asimba Core Servlet -->
+    <servlet>
+        <servlet-name>OAServlet</servlet-name>
+        <servlet-class>
+            com.alfaariss.oa.OAServlet
+        </servlet-class>
+        <load-on-startup>2</load-on-startup>
+    </servlet>
+	<!-- Web SSO -->
+	<servlet>
+		<servlet-name>WebSSO</servlet-name>
+		<servlet-class>com.alfaariss.oa.sso.web.WebSSOServlet</servlet-class>
+		<load-on-startup>3</load-on-startup>
+	</servlet>
+	
+	<!-- Services: Webservices Axis2/J Servlet -->  
+	 <servlet>
+        <servlet-name>AxisServlet</servlet-name>
+        <servlet-class>org.apache.axis2.transport.http.AxisServlet</servlet-class>        
+        <load-on-startup>3</load-on-startup>
+    </servlet>
+    
+	<!-- Asimba Core Manager -->
+	<servlet-mapping>
+		<servlet-name>ManagerServlet</servlet-name>
+		<url-pattern>/manager</url-pattern>
+	</servlet-mapping>
+	
+	<!-- Web SSO -->
+	<servlet-mapping>
+		<servlet-name>WebSSO</servlet-name>
+		<url-pattern>/sso/*</url-pattern>
+	</servlet-mapping>
+	
+	<!-- Asimba services -->  
+	<servlet-mapping>
+        <servlet-name>AxisServlet</servlet-name>
+        <url-pattern>/services/*</url-pattern>
+    </servlet-mapping>
+
+	<!-- Asimba Requestor profiles -->
+	<servlet-mapping>
+		<servlet-name>OAServlet</servlet-name>
+		<url-pattern>/profiles/*</url-pattern>
+	</servlet-mapping>
+	
+	<!-- Asimba Helpers -->
+	<servlet-mapping>
+		<servlet-name>OAServlet</servlet-name>
+		<url-pattern>/helpers/*</url-pattern>
+	</servlet-mapping>
+
+
+	<session-config>
+		<session-timeout>15</session-timeout>
+	</session-config>
+	
+	<!-- Welcome files -->
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+        <welcome-file>index.html</welcome-file>
+    </welcome-file-list>
+
+
+	<security-constraint>
+		<display-name>Restrict direct access to JSP pages</display-name>
+		<web-resource-collection>
+            <web-resource-name>
+			Restrict access to JSP pages
+            </web-resource-name>	    	
+			<url-pattern>/ui/*</url-pattern> 		
+		</web-resource-collection>
+		<auth-constraint>
+	    	<description>
+			With no roles defined, no access granted
+		    </description>
+		</auth-constraint>
+    </security-constraint>
+
+
+</web-app>

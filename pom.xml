@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.asimba</groupId>
+  <artifactId>asimba-server-baseline</artifactId>
+  <version>1.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>Asimba Server - Baseline</name>
+  <url>http://www.asimba.org</url>
+  <inceptionYear>2012</inceptionYear>
+
+  <organization>
+  	<name>Asimba</name>
+  	<url>http://www.asimba.org</url>
+  </organization>
+
+  <licenses>
+    <license>
+      <name>GNU Affero</name>
+      <url>http://www.gnu.org/licenses/agpl.txt</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>dopey</id>
+      <name>Mark Dobrinic</name>
+      <organization>Cozmanova</organization>
+      <organizationUrl>http://www.cozmanova.com</organizationUrl>
+      <roles>
+        <role>architect</role>
+        <role>developer</role>
+      </roles>
+      <timezone>+1</timezone>
+    </developer>
+  </developers>
+
+  <issueManagement>
+  	<system>SourceForge Tickets</system>
+  	<url>https://sourceforge.net/p/asimba/tickets/</url>
+  </issueManagement>
+  
+  <scm>
+  	<url>https://sourceforge.net/p/asimba/code</url>
+  	<connection>scm:svn:svn+ssh://svn.code.sf.net/p/asimba/code/trunk</connection>
+  	<developerConnection>scm:svn:svn+ssh://svn.code.sf.net/p/asimba/code/trunk</developerConnection>
+  </scm>
+  
+  <distributionManagement>
+    <site>
+      <id>asimba-site</id>
+      <name>Asimba Maven Site</name>
+      <url>scp://www.asimba.org/var/www/www.asimba.org/maven/site</url>
+    </site>
+    <repository>
+      <id>asimba-artifact-repository</id>
+      <name>Asimba Artifact Repository</name>
+      <url>scp://www.asimba.org/var/www/www.asimba.org/maven/repo</url>
+    </repository>
+  </distributionManagement>
+
+
+  <!-- define the modules that are pare of the baseline release of Asimba -->
+  <modules>
+  	<module>asimba-api</module>
+  	<module>asimba-utility</module>
+  	<module>asimba-engine-core</module>
+  	<module>asimba-engine-sso</module>
+  	<module>asimba-cozmanova-utility</module>
+  	<module>asimba-wa</module>
+  	<module>asimba-sso-web</module>
+  	<module>asimba-engine-storage</module>
+  	<module>asimba-engine-crypto-keystore</module>
+  	<module>asimba-engine-tgt-memory</module>
+  	<module>asimba-engine-session-memory</module>
+  	<module>asimba-engine-attribute-gather-file</module>
+  	<module>asimba-engine-requestor-configuration</module>
+  	<module>asimba-engine-authentication-configuration</module>
+  	<module>asimba-engine-authorization-configuration</module>
+  	<module>asimba-engine-attribute-release-configuration</module>
+  	<module>asimba-engine-user-provisioning</module>
+    <module>asimba-engine-idp-configuration</module>
+    <module>asimba-engine-idp-jdbc</module>
+    <module>asimba-helper-stylesheet</module>
+    <module>asimba-am-password</module>
+    <module>asimba-am-password-jdbc</module>
+    <module>asimba-am-password-jndi</module>
+    <!-- add this later, when maven repository is fixed for jradius -->
+    <module>asimba-am-password-radius</module>
+    <module>asimba-am-password-htaccess</module>
+    <module>asimba-am-guest</module>
+    <module>asimba-am-password-asimbausersxml</module>
+    <module>asimba-am-smsotp</module>
+    <module>asimba-am-identifying</module>
+    <!-- IDP modules part of server-core: -->
+    <module>asimba-saml2-utility</module>
+    <module>asimba-idp-profile-saml2</module>
+    <module>asimba-idp-profile-aselect</module>
+    <module>asimba-am-remote</module>
+    <module>asimba-am-remote-aselect</module>
+  </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <build>
+	<extensions>
+		<extension>
+			<groupId>org.apache.maven.wagon</groupId>
+			<artifactId>wagon-ssh</artifactId>
+			<version>2.2</version>
+		</extension>
+	</extensions>
+    <plugins>
+      <!-- maven-site-plugin takes care of publishing the
+      	   generated site 
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>3.0</version>
+        <dependencies>
+          <dependency><!-- add support for ssh/scp -->
+            <groupId>org.apache.maven.wagon</groupId>
+            <artifactId>wagon-ssh</artifactId>
+            <version>2.2</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <!-- maven-assembly-plugin takes care of a creating a
+           package for distribution, as well as a deployable
+           WAR file for the drop-in release of Asimba
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <descriptors>
+            <!-- Find the assembly.xml file in the basedir of the project -->
+            <descriptor>${basedir}/assembly.xml</descriptor>
+          </descriptors>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id> <!-- this is used for inheritance merges -->
+            <phase>disable::package</phase> <!-- bind to the packaging phase -->
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+    	<groupId>log4j</groupId>
+    	<artifactId>log4j</artifactId>
+    </dependency>
+    <dependency>
+    	<groupId>commons-logging</groupId>
+    	<artifactId>commons-logging</artifactId>
+    </dependency>
+    <dependency>
+    	<groupId>org.slf4j</groupId>
+    	<artifactId>slf4j-api</artifactId>
+    	<version>1.6.4</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.slf4j</groupId>
+    	<artifactId>slf4j-simple</artifactId>
+    	<version>1.6.4</version>
+    </dependency>
+  </dependencies>
+
+  <dependencyManagement>
+  	<dependencies>
+  		<dependency>
+  			<groupId>junit</groupId>
+  			<artifactId>junit</artifactId>
+  			<version>3.8.1</version>
+  		</dependency>
+  		<dependency>
+  			<groupId>javax.servlet</groupId>
+  			<artifactId>servlet-api</artifactId>
+  			<version>3.0-alpha-1</version>
+  			<scope>provided</scope>
+  		</dependency>
+  		<dependency>
+  			<groupId>log4j</groupId>
+  			<artifactId>log4j</artifactId>
+  			<version>1.2.16</version>
+  		</dependency>
+  		<dependency>
+  			<groupId>commons-logging</groupId>
+  			<artifactId>commons-logging</artifactId>
+  			<version>1.1.1</version>
+  		</dependency>
+  	</dependencies>
+  </dependencyManagement>
+</project>
