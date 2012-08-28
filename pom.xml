@@ -100,6 +100,7 @@
     <module>asimba-idp-profile-aselect</module>
     <module>asimba-am-remote</module>
     <module>asimba-am-remote-aselect</module>
+    <module>asimba-engine-requestor-jdbc</module>
   </modules>
 
   <properties>
