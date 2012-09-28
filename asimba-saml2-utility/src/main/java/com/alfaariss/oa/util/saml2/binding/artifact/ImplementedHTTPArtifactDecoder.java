@@ -40,7 +40,6 @@ import org.opensaml.saml2.core.Artifact;
 import org.opensaml.saml2.core.ArtifactResolve;
 import org.opensaml.saml2.core.ArtifactResponse;
 import org.opensaml.saml2.core.Issuer;
-import org.opensaml.saml2.core.StatusResponseType;
 import org.opensaml.saml2.core.impl.ArtifactBuilder;
 import org.opensaml.saml2.core.impl.ArtifactResolveBuilder;
 import org.opensaml.saml2.core.impl.IssuerBuilder;
@@ -309,8 +308,10 @@ public class ImplementedHTTPArtifactDecoder extends HTTPArtifactDecoder
         {
             ArtifactResponse artResp = (ArtifactResponse)samlResponseMessage;
             SAMLObject message = artResp.getMessage();
-            if (message instanceof StatusResponseType)
+            if (message != null)
                 samlMsgCtx.setInboundSAMLMessage(message);
+            else
+                _logger.debug("No message found in artifact: " + artResp);
         }
         else
         {

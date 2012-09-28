@@ -23,6 +23,9 @@
 package com.alfaariss.oa.profile.saml2.profile.sso;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Hashtable;
@@ -64,6 +67,7 @@ import com.alfaariss.oa.RequestorEvent;
 import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.UserEvent;
 import com.alfaariss.oa.UserException;
+import com.alfaariss.oa.api.attribute.IAttributes;
 import com.alfaariss.oa.api.attribute.ISessionAttributes;
 import com.alfaariss.oa.api.authentication.IAuthenticationProfile;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
@@ -74,6 +78,8 @@ import com.alfaariss.oa.engine.core.Engine;
 import com.alfaariss.oa.engine.core.authentication.AuthenticationException;
 import com.alfaariss.oa.engine.core.authentication.AuthenticationProfile;
 import com.alfaariss.oa.engine.core.authentication.factory.IAuthenticationProfileFactory;
+import com.alfaariss.oa.engine.core.requestor.RequestorPool;
+import com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory;
 import com.alfaariss.oa.engine.core.tgt.factory.ITGTAliasStore;
 import com.alfaariss.oa.profile.saml2.profile.sso.protocol.AuthenticationRequestProtocol;
 import com.alfaariss.oa.util.ModifiedBase64;
@@ -113,27 +119,34 @@ public class WebBrowserSSO extends AbstractSAML2Profile
     /** SPNameQualifier */
     public final static String TGT_REQUEST_SPNAMEQUALIFIER = "SPNameQualifier";
     
+    /** Type: sourceid */
+    public final static String TYPE_SOURCEID = "sourceid";
+    
     private final static int TGT_ALIAS_LENGTH = 256;
     private final static long DEFAULT_RESPONSE_EXPIRATION = 60000;
     private final static String PROPERTY_AUTHNCONTEXT = ".authncontext";
     
     private Log _logger;
-    private BindingProperties _bindingProperties;
+    private BindingProperties _requestBindingProperties;
+    private BindingProperties _responseBindingProperties;
     private Hashtable<String, String> _htAuthnContexts;
     private NameIDFormatter _nameIDFormatter;
-    private String _sAttributeNameFormat;
+    private String _sAttributeNameFormatDefault;
+    private Hashtable<String,String> _htAttributeNameFormatMapper;
     private IDPSSODescriptor _idpSSODescriptor;
     private SecureRandom _oSecureRandom;
     private long _lExpirationOffset;
     private IAuthenticationProfileFactory _authnProfileFactory;
     private ITGTAliasStore _spAliasStore;
-    
+    private boolean _bCompatible;
+        
     /**
      * Constructor. 
      */
     public WebBrowserSSO ()
     {
         _logger = LogFactory.getLog(WebBrowserSSO.class);
+        _htAttributeNameFormatMapper = new Hashtable<String,String>();
     }
 
     /**
@@ -166,7 +179,8 @@ public class WebBrowserSSO extends AbstractSAML2Profile
             throw new OAException(SystemErrors.ERROR_CONFIG_READ);
         }
         
-        _bindingProperties = new BindingProperties(configurationManager, eBindings);
+        _requestBindingProperties = new BindingProperties(configurationManager, eBindings);
+        _responseBindingProperties = new BindingProperties(configurationManager, eBindings);
         
         //read NameID config
         Element eNameID = configurationManager.getSection(config, "nameid");
@@ -196,7 +210,8 @@ public class WebBrowserSSO extends AbstractSAML2Profile
         }
         
         _htAuthnContexts = readAuthnContextTypes(configurationManager, config);
-                
+        
+        _htAttributeNameFormatMapper.clear();
         Element eResponse = configurationManager.getSection(config, "response");
         if (eResponse == null)
         {
@@ -204,73 +219,32 @@ public class WebBrowserSSO extends AbstractSAML2Profile
                 "No optional 'response' section found in 'profile' section in configuration with profile id: " 
                 + _sID);
 
-            _sAttributeNameFormat = null;
+            _sAttributeNameFormatDefault = null;
             _lExpirationOffset = DEFAULT_RESPONSE_EXPIRATION;
         }
         else
         {
-            Element eAttributes = configurationManager.getSection(
-                eResponse, "attributes");
-            if (eAttributes == null)
-                _sAttributeNameFormat = null;
-            else
-            {
-                _sAttributeNameFormat = configurationManager.getParam(
-                    eAttributes, "nameformat");
-                if (_sAttributeNameFormat == null)
-                {
-                    _logger.error(
-                        "No 'nameformat' item in 'attributes' section found in configuration");
-                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-                }
-            } 
-            
-            Element eExpiration = configurationManager.getSection(
-                eResponse, "expiration");
-            if (eExpiration == null)
-                _lExpirationOffset = DEFAULT_RESPONSE_EXPIRATION;
-            else
-            {
-                String sOffset = configurationManager.getParam(
-                    eExpiration, "offset");
-                if (sOffset == null)
-                {
-                    _logger.error(
-                        "No 'offset' section found in 'expiration' section in configuration");
-                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-                }
-                
-                try
-                {
-                    _lExpirationOffset = Long.parseLong(sOffset);
-                    _lExpirationOffset = _lExpirationOffset * 1000;//in seconds
-                }
-                catch (NumberFormatException e)
-                {
-                    _logger.error(
-                        "Invalid 'offset' section found in 'expiration' section in configuration: " 
-                        + _lExpirationOffset, e);
-                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-                }
-                
-                if (_lExpirationOffset < 0)
-                {
-                    _logger.error(
-                        "Invalid 'offset' section found in 'expiration' section in configuration (may not be negative): " 
-                        + _lExpirationOffset);
-                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-                }
-            }
+            readResponseConfig(configurationManager, eResponse);
         }
         
-        if (_sAttributeNameFormat != null)
-            _logger.info("Using optional attribute name format: " 
-                + _sAttributeNameFormat);
-        else
-            _logger.info("Not using optional attribute name format");
+        //check if OA Server 1.5 is used
+        _bCompatible = isCompatible();
+        _logger.info("Artifact binding: " + (_bCompatible ? "supported" : "not supported"));
+        _logger.info("Optional user attribute name format: " + (_bCompatible ? "supported" : "not supported"));
+        _logger.info("Passive authentication: " + (_bCompatible ? "supported" : "not supported"));
         
-        _logger.info("Using expiration offset in response of (ms): " 
-            + _lExpirationOffset);
+        if (!_bCompatible && _requestBindingProperties.isSupported(SAMLConstants.SAML2_ARTIFACT_BINDING_URI))
+        {
+            StringBuffer sbWarn = new StringBuffer("Disabling '");
+            sbWarn.append(SAMLConstants.SAML2_ARTIFACT_BINDING_URI);
+            sbWarn.append("' binding as request binding, because it is not supported in this version");
+            _logger.warn(sbWarn.toString());
+            
+            List<String> listBindings = new Vector<String>();
+            listBindings.addAll(_requestBindingProperties.getBindings());
+            listBindings.remove(SAMLConstants.SAML2_ARTIFACT_BINDING_URI);
+            _requestBindingProperties.setBindings(listBindings);
+        }
         
         updateEntityDescriptor(configurationManager, config);
     }
@@ -408,7 +382,7 @@ public class WebBrowserSSO extends AbstractSAML2Profile
         {
             AbstractDecodingFactory decFactory = 
                 AbstractDecodingFactory.resolveInstance(request, 
-                    response, _bindingProperties);
+                    response, _requestBindingProperties);
             
             if (decFactory == null)
             {
@@ -420,7 +394,7 @@ public class WebBrowserSSO extends AbstractSAML2Profile
     
             //check all supported bindings
             String sBindingURI = decoder.getBindingURI();
-            if (!_bindingProperties.isSupported(sBindingURI))
+            if (!_requestBindingProperties.isSupported(sBindingURI))
             {
                 _logger.error("The binding is not supported by this protocol: " 
                     + sBindingURI);
@@ -444,14 +418,24 @@ public class WebBrowserSSO extends AbstractSAML2Profile
                 SAML2ArtifactType0004Builder bf = new SAML2ArtifactType0004Builder();
                 b = bf.buildArtifact(bb);
                 
-                _logger.debug("Unknown requestor specified with SourceID : " + Arrays.toString(b.getSourceID()));
+                SAML2Requestor saml2Requestor = resolveRequestor(b.getSourceID());
+                if (saml2Requestor == null)
+                {
+                    StringBuffer sbDebug = new StringBuffer("Unknown requestor specified with with SourceID '");
+                    sbDebug.append(Arrays.toString(b.getSourceID()));
+                    sbDebug.append("' in artifact: ");
+                    sbDebug.append(sSAMLart);
+                    _logger.warn(sbDebug.toString());
+                    throw new UserException(UserEvent.REQUEST_INVALID);
+                }
                 
-//                context.setMetadataProvider(requestor.getMetadataProvider());
-//                context.setInboundMessageIssuer(requestor.getID());
+                ChainingMetadataProvider metadataProvider = 
+                    saml2Requestor.getChainingMetadataProvider();
+                if (metadataProvider != null)
+                    context.setMetadataProvider(metadataProvider);
+                
+                context.setInboundMessageIssuer(saml2Requestor.getID());
                 context.setOutboundMessageIssuer(_sEntityID);
-                
-                _logger.debug("Supplied artifact is currently not supported: " + sSAMLart);
-                throw new UserException(UserEvent.REQUEST_INVALID);
             }
             
             try
@@ -541,11 +525,11 @@ public class WebBrowserSSO extends AbstractSAML2Profile
             
             protocol = new AuthenticationRequestProtocol(session, 
                 _nameIDFormatter, _sProfileURL, _sEntityID, saml2Requestor, 
-                _cryptoManager, _issueInstantWindow);
+                _cryptoManager, _issueInstantWindow, _bCompatible);
             
             session = protocol.processRequest(authnRequest);
             
-            if (!_bindingProperties.isSupported(protocol.getProtocolBinding()))
+            if (!_requestBindingProperties.isSupported(protocol.getProtocolBinding()))
             {
                 _logger.debug("Response binding is not supported: " 
                     + protocol.getProtocolBinding());
@@ -555,6 +539,11 @@ public class WebBrowserSSO extends AbstractSAML2Profile
             
             //generate session id
             session.persist();
+            
+            RequestorEventLogItem oLogItem = new RequestorEventLogItem(session, 
+                request.getRemoteAddr(), RequestorEvent.AUTHN_INITIATION_SUCCESSFUL, 
+                this, null);
+            _eventLogger.info(oLogItem);
             
             forwardUser(request, response, session);
         }
@@ -620,7 +609,7 @@ public class WebBrowserSSO extends AbstractSAML2Profile
             AuthenticationRequestProtocol protocol = 
                 new AuthenticationRequestProtocol(session, _nameIDFormatter, 
                     _sProfileURL, _sEntityID, saml2Requestor, _cryptoManager, 
-                    _issueInstantWindow);
+                    _issueInstantWindow, _bCompatible);
             
             StatusResponseType samlResponse = null;
             RequestorEventLogItem oLogItem = null;
@@ -665,8 +654,9 @@ public class WebBrowserSSO extends AbstractSAML2Profile
                     
                     samlResponse = protocol.createResponse(tgt, 
                         listAuthnContextTypes, session.getUser().getAttributes(), 
-                        _sAttributeNameFormat, sTGTAlias, _lExpirationOffset, 
-                        listAuthenticatingAuthorities);
+                        _sAttributeNameFormatDefault, 
+                        _htAttributeNameFormatMapper, sTGTAlias, 
+                        _lExpirationOffset, listAuthenticatingAuthorities);
                     
                     if (samlResponse == null)
                     {//DD Because the SAML response creation went wrong, authn failed for the user; So the requestor must be logged out and if no requestor is using the TGT anymore, it (the TGT) must be removed.
@@ -695,6 +685,13 @@ public class WebBrowserSSO extends AbstractSAML2Profile
                         RequestorEvent.TOKEN_DEREFERENCE_SUCCESSFUL, 
                         this, null);
                     
+                    break;
+                }
+                case PASSIVE_FAILED:
+                {
+                    samlResponse = protocol.createErrorResponse(
+                        protocol.getDestination(), StatusCode.RESPONDER_URI, 
+                        StatusCode.NO_PASSIVE_URI);
                     break;
                 }
                 case USER_CANCELLED:
@@ -769,10 +766,10 @@ public class WebBrowserSSO extends AbstractSAML2Profile
             
             //resolve response binding
             String sBindingType = protocol.getProtocolBinding();
-            if (sBindingType == null || !_bindingProperties.isSupported(sBindingType))
+            if (sBindingType == null || !_responseBindingProperties.isSupported(sBindingType))
             {
-                _logger.debug("Using default binding: " + _bindingProperties.getDefault());
-                sBindingType = _bindingProperties.getDefault();
+                _logger.debug("Using default binding: " + _responseBindingProperties.getDefault());
+                sBindingType = _responseBindingProperties.getDefault();
             }
             
             //Add my metadata
@@ -793,7 +790,7 @@ public class WebBrowserSSO extends AbstractSAML2Profile
                         
             AbstractEncodingFactory encFactory = 
                 AbstractEncodingFactory.createInstance(request, response, 
-                    sBindingType, _bindingProperties);
+                    sBindingType, _responseBindingProperties);
             
             SAMLMessageEncoder encoder = encFactory.getEncoder();
             
@@ -831,7 +828,7 @@ public class WebBrowserSSO extends AbstractSAML2Profile
         
         builder.buildNameIDFormats();
         builder.buildWantAuthnRequestsSigned(_requestors.isDefaultSigningEnabled());
-        builder.buildSingleSignOnService(_sProfileURL, _bindingProperties);
+        builder.buildSingleSignOnService(_sProfileURL, _requestBindingProperties);
     }
 
     private Hashtable<String, String> readAuthnContextTypes(
@@ -1068,5 +1065,199 @@ public class WebBrowserSSO extends AbstractSAML2Profile
         }
 
         return listAuthenticatingAuthorities;
+    }
+    
+    
+    private SAML2Requestor resolveRequestor(byte[] sourceid) 
+        throws OAException, UserException
+    {
+        IRequestor requestor = null;
+        
+        if (_requestorPoolFactory.isRequestorIDSupported(TYPE_SOURCEID))
+        {
+            requestor = _requestorPoolFactory.getRequestor(sourceid, "sourceid");
+        }
+        else
+        {
+            for (IRequestor oRequestor: _requestorPoolFactory.getAllEnabledRequestors())
+            {
+                byte[] baSourceID = generateSHA1(oRequestor.getID());
+                if (Arrays.equals(sourceid, baSourceID))
+                {
+                    requestor = oRequestor;
+                    break;
+                }
+            }
+        }
+        
+        if (requestor == null)
+        {
+            _logger.debug("Unknown requestor specified with SourceID: " + Arrays.toString(sourceid));
+            throw new UserException(UserEvent.REQUEST_INVALID);
+        }
+        
+        if (!requestor.isEnabled())
+        {
+            _logger.debug("Disabled requestor found in request: " 
+                + requestor.getID());
+            throw new UserException(UserEvent.REQUEST_INVALID); 
+        }
+        
+        RequestorPool oRequestorPool = 
+            _requestorPoolFactory.getRequestorPool(requestor.getID());
+        if (oRequestorPool == null)
+        {
+            _logger.warn("Requestor not available in a pool: " 
+                + requestor.getID());
+            throw new OAException(SystemErrors.ERROR_INTERNAL);
+        }
+    
+        if (!oRequestorPool.isEnabled())
+        {
+            StringBuffer sbError = new StringBuffer("Requestor '");
+            sbError.append(requestor.getID());
+            sbError.append("' is found in a disabled requestor pool: ");
+            sbError.append(oRequestorPool.getID());
+            _logger.warn(sbError.toString());
+            throw new OAException(SystemErrors.ERROR_INTERNAL);
+        }
+        
+        return _requestors.getRequestor(requestor);
+    }
+    
+    private byte[] generateSHA1(String id) throws OAException
+    {
+        try
+        {
+            MessageDigest dig = MessageDigest.getInstance("SHA-1");
+            return dig.digest(id.getBytes("UTF-8"));
+        }
+        catch (NoSuchAlgorithmException e)
+        {
+            _logger.error("SHA-1 not supported", e);
+            throw new OAException(SystemErrors.ERROR_INTERNAL);
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            _logger.error("UTF-8 not supported", e);
+            throw new OAException(SystemErrors.ERROR_INTERNAL);
+        }
+    }
+    
+    private void readResponseConfig(IConfigurationManager configurationManager,
+        Element config) throws OAException
+    {
+        Element eAttributes = configurationManager.getSection(
+            config, "attributes");
+        if (eAttributes == null)
+            _sAttributeNameFormatDefault = null;
+        else
+        {
+            _sAttributeNameFormatDefault = configurationManager.getParam(
+                eAttributes, "format");
+            if (_sAttributeNameFormatDefault == null)
+            {
+                _sAttributeNameFormatDefault = configurationManager.getParam(
+                    eAttributes, "nameformat");
+                if (_sAttributeNameFormatDefault == null)
+                {
+                    _logger.info(
+                        "No optional 'format' or 'nameformat' item in 'attributes' section found in configuration");
+                }
+            }
+            
+            Element eAttribute = configurationManager.getSection(
+                eAttributes, "attribute");
+            while (eAttribute != null)
+            {
+                String sName = configurationManager.getParam(eAttribute, "name");
+                if (sName == null)
+                {
+                    _logger.error("No 'name' item in 'attribute' section found in configuration");
+                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+                }
+                String sFormat = configurationManager.getParam(eAttribute, "format");
+                if (sFormat == null)
+                {
+                    _logger.error("No 'format' item in 'attribute' section found in configuration");
+                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+                }
+                if (_htAttributeNameFormatMapper.containsKey(sName))
+                {
+                    _logger.error("Configured 'name' in 'attribute' section is not unique: " + sName);
+                    throw new OAException(SystemErrors.ERROR_INIT);
+                }
+                _htAttributeNameFormatMapper.put(sName, sFormat);
+                
+                eAttribute = configurationManager.getNextSection(eAttribute);
+            }
+        } 
+        
+        if (_sAttributeNameFormatDefault != null)
+            _logger.info("Using optional attribute name format: " 
+                + _sAttributeNameFormatDefault);
+        else
+            _logger.info("Not using optional attribute name format");
+        
+        Element eExpiration = configurationManager.getSection(
+            config, "expiration");
+        if (eExpiration == null)
+            _lExpirationOffset = DEFAULT_RESPONSE_EXPIRATION;
+        else
+        {
+            String sOffset = configurationManager.getParam(
+                eExpiration, "offset");
+            if (sOffset == null)
+            {
+                _logger.error(
+                    "No 'offset' section found in 'expiration' section in configuration");
+                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+            }
+            
+            try
+            {
+                _lExpirationOffset = Long.parseLong(sOffset);
+                _lExpirationOffset = _lExpirationOffset * 1000;//in seconds
+            }
+            catch (NumberFormatException e)
+            {
+                _logger.error(
+                    "Invalid 'offset' section found in 'expiration' section in configuration: " 
+                    + _lExpirationOffset, e);
+                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+            }
+            
+            if (_lExpirationOffset < 0)
+            {
+                _logger.error(
+                    "Invalid 'offset' section found in 'expiration' section in configuration (may not be negative): " 
+                    + _lExpirationOffset);
+                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+            }
+        }
+        
+        _logger.info("Using expiration offset in response of (ms): " 
+            + _lExpirationOffset);
+    }
+    
+    
+    private boolean isCompatible()
+    {
+        try
+        {
+            IRequestorPoolFactory.class.getDeclaredMethod("isRequestorIDSupported", String.class);
+            IAttributes.class.getDeclaredMethod("getFormat", String.class);
+            ISession.class.getDeclaredMethod("isPassive");
+            return true;
+        }
+        catch (java.lang.SecurityException e)
+        {
+            //false
+        }
+        catch (NoSuchMethodException e)
+        {
+            //false
+        }
+        return false;
     }
 }

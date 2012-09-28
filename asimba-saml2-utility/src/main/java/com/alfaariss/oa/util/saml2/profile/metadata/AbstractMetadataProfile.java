@@ -27,6 +27,10 @@ import java.io.PrintWriter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,7 +45,6 @@ import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.io.Unmarshaller;
 import org.opensaml.xml.io.UnmarshallingException;
-import org.opensaml.xml.util.XMLHelper;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -135,16 +138,15 @@ abstract public class AbstractMetadataProfile extends AbstractSAML2Profile
         PrintWriter pwOut = null;
         try 
         {
-            //Write to output
-            String sXML = XMLHelper.prettyPrintXML(entityDescriptor.getDOM());
-                         
+            TransformerFactory tfactory = TransformerFactory.newInstance();
+            Transformer serializer = tfactory.newTransformer();
             servletResponse.setContentType(SAML2Constants.METADATA_CONTENT_TYPE);
-           
             servletResponse.setHeader("Content-Disposition", 
                 "attachment; filename=metadata.xml");
+            
             //TODO EVB, MHO: cache processing conform RFC2616 [saml-metadata r1404]
             pwOut = servletResponse.getWriter();
-            pwOut.println(sXML);
+            serializer.transform(new DOMSource(entityDescriptor.getDOM()), new StreamResult(pwOut));
         }  
         catch (IOException e)
         {

@@ -69,8 +69,6 @@ import com.alfaariss.oa.util.saml2.metadata.AbstractMetadataBuilder;
  */
 public class EntityDescriptorBuilder extends AbstractMetadataBuilder 
 {
-    private final static long CACHE_DURATION = 86400000;//24 hours 
-    
     private Log _logger;
     private IConfigurationManager _configuration;
     private Element _eMetadata;
@@ -242,11 +240,31 @@ public class EntityDescriptorBuilder extends AbstractMetadataBuilder
      * 
      * Optional attribute indicates the maximum length of time a consumer should 
      * cache the metadata contained in the element and any contained elements.
+     * @throws OAException If configuration is invalid
      */
-    public void buildCacheDuration()
+    public void buildCacheDuration() throws OAException
     {
-        //TODO JRE, RDV: Define usecase metadata cache duration.
-        _result.setCacheDuration(new Long(CACHE_DURATION)); 
+        String cacheDuration = null;
+        try
+        {
+            cacheDuration = _configuration.getParam(_eMetadata, "cacheDuration");
+            if (cacheDuration != null)
+            {
+                Long longCacheDuration = Long.valueOf(cacheDuration);
+                if (longCacheDuration != null)
+                    _result.setCacheDuration(longCacheDuration);
+            }
+        }
+        catch(NumberFormatException e)
+        {
+            _logger.error("Invalid 'cacheDuration' configured: " + cacheDuration, e);
+            throw new OAException(SystemErrors.ERROR_INIT);
+        }
+        catch(ConfigurationException e)
+        {
+            _logger.error("Error while reading cacheDuration configuration", e);
+            throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+        }            
     }
 
     /**

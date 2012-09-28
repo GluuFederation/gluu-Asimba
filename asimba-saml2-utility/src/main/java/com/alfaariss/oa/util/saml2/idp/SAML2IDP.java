@@ -65,6 +65,11 @@ public class SAML2IDP extends AbstractIDP
     private String _sMetadataFile;
     private String _sMetadataURL;
     private int _iMetadataTimeout;
+    private Boolean _boolACSIndex;
+    private Boolean _boolScoping;
+    private Boolean _boolNameIDPolicy;
+    private Boolean _boolAllowCreate;    
+    private String _sNameIDFormat;
     
     /**
      * Creates an organization object.
@@ -76,11 +81,19 @@ public class SAML2IDP extends AbstractIDP
      * @param sMetadataURL The url of the metadata or NULL if none
      * @param iMetadataTimeout The timeout to be used in connecting the the url 
      * metadata or -1 when default must be used
+     * @param useACSIndex TRUE if ACS should be set as Index
+     * @param useAllowCreate AllowCreate value or NULL if disabled
+     * @param useScoping TRUE if Scoping element must be send
+     * @param useNameIDPolicy TRUE if NameIDPolicy element must be send
+     * @param forceNameIDFormat The NameIDFormat to be set in the NameIDPolicy 
+     * or NULL if resolved from metadata
      * @throws OAException if invalid data supplied
      */
     public SAML2IDP(String sID, byte[] baSourceID, String sFriendlyName,
         String sMetadataFile, String sMetadataURL, 
-        int iMetadataTimeout) throws OAException
+        int iMetadataTimeout, Boolean useACSIndex, Boolean useAllowCreate, 
+        Boolean useScoping, Boolean useNameIDPolicy, String forceNameIDFormat) 
+        throws OAException
     {
         super(sID, sFriendlyName);
         
@@ -129,7 +142,13 @@ public class SAML2IDP extends AbstractIDP
             sbDebug.append(_iMetadataTimeout);
             _logger.debug(sbDebug.toString());
         }
-    }  
+        
+        _boolACSIndex = useACSIndex;
+        _boolScoping = useScoping;
+        _boolNameIDPolicy = useNameIDPolicy;
+        _boolAllowCreate = useAllowCreate;
+        _sNameIDFormat = forceNameIDFormat;
+    }
     
     /**
      * Returns the SourceID of the organization.
@@ -189,6 +208,90 @@ public class SAML2IDP extends AbstractIDP
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
         return chainingMetadataProvider;
+    }
+    
+    /**
+     * Indicates whether the ACS location in the AuthnRequest must be an Index.
+     * 
+     * Values are:
+     * <ul>
+     * <li>TRUE - AssertionConsumerServiceIndex must be set <b>(default)</b></li>
+     * <li>FALSE - AssertionConsumerServiceURL and ProtocolBinding must be set</li>
+     * </ul>
+     * @return TRUE if the ACS location must be an index.
+     * @since 1.2
+     */
+    public Boolean useACSIndex()
+    {
+        return _boolACSIndex;
+    }
+    
+    /**
+     * Indicates what the value of AllowCreate in the NameIDPolicy of the AuthnRequest must be.
+     * 
+     * Values are:
+     * <ul>
+     * <li>NULL - AllowCreate is not send in the AuthnRequest <b>(default unless it's proxied)</b></li>
+     * <li>TRUE - AllowCreate=true</li>
+     * <li>FALSE - AllowCreate=false</li>
+     * </ul>
+     * @return the preferred AllowCreate value.
+     * @since 1.2
+     */
+    public Boolean useAllowCreate()
+    {
+        return _boolAllowCreate;
+    }
+    
+    /**
+     * Indicates what the value of Scoping in the AuthnRequest must be.
+     * 
+     * Values are:
+     * <ul>
+     * <li>TRUE - Scoping element will be send <b>(default)</b></li>
+     * <li>FALSE - Scoping element will not be send </li>
+     * </ul>
+     * @return TRUE if the Scoping element must be send.
+     * @since 1.2
+     */
+    public Boolean useScoping()
+    {
+        return _boolScoping;
+    }
+    
+    /**
+     * Indicates what the value of NameIDPolicy in the AuthnRequest must be.
+     * 
+     * Values are:
+     * <ul>
+     * <li>TRUE - NameIDPolicy element will be send <b>(default)</b></li>
+     * <li>FALSE - NameIDPolicy element will not be send </li>
+     * </ul>
+     * @return TRUE if the NameIDPolicy element must be send.
+     * @since 1.2
+     */
+    public Boolean useNameIDPolicy()
+    {
+        return _boolNameIDPolicy;
+    }
+    
+    /**
+     * Indicates what the value of Format in the NameIDPolicy of the AuthnRequest must be.
+     * 
+     * Values are:
+     * <ul>
+     * <li>NULL - The first NameIDFormat in the IdP Metadata should be used OR 
+     * no format when a NameIDFormat is not available in that metadata<b>(default)</b></li>
+     * <li>NOT NULL - The Format should be overrulen with the configured format</li>
+     * </ul>
+     * This functionality will only be used when the NameIDPolicy is used.
+     * 
+     * @return the preferred NameIDFormat value.
+     * @since 1.2
+     */
+    public String getNameIDFormat()
+    {
+        return _sNameIDFormat;
     }
 
     private HTTPMetadataProvider createHTTPMetadataProvider(String sMetadataURL,

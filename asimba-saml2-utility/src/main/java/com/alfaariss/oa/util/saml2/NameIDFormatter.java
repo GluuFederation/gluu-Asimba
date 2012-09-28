@@ -515,6 +515,134 @@ public class NameIDFormatter
         return null;
     }
     
+    /**
+     * Store the supplied NameID as TGT alias.
+     *
+     * @param sTGTID The TGT ID for which the alias must be stored
+     * @param sNameIDFormat The Alias type
+     * @param sEntityID The Entity ID
+     * @param sNameID The TGT Alias
+     * @throws OAException If NameIDFormat is unknown
+     * @since 1.2.1
+     */
+    public void store(String sTGTID, String sNameIDFormat, String sEntityID, 
+        String sNameID) throws OAException
+    {
+        try
+        {
+            if (sNameIDFormat.equals(NameIDType.PERSISTENT))
+            {
+                _tgtAliasStore.putAlias(TYPE_ALIAS_PERSISTENT_UID, 
+                    sEntityID, sTGTID, sNameID);
+            }
+            else if (sNameIDFormat.equals(NameIDType.TRANSIENT))
+            {
+                _tgtAliasStore.putAlias(TYPE_ALIAS_TRANSIENT_UID, 
+                    sEntityID, sTGTID, sNameID);
+            }
+            else if (sNameIDFormat.equals(NameIDType.EMAIL))
+            {
+                _tgtAliasStore.putAlias(TYPE_ALIAS_EMAIL_UID, 
+                    sEntityID, sTGTID, sNameID);
+            }
+            else if (sNameIDFormat.equals(NameIDType.UNSPECIFIED)) 
+            {
+                _tgtAliasStore.putAlias(TYPE_ALIAS_UNSPECIFIED11_UID, 
+                    sEntityID, sTGTID, sNameID);
+            }
+            else if (sNameIDFormat.equals(SAML20_UNSPECIFIED))
+            {
+                _tgtAliasStore.putAlias(TYPE_ALIAS_UNSPECIFIED20_UID, 
+                    sEntityID, sTGTID, sNameID);
+            }
+            else
+            {
+                _logger.debug("Unsupported NameID Format supplied for storing NameID as TGT Alias: " + 
+                    sNameIDFormat);
+            }
+        }
+        catch (OAException e)
+        {
+            throw e;
+        }
+        catch (Exception e)
+        {
+            StringBuffer sbError = new StringBuffer("Could not store NameID '");
+            sbError.append(sNameID);
+            sbError.append("' for entityID '");
+            sbError.append(sEntityID);
+            sbError.append("' with NameIDFormat '");
+            sbError.append(sNameIDFormat);
+            sbError.append("' as alias for TGT: ");
+            sbError.append(sTGTID);
+            _logger.fatal(sbError.toString(), e);
+            throw new OAException(SystemErrors.ERROR_INTERNAL);
+        }
+    }
+    
+    /**
+     * Remove the supplied NameID as TGT alias.
+     *
+     * @param sNameIDFormat The Alias type
+     * @param sEntityID The Entity ID
+     * @param sNameID The TGT Alias
+     * @throws OAException If NameIDFormat is unknown
+     * @since 1.2.1
+     */
+    public void remove(String sNameIDFormat, String sEntityID, 
+        String sNameID) throws OAException
+    {
+        try
+        {
+            if (sNameIDFormat.equals(NameIDType.PERSISTENT))
+            {
+                _tgtAliasStore.removeAlias(TYPE_ALIAS_PERSISTENT_UID, 
+                    sEntityID, sNameID);
+            }
+            else if (sNameIDFormat.equals(NameIDType.TRANSIENT))
+            {
+                _tgtAliasStore.removeAlias(TYPE_ALIAS_TRANSIENT_UID, 
+                    sEntityID, sNameID);
+            }
+            else if (sNameIDFormat.equals(NameIDType.EMAIL))
+            {
+                _tgtAliasStore.removeAlias(TYPE_ALIAS_EMAIL_UID, 
+                    sEntityID, sNameID);
+            }
+            else if (sNameIDFormat.equals(NameIDType.UNSPECIFIED)) 
+            {
+                _tgtAliasStore.removeAlias(TYPE_ALIAS_UNSPECIFIED11_UID, 
+                    sEntityID, sNameID);
+            }
+            else if (sNameIDFormat.equals(SAML20_UNSPECIFIED))
+            {
+                _tgtAliasStore.removeAlias(TYPE_ALIAS_UNSPECIFIED20_UID, 
+                    sEntityID, sNameID);
+            }
+            else
+            {
+                _logger.debug("Unsupported NameID Format supplied for removing NameID as TGT Alias: " + 
+                    sNameIDFormat);
+            }
+        }
+        catch (OAException e)
+        {
+            throw e;
+        }
+        catch (Exception e)
+        {
+            StringBuffer sbError = new StringBuffer("Could not remove NameID '");
+            sbError.append(sNameID);
+            sbError.append("' for entityID '");
+            sbError.append(sEntityID);
+            sbError.append("' with NameIDFormat: ");
+            sbError.append(sNameIDFormat);
+            _logger.fatal(sbError.toString(), e);
+            throw new OAException(SystemErrors.ERROR_INTERNAL);
+        }
+    }
+    
+    
     private String generatePersistent(String type, String tgtID, 
         String sEntityID, IUser user, IAttributes attributes) throws OAException
     {

@@ -87,6 +87,30 @@ public class IDPMetadata extends AbstractMetadataProfile
         {
             signSAMLObject(_myEntityDescriptor);
         }
+        else
+        {
+            if(_myEntityDescriptor.getDOM() == null)
+            {
+                Marshaller marshaller = Configuration.getMarshallerFactory(
+                    ).getMarshaller(_myEntityDescriptor);
+                if (marshaller == null) 
+                {
+                    _logger.error("No marshaller registered for " + 
+                        _myEntityDescriptor.getElementQName() + 
+                        ", unable to marshall metadata");
+                    throw new OAException(SystemErrors.ERROR_INTERNAL);
+                }
+                try
+                {
+                    marshaller.marshall(_myEntityDescriptor);
+                }
+                catch (MarshallingException e)
+                {
+                    _logger.warn("Could not marshall", e);
+                    throw new OAException(SystemErrors.ERROR_INTERNAL);
+                }
+            }
+        }
     }
     
     /**

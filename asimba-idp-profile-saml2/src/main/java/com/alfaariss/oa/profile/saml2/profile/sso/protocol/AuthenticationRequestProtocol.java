@@ -24,6 +24,7 @@ package com.alfaariss.oa.profile.saml2.profile.sso.protocol;
 
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
@@ -126,7 +127,7 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
     public final static String SESSION_REQUEST_ASSERTION_CONSUMER_SERVICE_URL = "AssertionConsumerServiceURL";
     /** ProtocolBinding */
     public final static String SESSION_REQUEST_PROTOCOLBINDING = "ProtocolBinding";
-    /** NameIDPolicy */
+    /** NameIDFormat */
     public final static String SESSION_REQUEST_NAMEIDFORMAT = "NameIDFormat";
     /** SPNameQualifier */
     public final static String SESSION_REQUEST_SPNAMEQUALIFIER = "SPNameQualifier";
@@ -140,6 +141,7 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
     private SAML2Requestor _saml2Requestor;
     private SPSSODescriptor _spSSODescriptor;
     private CryptoManager _cryptoManager;
+    private boolean _bCompatible;
     
     /**
      * Creates the object.
@@ -151,12 +153,13 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
      * @param saml2Requestor SAML Requestor object
      * @param cryptoManager The OA CryptoManager
      * @param issueInstantWindow IssueInstant time window object
+     * @param bCompatible TRUE if OA Server 1.5 compatible
      * @throws OAException If requestor metadata is invalid
      */
     public AuthenticationRequestProtocol(ISession session, 
         NameIDFormatter nameIDFormatter, String sProfileURL, String sEntityId, 
         SAML2Requestor saml2Requestor, CryptoManager cryptoManager, 
-        SAML2IssueInstantWindow issueInstantWindow) 
+        SAML2IssueInstantWindow issueInstantWindow, boolean bCompatible) 
         throws OAException
     {
         super(cryptoManager.getSecureRandom(), sProfileURL, session, sEntityId, 
@@ -172,6 +175,7 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
             _nameIDFormatter = nameIDFormatter;
             _saml2Requestor = saml2Requestor;
             _cryptoManager = cryptoManager;
+            _bCompatible = bCompatible;
             
             if (_saml2Requestor != null)
             {
@@ -243,9 +247,17 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
             Boolean boolPassive = authnRequest.isPassive();
             if (boolPassive != null && boolPassive.booleanValue())
             {
-                _logger.debug("Unsupported Passive: " + boolPassive);
-                throw new StatusException(RequestorEvent.REQUEST_INVALID, 
-                    StatusCode.RESPONDER_URI, StatusCode.NO_PASSIVE_URI);
+                if (_bCompatible)
+                {
+                    _logger.debug("Passive: " + boolPassive);
+                    _session.setPassive(boolPassive.booleanValue());
+                }
+                else
+                {
+                    _logger.debug("Unsupported Passive: " + boolPassive);
+                    throw new StatusException(RequestorEvent.REQUEST_INVALID, 
+                        StatusCode.RESPONDER_URI, StatusCode.NO_PASSIVE_URI);
+                }
             }
             
             Integer intAttributeConsumingServiceIndex = authnRequest.getAttributeConsumingServiceIndex();
@@ -263,8 +275,6 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
                 oAttributes.put(ProxyAttributes.class, 
                     ProxyAttributes.PROVIDERNAME, providerName);
                 _logger.debug("ProviderName: " + providerName);
-                
-                oAttributes.put(ISession.class, ProxyAttributes.PROVIDERNAME, providerName);                
             }
         }
         catch (StatusException e)
@@ -292,8 +302,9 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
      *  the user is authenticated for.
      * @param attributes attributes that may be sent to the application (so ARP 
      * must be applied).
-     * @param sAttributeNameFormat The attribute nameformat for all attributes 
+     * @param sAttributeNameFormatDefault The attribute nameformat for all attributes 
      *  in response.
+     * @param htAttributeNameFormatMapper The attribute nameformat mapper.
      * @param sSessionIndex The session index that must be used in the response.
      * @param lExpirationOffset Expiration offset to be set as the not on or 
      *  after time in the response.
@@ -303,7 +314,8 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
      * @throws OAException If an internal error occurred.
      */
     public StatusResponseType createResponse(ITGT tgt, List<String> authnContextTypes, 
-        IAttributes attributes, String sAttributeNameFormat, 
+        IAttributes attributes, String sAttributeNameFormatDefault, 
+        Hashtable<String,String> htAttributeNameFormatMapper, 
         String sSessionIndex, long lExpirationOffset, 
         List<String> listAuthenticatingAuthorities) throws OAException
     {
@@ -326,7 +338,8 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
             response = builder.buildObject();
     
             Assertion assertion = buildAssertion(tgt, authnContextTypes, 
-                attributes, sAttributeNameFormat, sSessionIndex, 
+                attributes, sAttributeNameFormatDefault, 
+                htAttributeNameFormatMapper, sSessionIndex, 
                 lExpirationOffset, listAuthenticatingAuthorities);
             
             if (_spSSODescriptor != null 
@@ -690,8 +703,17 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
                         StatusCode.RESPONDER_URI);      
                 }
                 
-                AssertionConsumerService acs = listACS.get(
-                    intAssertionConsumerServiceIndex);
+                AssertionConsumerService acs = null;
+
+                for (AssertionConsumerService acsCandidate : listACS)
+                {
+                    if (intAssertionConsumerServiceIndex.equals(acsCandidate.getIndex()))
+                    {
+                        acs = acsCandidate;
+                        break;
+                    }
+                }
+
                 if (acs == null)
                 {
                     StringBuffer sbError = 
@@ -908,6 +930,7 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
     
     private Assertion buildAssertion(ITGT tgt, List<String> authnContextTypes, 
         IAttributes attributes, String sAttributeNameFormat, 
+        Hashtable<String,String> htAttributeNameFormatMapper,
         String sSessionIndex, long lExpirationOffset, 
         List<String> listAuthenticatingAuthorities) throws OAException
     {
@@ -938,8 +961,7 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
                     _session.getRequestorId(), sTGTID);
             Subject subject = buildSubject(sNameID, dtNotOnOrAfter);
             assertion.setSubject(subject);
-            
-            
+                        
             DateTime dtAuthnStatementNotOnOrAfter = dtNotOnOrAfter;
             if (tgt != null)
                 dtAuthnStatementNotOnOrAfter = new DateTime(tgt.getTgtExpTime());
@@ -955,7 +977,8 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
             if (attributes.size() > 0)
             {
                 AttributeStatement attributeStatement = 
-                    buildAttributeStatement(attributes, sAttributeNameFormat);
+                    buildAttributeStatement(attributes, sAttributeNameFormat, 
+                        htAttributeNameFormatMapper);
                 assertion.getAttributeStatements().add(attributeStatement);
             }
             
@@ -1117,7 +1140,8 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
     }
     
     private AttributeStatement buildAttributeStatement(IAttributes attributes, 
-        String sAttributeNameFormat)
+        String sAttributeNameFormat, 
+        Hashtable<String,String> htAttributeNameFormatMapper)
     {
         AttributeStatementBuilder attributeStatemenBuilder = 
             (AttributeStatementBuilder)_builderFactory.getBuilder(
@@ -1135,9 +1159,20 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
             Attribute attribute = attributeBuilder.buildObject();
             attribute.setName(sName);
             
-            if (sAttributeNameFormat != null)
-                attribute.setNameFormat(sAttributeNameFormat);
-            
+            //DD nameformat can be overwritten by a default or explicitly configured nameformat
+            String sNameFormat = htAttributeNameFormatMapper.get(sName);
+            if (sNameFormat == null)
+            {
+                if (sAttributeNameFormat != null && sAttributeNameFormat.trim().length() == 0)
+                    sNameFormat = null;
+                else if (sAttributeNameFormat != null)
+                    sNameFormat = sAttributeNameFormat;
+                else if (_bCompatible)
+                    sNameFormat = attributes.getFormat(sName);
+            }
+            if (sNameFormat != null)
+                attribute.setNameFormat(sNameFormat);
+                        
             Object oValue = attributes.get(sName);
             if (oValue instanceof String)
             {

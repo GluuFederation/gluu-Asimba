@@ -62,6 +62,16 @@ public class BindingProperties implements Serializable
     private List<String> _bindings;
     
     /**
+     * Constructor. 
+     */
+    public BindingProperties()
+    {
+        _bindingProperties = new Hashtable<String, Properties>();
+        _bindings = new Vector<String>();
+        _sDefault = null;
+    }
+    
+    /**
      * Create new <code>BindingProperties</code> from configuration.
      *
      * @param config The configuration manager.
@@ -273,12 +283,41 @@ public class BindingProperties implements Serializable
     
     /**
      * Returns the default binding URI.
-     * 
      * @return The binding URI configured as default
      */
     public String getDefault()
     {
         return _sDefault;
+    }
+    
+    /**
+     * Set the supported binding URI's.
+     * @param bindings List with all supported binding URI's
+     * @since 1.5
+     */
+    public void setBindings(List<String> bindings)
+    {
+        _bindings = bindings;
+    }
+    
+    /**
+     * Set the default binding URI.
+     * @param binding the binding URI
+     * @since 1.5
+     */
+    public void setDefault(String binding)
+    {
+        _sDefault = binding;
+    }
+    
+    /**
+     * Set the binding properties.
+     * @param bindingProperties specific binding configuration.
+     * @since 1.5
+     */
+    public void setBindingProperties(Map<String, Properties> bindingProperties)
+    {
+        _bindingProperties = bindingProperties;
     }
     
     private Map<String, Properties> readBindings(
