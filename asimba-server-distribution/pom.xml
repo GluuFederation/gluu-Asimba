@@ -3,7 +3,7 @@
   <parent>
     <artifactId>server-core</artifactId>
     <groupId>org.asimba</groupId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.1-SNAPSHOT</version>
     <!-- relativePath>..</relativePath -->
   </parent>
   <artifactId>asimba-server-distribution</artifactId>
@@ -14,164 +14,174 @@
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-am-guest</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<artifactId>asimba-wa</artifactId>
   		<groupId>org.asimba</groupId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   		<type>war</type>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-am-identifying</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-am-password</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-am-password-htaccess</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-am-password-jdbc</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-am-password-jndi</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-am-password-radius</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-am-remote</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-am-remote-aselect</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.asimba</groupId>
+  		<artifactId>asimba-am-remote-saml2</artifactId>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-api</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-cozmanova-utility</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-engine-attribute-gather-file</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>
   			asimba-engine-attribute-release-configuration
   		</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>
   			asimba-engine-authentication-configuration
   		</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>
   			asimba-engine-authorization-configuration
   		</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-engine-core</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-engine-crypto-keystore</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-engine-idp-configuration</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-engine-idp-jdbc</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-engine-requestor-configuration</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.asimba</groupId>
+  		<artifactId>asimba-engine-requestor-jdbc</artifactId>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-engine-session-memory</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-engine-storage</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-engine-tgt-memory</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-engine-user-provisioning</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-helper-stylesheet</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-sso-web</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-utility</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-am-password-asimbausersxml</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-am-smsotp</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-idp-profile-saml2</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
     	<exclusions>
   			<exclusion>
   				<artifactId>servlet-api</artifactId>
@@ -182,12 +192,12 @@
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-saml2-utility</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-idp-profile-aselect</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   </dependencies>
   
