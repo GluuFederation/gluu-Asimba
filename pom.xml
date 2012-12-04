@@ -77,6 +77,7 @@
   	<module>asimba-engine-session-memory</module>
   	<module>asimba-engine-attribute-gather-file</module>
   	<module>asimba-engine-requestor-configuration</module>
+    <module>asimba-engine-requestor-jdbc</module>
   	<module>asimba-engine-authentication-configuration</module>
   	<module>asimba-engine-authorization-configuration</module>
   	<module>asimba-engine-attribute-release-configuration</module>
@@ -100,7 +101,7 @@
     <module>asimba-idp-profile-aselect</module>
     <module>asimba-am-remote</module>
     <module>asimba-am-remote-aselect</module>
-    <module>asimba-engine-requestor-jdbc</module>
+    <module>asimba-am-remote-saml2</module>
   </modules>
 
   <properties>
