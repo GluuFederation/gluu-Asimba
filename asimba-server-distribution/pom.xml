@@ -92,6 +92,13 @@
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>
+  			asimba-engine-attribute-release-jdbc
+  		</artifactId>
+  		<version>1.0.1-SNAPSHOT</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.asimba</groupId>
+  		<artifactId>
   			asimba-engine-authentication-configuration
   		</artifactId>
   		<version>1.0.1-SNAPSHOT</version>
@@ -136,6 +143,11 @@
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-engine-session-memory</artifactId>
+  		<version>1.0.1-SNAPSHOT</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.asimba</groupId>
+  		<artifactId>asimba-engine-session-jdbc</artifactId>
   		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
   	<dependency>
