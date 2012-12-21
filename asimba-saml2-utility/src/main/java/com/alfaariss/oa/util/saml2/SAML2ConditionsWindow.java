@@ -22,15 +22,13 @@
  */
 package com.alfaariss.oa.util.saml2;
 
-import java.io.Serializable;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.asimba.util.saml2.assertion.SAML2TimestampWindow;
 import org.joda.time.DateTime;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
-import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 
 /**
@@ -38,32 +36,20 @@ import com.alfaariss.oa.api.configuration.IConfigurationManager;
  * @author MHO
  * @author Alfa & Ariss
  */
-public class SAML2ConditionsWindow implements Serializable
+public class SAML2ConditionsWindow extends SAML2TimestampWindow
 {
     /** serialVersionUID */
     private static final long serialVersionUID = 4751285324103071819L;
-    private final static long DEFAULT_BEFORE_OFFSET = 60000;
-    private final static long DEFAULT_AFTER_OFFSET = 60000;
+
     private Log _logger;
-    private long _lBeforeOffset;
-    private long _lAfterOffset;
     
     /**
      * Default constructor using default window.
      */
     public SAML2ConditionsWindow()
     {
+        super();
         _logger = LogFactory.getLog(SAML2ConditionsWindow.class);
-        
-        _lBeforeOffset = DEFAULT_BEFORE_OFFSET;
-        _logger.info(
-            "Using configured IssueInstant window 'before offset time' in ms: " 
-            + _lBeforeOffset);
-        
-        _lAfterOffset = DEFAULT_AFTER_OFFSET;
-        _logger.info(
-            "Using configured IssueInstant window 'after offset time' in ms: " 
-            + _lAfterOffset);
     }
     /**
      * Constructor using configurable window.
@@ -75,109 +61,7 @@ public class SAML2ConditionsWindow implements Serializable
     public SAML2ConditionsWindow (IConfigurationManager configurationManager, 
         Element eConfig) throws OAException
     {
-        _logger = LogFactory.getLog(SAML2ConditionsWindow.class);
-        try
-        {
-            Element eWindow = configurationManager.getSection(eConfig, "window");
-            if (eWindow == null)
-            {
-                _logger.error("No 'window' section configured for IssueInstant");
-                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-            }
-            
-            String sBefore = configurationManager.getParam(eWindow, "before_offset");
-            if (sBefore == null)
-            {
-                _logger.error(
-                    "No 'before_offset' item in 'window' section configured for IssueInstant");
-                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-            }
-            
-            try
-            {
-                _lBeforeOffset = Long.parseLong(sBefore);
-                _lBeforeOffset = _lBeforeOffset * 1000;//milliseconds
-            }
-            catch(NumberFormatException e)
-            {
-                _logger.error(
-                    "Configured 'before_offset' item in 'window' section configured for IssueInstant is invalid: " 
-                    + sBefore, e);
-                throw new OAException(SystemErrors.ERROR_INIT);
-            }
-            
-            if (_lBeforeOffset < 0)
-            {
-                _logger.error(
-                    "Invalid 'before_offset' item in 'window' section configured for IssueInstant is invalid (may not be negative): " 
-                    + sBefore);
-                throw new OAException(SystemErrors.ERROR_INIT);
-            }
-            
-            _logger.info(
-                "Using configured IssueInstant window 'before offset time' in ms: " 
-                + _lBeforeOffset);
-            
-            String sAfter = configurationManager.getParam(eWindow, "after_offset");
-            if (sAfter == null)
-            {
-                _logger.error(
-                    "No 'after_offset' item in 'window' section configured for IssueInstant");
-                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-            }
-            
-            try
-            {
-                _lAfterOffset = Long.parseLong(sAfter);
-                _lAfterOffset = _lAfterOffset * 1000;//milliseconds
-            }
-            catch(NumberFormatException e)
-            {
-                _logger.error(
-                    "Configured 'after_offset' item in 'window' section configured for IssueInstant is invalid: " 
-                    + sAfter, e);
-                throw new OAException(SystemErrors.ERROR_INIT);
-            }
-            
-            if (_lBeforeOffset < 0)
-            {
-                _logger.error(
-                    "Invalid 'after_offset' item in 'window' section configured for IssueInstant is invalid (may not be negative): " 
-                    + sAfter);
-                throw new OAException(SystemErrors.ERROR_INIT);
-            }
-            
-            _logger.info(
-                "Using configured IssueInstant window 'after offset time' in ms: " 
-                + _lAfterOffset);
-        }
-        catch (OAException e)
-        {
-            throw e;
-        }
-        catch (Exception e)
-        {
-            _logger.fatal("Internal error during object creation", e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
-        }
-    }
-    
-    /**
-     * Returns the before offset time in milliseconds.
-     * @return The before offset time in milliseconds.
-     */
-    public long getBeforeOffset()
-    {
-        return _lBeforeOffset;
-    }
-    
-    /**
-     * Returns the after offset time in milliseconds.
-     * @return The after offset time in milliseconds.
-     */
-    public long getAfterOffset()
-    {
-        return _lAfterOffset;
+    	super(configurationManager, eConfig);
     }
     
     /**
@@ -222,17 +106,6 @@ public class SAML2ConditionsWindow implements Serializable
         }
         
         return true;
-    }
-    
-    /**
-     * Verifies if the current time is before the AuthnInstant time.
-     * @param dtAuthnInstant AuthnInstant
-     * @return TRUE if supplied AuthnInstant is before the current time
-     */
-    public boolean canAccept(DateTime dtAuthnInstant)
-    {
-        DateTime dtNow = new DateTime().minus(_lBeforeOffset);
-        return (dtNow.isAfter(dtAuthnInstant));
     }
 }
 
