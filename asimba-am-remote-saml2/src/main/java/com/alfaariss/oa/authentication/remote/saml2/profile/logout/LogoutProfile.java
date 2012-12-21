@@ -30,6 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.asimba.util.saml2.assertion.SAML2TimestampWindow;
 import org.joda.time.DateTime;
 import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObject;
@@ -146,7 +147,9 @@ public class LogoutProfile extends AbstractAuthNMethodSAML2Profile
         SAML2ConditionsWindow conditionsWindow)
         throws OAException
     {
-        super.init(null, null, entityDescriptor, mapper, store, sMethodID, conditionsWindow);
+    	SAML2TimestampWindow oAuthnInstant = null; // this is not used in logout profile
+    	
+        super.init(null, null, entityDescriptor, mapper, store, sMethodID, conditionsWindow, oAuthnInstant);
     }
     
     /**
