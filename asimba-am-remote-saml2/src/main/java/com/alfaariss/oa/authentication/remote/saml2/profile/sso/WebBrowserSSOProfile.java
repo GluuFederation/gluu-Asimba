@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.asimba.util.saml2.assertion.SAML2TimestampWindow;
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SignableSAMLObject;
@@ -129,9 +130,10 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
     public void init(IConfigurationManager configurationManager, Element config,
         EntityDescriptor entityDescriptor, IIDMapper mapper, 
         IIDPStorage orgStorage, String sMethodID, 
-        SAML2ConditionsWindow conditionsWindow) throws OAException
+        SAML2ConditionsWindow conditionsWindow,
+        SAML2TimestampWindow oAuthnInstant) throws OAException
     {
-        super.init(configurationManager,config,entityDescriptor,mapper,orgStorage,sMethodID,conditionsWindow);
+        super.init(configurationManager,config,entityDescriptor,mapper,orgStorage,sMethodID,conditionsWindow, oAuthnInstant);
         
         //check if OA Server 1.5 is used
         _bCompatible =  isCompatible();

@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.asimba.util.saml2.assertion.SAML2TimestampWindow;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.metadata.SingleLogoutService;
 import org.opensaml.xml.ConfigurationException;
@@ -64,7 +65,11 @@ import com.alfaariss.oa.util.saml2.opensaml.CustomOpenSAMLBootstrap;
 /**
  * Base class for creating authentication methods based on the SAML protocol. It reads
  * basic configuration items.
- *
+ * 
+ * 2012/12/21: added configurable authnstmt acceptance window in profile (mdobrinic)
+ *   configure using
+ * 
+ * @author mdobrinic
  * @author MHO
  * @author jre
  * @author Alfa & Ariss
@@ -134,6 +139,11 @@ public abstract class BaseSAML2AuthenticationMethod implements
     
     /** SAML2 Conditions Window */
     protected SAML2ConditionsWindow _conditionsWindow;
+    
+    /**
+     * Acceptance window for AuthmStmt/AuthnInstant values
+     */
+    protected SAML2TimestampWindow _oAuthnInstantWindow;
     
     /** ASynchronous Logout Profile */
     private LogoutProfile _asynchronousLogoutProfile;
@@ -244,12 +254,26 @@ public abstract class BaseSAML2AuthenticationMethod implements
             
             if (_bIsEnabled)
             {
+                // Read <Conditions> section as SAML2TimestampWindow:
                 Element eConditions = _configurationManager.getSection(eConfig, "Conditions");
                 if (eConditions == null)
                     _conditionsWindow = new SAML2ConditionsWindow();
                 else
                     _conditionsWindow = new SAML2ConditionsWindow(
                         _configurationManager, eConditions);
+                
+                // Read <authnstmt> section as SAML2TimestampWindow:
+                Element eAuthnStmtInstant = _configurationManager.getSection(eConfig, "authnstmt");
+                if (eAuthnStmtInstant == null) {
+                	_oAuthnInstantWindow = new SAML2TimestampWindow();
+                	// as default: allow 1 hour to pass before rejecting AuthnInstant
+                	_oAuthnInstantWindow.setBeforeOffset(60*60*1000);
+                	_logger.info("Initializing AuthnInstant before-offset to "+_oAuthnInstantWindow.getBeforeOffset());
+                } else {
+                	_oAuthnInstantWindow = new SAML2TimestampWindow(
+                			_configurationManager, eAuthnStmtInstant);
+                	_logger.info("Initialized AuthnInstant offsets.");
+                }
                 
                 Element eIDMapper = _configurationManager.getSection(eConfig, "idmapper");
                 if (eIDMapper != null)

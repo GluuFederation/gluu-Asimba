@@ -33,6 +33,7 @@ import javax.xml.namespace.QName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.asimba.util.saml2.assertion.SAML2TimestampWindow;
 import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SignableSAMLObject;
@@ -172,6 +173,11 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
     /** SAML2 Conditions acceptance Window */
     protected SAML2ConditionsWindow _conditionsWindow;
     
+    /**
+     * Acceptance window for AuthnStatement/AuthnInstant values
+     */
+    protected SAML2TimestampWindow _oAuthnInstantWindow;
+    
     /** Organization ID of this OpenASelect Server */
     protected String _sMyOrganizationID;
     
@@ -187,7 +193,8 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
     public void init(IConfigurationManager configurationManager, Element config,
         EntityDescriptor entityDescriptor, IIDMapper mapper, 
         IIDPStorage orgStorage, String sMethodID, 
-        SAML2ConditionsWindow conditionsWindow) throws OAException
+        SAML2ConditionsWindow conditionsWindow,
+        SAML2TimestampWindow oAuthnInstantWindow) throws OAException
     {
         _oConfigManager = configurationManager;
         
@@ -198,6 +205,7 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
         _organizationStorage = orgStorage;
         _sMethodID = sMethodID;
         _conditionsWindow = conditionsWindow;
+        _oAuthnInstantWindow = oAuthnInstantWindow;
         _sMyOrganizationID = oaEngine.getServer().getOrganization().getID();
         _requestorPoolFactory = oaEngine.getRequestorPoolFactory();
         
@@ -311,7 +319,7 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
     }
     
     /**
-     * Checks authentication statement
+     * Checks validity of authentication statement
      *
      * @param stmt The AuthnStatement SAML object
      * @return true if correct
@@ -320,9 +328,9 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
     {
         //TODO check authN context?
         //does not have to do anything yet? AuthN context type check?
-        if (_conditionsWindow.canAccept(stmt.getAuthnInstant()))
+        if (! _oAuthnInstantWindow.canAccept(stmt.getAuthnInstant()))
         {
-            _logger.debug("AuthN statement check failed: issue instant is in the future");
+            _logger.debug("AuthN statement check failed: issue instant not in acceptable window.");
             return false;
         }
 

@@ -22,6 +22,7 @@
  */
 package com.alfaariss.oa.authentication.remote.saml2.profile;
 
+import org.asimba.util.saml2.assertion.SAML2TimestampWindow;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.w3c.dom.Element;
 
@@ -49,12 +50,14 @@ public interface IAuthNMethodSAML2Profile
      * @param orgStorage The organization storage
      * @param sMethodID The authentication method id
      * @param conditionsWindow Conditions acceptance window 
+     * @param oAuthnInstantWindow Acceptance window for AuthnStmt/AuthnInstant value
      * @throws OAException If initialization fails.
      */
     public void init(IConfigurationManager configManager, Element config,
         EntityDescriptor entityDescriptor, IIDMapper mapper, 
         IIDPStorage orgStorage, String sMethodID, 
-        SAML2ConditionsWindow conditionsWindow)
+        SAML2ConditionsWindow conditionsWindow,
+        SAML2TimestampWindow oAuthnInstantWindow)
         throws OAException;
     
     /**
