@@ -196,6 +196,11 @@
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
+  		<artifactId>asimba-authorization-web</artifactId>
+  		<version>1.0.1-SNAPSHOT</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.asimba</groupId>
   		<artifactId>asimba-utility</artifactId>
   		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
