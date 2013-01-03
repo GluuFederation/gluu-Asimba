@@ -106,6 +106,13 @@
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>
+  			asimba-engine-authentication-jdbc
+  		</artifactId>
+  		<version>1.0.1-SNAPSHOT</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.asimba</groupId>
+  		<artifactId>
   			asimba-engine-authorization-configuration
   		</artifactId>
   		<version>1.0.1-SNAPSHOT</version>
