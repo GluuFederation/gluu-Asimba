@@ -162,6 +162,11 @@
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
+  		<artifactId>asimba-engine-tgt-jdbc</artifactId>
+  		<version>1.0.1-SNAPSHOT</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.asimba</groupId>
   		<artifactId>asimba-engine-user-provisioning</artifactId>
   		<version>1.0.1-SNAPSHOT</version>
   	</dependency>

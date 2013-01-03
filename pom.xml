@@ -74,6 +74,7 @@
   	<module>asimba-engine-storage</module>
   	<module>asimba-engine-crypto-keystore</module>
   	<module>asimba-engine-tgt-memory</module>
+    <module>asimba-engine-tgt-jdbc</module>
   	<module>asimba-engine-session-memory</module>
     <module>asimba-engine-session-jdbc</module>
   	<module>asimba-engine-attribute-gather-file</module>
