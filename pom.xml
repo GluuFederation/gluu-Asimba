@@ -87,6 +87,7 @@
     <module>asimba-engine-authentication-jdbc</module>
   	<module>asimba-engine-authorization-configuration</module>
     <module>asimba-engine-authorization-jdbc</module>
+    <module>asimba-engine-action</module>
   	<module>asimba-engine-attribute-release-configuration</module>
     <module>asimba-engine-attribute-release-jdbc</module>
   	<module>asimba-engine-user-provisioning</module>

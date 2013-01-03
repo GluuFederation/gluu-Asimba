@@ -136,6 +136,11 @@
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
+  		<artifactId>asimba-engine-action</artifactId>
+  		<version>1.0.1-SNAPSHOT</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.asimba</groupId>
   		<artifactId>asimba-engine-core</artifactId>
   		<version>1.0.1-SNAPSHOT</version>
   	</dependency>
