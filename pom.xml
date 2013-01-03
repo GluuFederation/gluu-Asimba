@@ -79,6 +79,7 @@
   	<module>asimba-engine-session-memory</module>
     <module>asimba-engine-session-jdbc</module>
   	<module>asimba-engine-attribute-gather-file</module>
+    <module>asimba-engine-attribute-gather-jdbc</module>
   	<module>asimba-engine-requestor-configuration</module>
     <module>asimba-engine-requestor-jdbc</module>
   	<module>asimba-engine-authentication-configuration</module>
