@@ -211,6 +211,11 @@
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
+  		<artifactId>asimba-sso-profile-ssoquery</artifactId>
+  		<version>1.0.1-SNAPSHOT</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.asimba</groupId>
   		<artifactId>asimba-authorization-web</artifactId>
   		<version>1.0.1-SNAPSHOT</version>
   	</dependency>

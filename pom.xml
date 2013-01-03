@@ -71,6 +71,7 @@
   	<module>asimba-cozmanova-utility</module>
   	<module>asimba-wa</module>
   	<module>asimba-sso-web</module>
+    <module>asimba-sso-profile-ssoquery</module>
     <module>asimba-authorization-web</module>
   	<module>asimba-engine-storage</module>
   	<module>asimba-engine-crypto-keystore</module>
