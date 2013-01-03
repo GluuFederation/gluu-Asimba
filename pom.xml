@@ -83,6 +83,7 @@
   	<module>asimba-engine-authentication-configuration</module>
     <module>asimba-engine-authentication-jdbc</module>
   	<module>asimba-engine-authorization-configuration</module>
+    <module>asimba-engine-authorization-jdbc</module>
   	<module>asimba-engine-attribute-release-configuration</module>
     <module>asimba-engine-attribute-release-jdbc</module>
   	<module>asimba-engine-user-provisioning</module>
@@ -106,6 +107,7 @@
     <module>asimba-am-remote</module>
     <module>asimba-am-remote-aselect</module>
     <module>asimba-am-remote-saml2</module>
+    <module>asimba-engine-authorization-jdbc</module>
   </modules>
 
   <properties>
