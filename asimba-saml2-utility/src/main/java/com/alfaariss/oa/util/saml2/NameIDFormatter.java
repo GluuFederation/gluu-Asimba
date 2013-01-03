@@ -22,23 +22,20 @@
  */
 package com.alfaariss.oa.util.saml2;
 
-import java.security.MessageDigest;
-import java.security.SecureRandom;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.asimba.util.saml2.nameid.INameIDFormatHandler;
 import org.opensaml.saml2.core.NameIDType;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
-import com.alfaariss.oa.api.attribute.IAttributes;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
+import com.alfaariss.oa.api.session.ISession;
 import com.alfaariss.oa.api.user.IUser;
 import com.alfaariss.oa.engine.core.crypto.CryptoManager;
 import com.alfaariss.oa.engine.core.tgt.factory.ITGTAliasStore;
@@ -46,93 +43,82 @@ import com.alfaariss.oa.engine.core.tgt.factory.ITGTAliasStore;
 /**
  * NameID Formatter.
  *
+ * History:
+ * 2012/11; Componentized the handlers for each format [mdobrinic]
+ *
+ * @author mdobrinic
  * @author JRE
  * @author MHO
  * @author Alfa & Ariss
  */
 public class NameIDFormatter
 {
+	/**
+	 * configuration element names
+	 */
+	public static final String EL_ATTR_DEFAULT = "default";
+	public static final String EL_FORMAT = "format";
+	public static final String EL_ID = "id";
+	public static final String EL_CLASS = "class";
+
+	
+	/**
+	 * Static map with supported NameID formats and their default implementations
+	 */
+	protected static final Map<String, String> mFormatDefaultClass = createFormatDefaultClassMap();
+	
     /** Not standard SAML 2.0 Unspecified URI: urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified */
     public final static String SAML20_UNSPECIFIED = 
         "urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified";
-    /** Default transient length: 256 */
-    public final static int DEFAULT_TRANSIENT_LENGTH = 256;
     
     /** Type: TGT_ALIAS */
     public final static String TYPE_ALIAS_TGT = "session_index";
-    /** Type: TRANSIENT_USER_ID */
-    public final static String TYPE_ALIAS_TRANSIENT_UID = "transient_user_id";
-    /** Type: PERSISTENT_USER_ID */
-    public final static String TYPE_ALIAS_PERSISTENT_UID = "persistent_user_id";
-    /** Type: unspecified UID for SAML1.1 */
-    public final static String TYPE_ALIAS_UNSPECIFIED11_UID = "unspecified11_user_id";
-    /** Type: unspecified UID for SAML2.0 */
-    public final static String TYPE_ALIAS_UNSPECIFIED20_UID = "unspecified20_user_id";
-    /** Type: Email UID */
-    public final static String TYPE_ALIAS_EMAIL_UID = "email_user_id";
+
+    protected static final Map<String, String> mFormatToType = createFormatToTypeMap();
     
-    private final static char[] TRANSIENT_CHARS = {
-        'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
-        'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-        '1','2','3','4','5','6','7','8','9','0'};
-    
-    private Log _logger;
-    private CryptoManager _cryptoManager;
-    private SecureRandom _secureRandom;
-    private List<String> _listFormats;
+    private static final Log _oLogger = LogFactory.getLog(NameIDFormatter.class);
+    private CryptoManager _oCryptoManager;
+    private ITGTAliasStore _oTGTAliasStore;
+
+    /**
+     * Configured NameIDType handlers 
+     */
+    protected Map<String, INameIDFormatHandler> _mFormatHandlers;
+
+    /**
+     * Default format; either configured using the nameid@default attribute,
+     * or otherwise the first element from the configuration
+     */
     private String _sDefaultFormat;
-    private boolean _bOpaqueEnabled;
-    private String _sOpaqueSalt;
-    private int _iTransientLength;
-    private ITGTAliasStore _tgtAliasStore;
-    private Map<String, String> _mapAttributeNames;
+
     
     /**
      * Creates the object.
      *
-     * @param configurationManager The configuration manager contianing the configuration.
-     * @param config The configuration section for this object.
-     * @param cryptoManager Crypto manager
-     * @param tgtAliasStore TGT alias store
+     * @param oConfigManager The configuration manager containing the configuration.
+     * @param elConfig The configuration section for this object.
+     * @param oCryptoManager Crypto manager
+     * @param oTGTAliasStore TGT alias store
      * @throws OAException If object could not be created.
      */
-    public NameIDFormatter(IConfigurationManager configurationManager,
-        Element config, CryptoManager cryptoManager, ITGTAliasStore tgtAliasStore) 
+    public NameIDFormatter(IConfigurationManager oConfigManager,
+        Element elConfig, CryptoManager oCryptoManager, ITGTAliasStore oTGTAliasStore) 
         throws OAException
     {
         try
         {
-            _logger = LogFactory.getLog(NameIDFormatter.class);
-            
-            _bOpaqueEnabled = false;
-            _sOpaqueSalt = null;
-            _mapAttributeNames = new HashMap<String, String>();
-            
-            _tgtAliasStore = tgtAliasStore;
-            _cryptoManager = cryptoManager;
-            _secureRandom = _cryptoManager.getSecureRandom();
+            _oTGTAliasStore = oTGTAliasStore;
+            _oCryptoManager = oCryptoManager;
 
-            _listFormats = readConfig(configurationManager, config);
-            
-            _sDefaultFormat = configurationManager.getParam(config, "default");
-            if (_sDefaultFormat != null)
-            {
-                if (!_listFormats.contains(_sDefaultFormat))
-                {
-                    _logger.error("Invalid 'default' NameID configured: " + _sDefaultFormat);
-                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-                }
-                
-                _logger.info("Using default NameID Format: " + _sDefaultFormat);
-            }
+            // Establish which formats are supported, and by which implementation
+            // they are handled; the supported format are the keys of the map
+            _mFormatHandlers = readFormatConfig(oConfigManager, elConfig);
         }
-        catch (OAException e)
-        {
+        catch (OAException e) {
+        	// Rethrow the exception:
             throw e;
-        }
-        catch (Exception e)
-        {
-            _logger.fatal("Could not create object", e);
+        } catch (Exception e) {
+            _oLogger.error("Exception when creating object instance: ", e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
     }
@@ -149,115 +135,103 @@ public class NameIDFormatter
     {
         try
         {
-            _logger = LogFactory.getLog(NameIDFormatter.class);
-            
-            _bOpaqueEnabled = false;
-            _sOpaqueSalt = null;
-            _mapAttributeNames = new HashMap<String, String>();
-            
-            _tgtAliasStore = tgtAliasStore;
-            _cryptoManager = cryptoManager;
-            _secureRandom = _cryptoManager.getSecureRandom();
+            _oTGTAliasStore = tgtAliasStore;
+            _oCryptoManager = cryptoManager;
 
-            _listFormats = new Vector<String>();
-            
+            // Empty defaults:
+            _mFormatHandlers = new HashMap<String, INameIDFormatHandler>();
             _sDefaultFormat = null;
         }
-        catch (Exception e)
-        {
-            _logger.fatal("Could not create object", e);
+        catch (Exception e) {
+            _oLogger.error("Exception when creating default object instance: ", e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
     }
+    
+    
+    /**
+     * Returns the crypto manager used by the NameIDFormatter
+     */
+    public CryptoManager getCryptoManager() {
+    	return _oCryptoManager;
+    }
+    
     
     /**
      * Returns the default configured NameID Format.
      * 
      * @return The default NameID Format URI.
      */
-    public String getDefault()
-    {
+    public String getDefault() {
         return _sDefaultFormat;
     }
     
+    
     /**
-     * Verifies if the supplied Name ID Format is supported.
+     * Verifies whether the supplied NameIDFormat is supported.
      * 
      * @param nameIDFormat Name ID Format to verify
      * @return TRUE if supplied Name ID Format is supported
      */
-    public boolean isSupported(String nameIDFormat)
-    {
-        return _listFormats.contains(nameIDFormat);
+    public boolean isSupported(String nameIDFormat) {
+        return _mFormatHandlers.keySet().contains(nameIDFormat);
     }
+    
     
     /**
      * Formats the User id to the requested Name ID Format.
      *
-     * @param user the user
-     * @param tgtID The users tgt or NULL if not available.
-     * @param nameIDFormat The target format.
+     * @param oUser the user
+     * @param sTGTID The users tgt or NULL if not available.
+     * @param sNameIDFormat The target format.
      * @param sEntityID Requestor or IDP ID.
      * @return The formatted user ID.
      * @throws OAException if user ID could not be formatted.
      */
-    public String format(IUser user, String nameIDFormat, String sEntityID, String tgtID) 
+    public String format(IUser oUser, String sNameIDFormat, String sEntityID, String sTGTID) 
         throws OAException
     {
-        if (user == null)
+        if (oUser == null)
             throw new IllegalArgumentException("Supplied user is empty");
         
         if (sEntityID == null)
             throw new IllegalArgumentException("Supplied Entity ID is empty");
 
-        if (nameIDFormat == null)
+        if (sNameIDFormat == null)
             throw new IllegalArgumentException("Supplied NameIDFormat is empty");
         
-        String nameID = null;
+    	INameIDFormatHandler oNIFH = _mFormatHandlers.get(sNameIDFormat);
+    	if (oNIFH == null) {
+    		_oLogger.error("Request for formatting unsupported NameIDFormat: '"+sNameIDFormat+"'");
+    		throw new OAException(SystemErrors.ERROR_INTERNAL);
+    	}
+
+    	String sNameID = null;
         try
         {
-            if (nameIDFormat.equals(NameIDType.TRANSIENT))
-            {
-                nameID = generateTransient(tgtID, sEntityID);
-            }
-            else if (nameIDFormat.equals(NameIDType.PERSISTENT))
-            {
-                nameID = generatePersistent(TYPE_ALIAS_PERSISTENT_UID, tgtID, 
-                    sEntityID, user, user.getAttributes());
-            }
-            else if (nameIDFormat.equals(NameIDType.UNSPECIFIED))
-            {
-                nameID = generatePersistent(TYPE_ALIAS_UNSPECIFIED11_UID, 
-                    tgtID, sEntityID, user, user.getAttributes());
-            }
-            else if (nameIDFormat.equals(SAML20_UNSPECIFIED))
-            {
-                nameID = generatePersistent(TYPE_ALIAS_UNSPECIFIED20_UID, 
-                    tgtID, sEntityID, user, user.getAttributes());
-            }
-            else if (nameIDFormat.equals(NameIDType.EMAIL))
-            {
-                nameID = generatePersistent(TYPE_ALIAS_EMAIL_UID, 
-                    tgtID, sEntityID, user, user.getAttributes());
-            }
-            else
-            {
-                _logger.error("Unsupported NameID Format requested: " + nameIDFormat);
+        	ISession oSession = null;	// how to get session here....
+
+        	String sType = mFormatToType.get(sNameIDFormat);
+        	
+    		if (sType != null) {
+    			sNameID = generate(sNameIDFormat, oUser, sEntityID, sTGTID, oSession);
+    		} else {
+    			_oLogger.error("Unsupported NameID Format requested: " + sNameIDFormat);
                 throw new OAException(SystemErrors.ERROR_INTERNAL);
-            }
-        }
-        catch (OAException e)
-        {
+    		}
+    		
+        } 
+        catch (OAException e) {
             throw e;
         }
-        catch (Exception e)
-        {
-            _logger.fatal("Could not generate name ID format", e);
+        catch (Exception e) {
+            _oLogger.fatal("Could not generate name ID format", e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
         
-        return nameID;
+        return sNameID;
     }
+
     
     /**
      * Verifies if the nameid in a request message is equal to the nameid 
@@ -275,58 +249,26 @@ public class NameIDFormatter
     {
         try
         {
-            if (sNameIDFormat.equals(NameIDType.PERSISTENT))
-            {
-                String sAlias = _tgtAliasStore.getAlias(TYPE_ALIAS_PERSISTENT_UID, 
-                    sEntityID, tgtID);
-                if (sAlias != null)
-                    return sAlias.equals(sNameID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.TRANSIENT))
-            {
-                String sAlias = _tgtAliasStore.getAlias(TYPE_ALIAS_TRANSIENT_UID, 
-                    sEntityID, tgtID);
-                if (sAlias != null)
-                    return sAlias.equals(sNameID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.EMAIL))
-            {
-                String sAlias = _tgtAliasStore.getAlias(TYPE_ALIAS_EMAIL_UID, 
-                    sEntityID, tgtID);
-                if (sAlias != null)
-                    return sAlias.equals(sNameID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.UNSPECIFIED)) 
-            {
-                String sAlias = _tgtAliasStore.getAlias(TYPE_ALIAS_UNSPECIFIED11_UID, 
-                    sEntityID, tgtID);
-                if (sAlias != null)
-                    return sAlias.equals(sNameID);
-            }
-            else if (sNameIDFormat.equals(SAML20_UNSPECIFIED))
-            {
-                String sAlias = _tgtAliasStore.getAlias(TYPE_ALIAS_UNSPECIFIED20_UID, 
-                    sEntityID, tgtID);
-                if (sAlias != null)
-                    return sAlias.equals(sNameID);
-            }
-            else
-            {
-                _logger.debug("Unsupported NameID Format requested: " + 
-                    sNameIDFormat);
-            }
+        	String sType = mFormatToType.get(sNameIDFormat);
+        	if (sType == null) {
+                _oLogger.debug("Unsupported NameID Format requested: " + sNameIDFormat);
+                return false;
+        	}
+        	
+        	String sAlias = _oTGTAliasStore.getAlias(sType, sEntityID, tgtID);
+        	if (sAlias == null) {
+        		return false;	// alias does not exist
+        	}
+        	
+        	return sAlias.equals(sNameID);
         }
-        catch (OAException e)
-        {
+        catch (OAException e) {
             throw e;
         }
-        catch (Exception e)
-        {
-            _logger.fatal("Could not verify Name ID", e);
+        catch (Exception e) {
+            _oLogger.fatal("Could not verify Name ID", e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
-        
-        return false;
     }
     
     /**
@@ -343,36 +285,13 @@ public class NameIDFormatter
     {
         try
         {
-            if (sNameIDFormat.equals(NameIDType.PERSISTENT))
-            {
-                return _tgtAliasStore.getAlias(TYPE_ALIAS_PERSISTENT_UID, 
-                    sEntityID, tgtID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.TRANSIENT))
-            {
-                return _tgtAliasStore.getAlias(TYPE_ALIAS_TRANSIENT_UID, 
-                    sEntityID, tgtID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.EMAIL))
-            {
-                return _tgtAliasStore.getAlias(TYPE_ALIAS_EMAIL_UID, 
-                    sEntityID, tgtID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.UNSPECIFIED)) 
-            {
-                return _tgtAliasStore.getAlias(TYPE_ALIAS_UNSPECIFIED11_UID, 
-                    sEntityID, tgtID);
-            }
-            else if (sNameIDFormat.equals(SAML20_UNSPECIFIED))
-            {
-                return _tgtAliasStore.getAlias(TYPE_ALIAS_UNSPECIFIED20_UID, 
-                    sEntityID, tgtID);
-            }
-            else
-            {
-                _logger.debug("Unsupported NameID Format requested: " + 
-                    sNameIDFormat);
-            }
+        	String sType = mFormatToType.get(sNameIDFormat);
+        	if (sType == null) {
+                _oLogger.debug("Unsupported NameID Format requested: " + sNameIDFormat);
+                return null;
+        	}
+        	
+        	return _oTGTAliasStore.getAlias(sType, sEntityID, tgtID);
         }
         catch (OAException e)
         {
@@ -380,11 +299,11 @@ public class NameIDFormatter
         }
         catch (Exception e)
         {
-            _logger.fatal("Could not resolve Name ID", e);
+            _oLogger.fatal("Could not resolve Name ID", e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }     
-        return null;
     }
+    
     
     /**
      * Verifies if an NameID already exists as TGT alias.
@@ -400,55 +319,24 @@ public class NameIDFormatter
     {
         try
         {
-            if (sNameIDFormat.equals(NameIDType.PERSISTENT))
-            {
-                return _tgtAliasStore.isAlias(TYPE_ALIAS_PERSISTENT_UID, 
-                    sEntityID, sNameID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.TRANSIENT))
-            {
-                return _tgtAliasStore.isAlias(TYPE_ALIAS_TRANSIENT_UID, 
-                    sEntityID, sNameID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.EMAIL))
-            {
-                return _tgtAliasStore.isAlias(TYPE_ALIAS_EMAIL_UID, 
-                    sEntityID, sNameID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.UNSPECIFIED)) 
-            {
-                return _tgtAliasStore.isAlias(TYPE_ALIAS_UNSPECIFIED11_UID, 
-                    sEntityID, sNameID);
-            }
-            else if (sNameIDFormat.equals(SAML20_UNSPECIFIED))
-            {
-                return _tgtAliasStore.isAlias(TYPE_ALIAS_UNSPECIFIED20_UID, 
-                    sEntityID, sNameID);
-            }
-            else
-            {
-                _logger.debug("Unsupported NameID Format supplied for exist check: " + 
-                    sNameIDFormat);
-            }
+        	String sType = mFormatToType.get(sNameIDFormat);
+        	if (sType == null) {
+                _oLogger.debug("Unsupported NameID Format requested: " + sNameIDFormat);
+                return false;
+        	}
+        	
+        	return _oTGTAliasStore.isAlias(sType, sEntityID, sNameID);
         }
-        catch (OAException e)
-        {
+        catch (OAException e) {
             throw e;
         }
-        catch (Exception e)
-        {
-            StringBuffer sbError = new StringBuffer();
-            sbError.append("Could not check if alias for entityID '");
-            sbError.append(sEntityID);
-            sbError.append("' exists for supplied NameIDFormat '");
-            sbError.append(sNameIDFormat);
-            sbError.append("' for NameID: ");
-            sbError.append(sNameID);
-            _logger.fatal(sbError.toString(), e);
+        catch (Exception e) {
+            _oLogger.error("Unable to verify alias '"+sNameID+"'for '"+sEntityID+
+            		"' and type '"+sNameIDFormat);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }     
-        return false;
     }
+
     
     /**
      * Resolves the TGT ID for a TGT Alias.
@@ -465,55 +353,24 @@ public class NameIDFormatter
     {
         try
         {
-            if (sNameIDFormat.equals(NameIDType.PERSISTENT))
-            {
-                return _tgtAliasStore.getTGTID(TYPE_ALIAS_PERSISTENT_UID, 
-                    sEntityID, sNameID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.TRANSIENT))
-            {
-                return _tgtAliasStore.getTGTID(TYPE_ALIAS_TRANSIENT_UID, 
-                    sEntityID, sNameID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.EMAIL))
-            {
-                return _tgtAliasStore.getTGTID(TYPE_ALIAS_EMAIL_UID, 
-                    sEntityID, sNameID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.UNSPECIFIED)) 
-            {
-                return _tgtAliasStore.getTGTID(TYPE_ALIAS_UNSPECIFIED11_UID, 
-                    sEntityID, sNameID);
-            }
-            else if (sNameIDFormat.equals(SAML20_UNSPECIFIED))
-            {
-                return _tgtAliasStore.getTGTID(TYPE_ALIAS_UNSPECIFIED20_UID, 
-                    sEntityID, sNameID);
-            }
-            else
-            {
-                _logger.debug("Unsupported NameID Format supplied for resolving TGT ID: " + 
-                    sNameIDFormat);
-            }
+        	String sType = mFormatToType.get(sNameIDFormat);
+        	if (sType == null) {
+                _oLogger.debug("Unsupported NameID Format requested: " + sNameIDFormat);
+                return null;
+        	}
+        	
+        	return _oTGTAliasStore.getTGTID(sType, sEntityID, sNameID);
         }
-        catch (OAException e)
-        {
+        catch (OAException e) {
             throw e;
         }
-        catch (Exception e)
-        {
-            StringBuffer sbError = new StringBuffer();
-            sbError.append("Could not resolve TGT ID for alias '");
-            sbError.append(sNameID);
-            sbError.append("' for entityID '");
-            sbError.append(sEntityID);
-            sbError.append("' with NameIDFormat '");
-            sbError.append(sNameIDFormat);
-            _logger.fatal(sbError.toString(), e);
+        catch (Exception e) {
+            _oLogger.error("Unable to find TGT with alias '"+sNameID+"'for '"+sEntityID+
+            		"' and type '"+sNameIDFormat);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }     
-        return null;
     }
+
     
     /**
      * Store the supplied NameID as TGT alias.
@@ -530,55 +387,25 @@ public class NameIDFormatter
     {
         try
         {
-            if (sNameIDFormat.equals(NameIDType.PERSISTENT))
-            {
-                _tgtAliasStore.putAlias(TYPE_ALIAS_PERSISTENT_UID, 
-                    sEntityID, sTGTID, sNameID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.TRANSIENT))
-            {
-                _tgtAliasStore.putAlias(TYPE_ALIAS_TRANSIENT_UID, 
-                    sEntityID, sTGTID, sNameID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.EMAIL))
-            {
-                _tgtAliasStore.putAlias(TYPE_ALIAS_EMAIL_UID, 
-                    sEntityID, sTGTID, sNameID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.UNSPECIFIED)) 
-            {
-                _tgtAliasStore.putAlias(TYPE_ALIAS_UNSPECIFIED11_UID, 
-                    sEntityID, sTGTID, sNameID);
-            }
-            else if (sNameIDFormat.equals(SAML20_UNSPECIFIED))
-            {
-                _tgtAliasStore.putAlias(TYPE_ALIAS_UNSPECIFIED20_UID, 
-                    sEntityID, sTGTID, sNameID);
-            }
-            else
-            {
-                _logger.debug("Unsupported NameID Format supplied for storing NameID as TGT Alias: " + 
-                    sNameIDFormat);
-            }
+        	String sType = mFormatToType.get(sNameIDFormat);
+        	if (sType == null) {
+                _oLogger.debug("Unsupported NameID Format requested: " + sNameIDFormat);
+                return;
+        	}
+        	
+        	_oTGTAliasStore.putAlias(sType, sEntityID, sTGTID, sNameID);
+        	
         }
-        catch (OAException e)
-        {
+        catch (OAException e) {
             throw e;
         }
-        catch (Exception e)
-        {
-            StringBuffer sbError = new StringBuffer("Could not store NameID '");
-            sbError.append(sNameID);
-            sbError.append("' for entityID '");
-            sbError.append(sEntityID);
-            sbError.append("' with NameIDFormat '");
-            sbError.append(sNameIDFormat);
-            sbError.append("' as alias for TGT: ");
-            sbError.append(sTGTID);
-            _logger.fatal(sbError.toString(), e);
+        catch (Exception e) {
+            _oLogger.error("Unable to store alias '"+sNameID+"'for '"+sEntityID+
+            		"' and type '"+sNameIDFormat+" with TGT '"+sTGTID+"'");
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
     }
+    
     
     /**
      * Remove the supplied NameID as TGT alias.
@@ -594,398 +421,201 @@ public class NameIDFormatter
     {
         try
         {
-            if (sNameIDFormat.equals(NameIDType.PERSISTENT))
-            {
-                _tgtAliasStore.removeAlias(TYPE_ALIAS_PERSISTENT_UID, 
-                    sEntityID, sNameID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.TRANSIENT))
-            {
-                _tgtAliasStore.removeAlias(TYPE_ALIAS_TRANSIENT_UID, 
-                    sEntityID, sNameID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.EMAIL))
-            {
-                _tgtAliasStore.removeAlias(TYPE_ALIAS_EMAIL_UID, 
-                    sEntityID, sNameID);
-            }
-            else if (sNameIDFormat.equals(NameIDType.UNSPECIFIED)) 
-            {
-                _tgtAliasStore.removeAlias(TYPE_ALIAS_UNSPECIFIED11_UID, 
-                    sEntityID, sNameID);
-            }
-            else if (sNameIDFormat.equals(SAML20_UNSPECIFIED))
-            {
-                _tgtAliasStore.removeAlias(TYPE_ALIAS_UNSPECIFIED20_UID, 
-                    sEntityID, sNameID);
-            }
-            else
-            {
-                _logger.debug("Unsupported NameID Format supplied for removing NameID as TGT Alias: " + 
-                    sNameIDFormat);
-            }
+        	String sType = mFormatToType.get(sNameIDFormat);
+        	if (sType == null) {
+                _oLogger.debug("Unsupported NameID Format requested: " + sNameIDFormat);
+                return;
+        	}
+        	
+        	_oTGTAliasStore.removeAlias(sType, sEntityID, sNameID);
         }
-        catch (OAException e)
-        {
+        catch (OAException e) {
             throw e;
         }
-        catch (Exception e)
-        {
-            StringBuffer sbError = new StringBuffer("Could not remove NameID '");
-            sbError.append(sNameID);
-            sbError.append("' for entityID '");
-            sbError.append(sEntityID);
-            sbError.append("' with NameIDFormat: ");
-            sbError.append(sNameIDFormat);
-            _logger.fatal(sbError.toString(), e);
+        catch (Exception e) {
+            _oLogger.error("Unable to remove alias '"+sNameID+"'for '"+sEntityID+
+            		"' and type '"+sNameIDFormat);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
     }
     
     
-    private String generatePersistent(String type, String tgtID, 
-        String sEntityID, IUser user, IAttributes attributes) throws OAException
+    private String generate(String sType, IUser oUser, String sEntityID, String sTGTID,
+    		ISession oSession)
+    	throws OAException
     {
-        String sPersistent = null;
-        String sAttributeName = _mapAttributeNames.get(type);
-        try
-        {
-            if (tgtID != null)
-            {
-                sPersistent = _tgtAliasStore.getAlias(type, 
-                    sEntityID, tgtID);
-            }
+    	INameIDFormatHandler oHandler = _mFormatHandlers.get(sType);
+    	
+    	String sDomain = sEntityID;
+    	String sAlias = null;
+    	String sAliasType = mFormatToType.get(sType);    	
+    	
+    	// If the NameID format is domain scoped, check if there is a value to re-use
+    	if (oHandler.isDomainScoped()) {
+    		sDomain = oHandler.getDomain(oUser, sEntityID);
+    		
+    		// Find the alias in the domain:
+    		if (sTGTID != null) {
+    			sAlias = _oTGTAliasStore.getAlias(sAliasType, sDomain, sTGTID);
+    		}
+    	}
+    	
+    	// No Identifier to re-use, generate new one
+    	// Support regeneration a couple of times to ensure that the identifier 
+    	//   should be unique within the domain
+    	if (sAlias == null) {
+    		int i=0; // loop protection
+    		do {
+    			sAlias = oHandler.format(oUser, sDomain, sTGTID, oSession);
+    			i++;
+    		} while (i<100 && 
+    				(oHandler.isDomainUnique() && _oTGTAliasStore.isAlias(sAliasType, sDomain, sAlias))
+    				);
+    		
+    		if (i >= 100) {
+    			_oLogger.error("Giving up; can not create unique NameID value within context of '"+sDomain+
+    					"': '"+sAlias+"'");
+    			throw new OAException(SystemErrors.ERROR_INTERNAL);
+    		}
+    	} else {
+    		// Alias already generated; call reformat on Formatter to
+    		// ensure consistent attribute-state
+    		oHandler.reformat(oUser, sEntityID, sTGTID, oSession);
+    	}
+    	
+    	// Store established NameID value in domain context for later re-use:
+    	if (oHandler.isDomainScoped() && sTGTID != null) {
+    		_oTGTAliasStore.putAlias(sAliasType, sDomain, sTGTID, sAlias);
+    	}
+    	
+    	return sAlias;
+    }
+    
+    
+    private Map<String, INameIDFormatHandler> readFormatConfig(IConfigurationManager oConfigManager,
+    	Element elConfig) throws OAException
+    {
+    	Map<String, INameIDFormatHandler> oFormatHandlers = new HashMap<String, INameIDFormatHandler>();
+    	
+    	String sFirstType = null;
+    	
+    	Element elFormat = oConfigManager.getSection(elConfig, EL_FORMAT);
+    	while (elFormat != null) {
+    		String sType = oConfigManager.getParam(elFormat, EL_ID);
+    		if (sType == null) {
+    			_oLogger.error("No @"+EL_ID+" specified with NameID format");
+    			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+    		}
+    		
+    		// Remember the first configured type, as default type when no default was specified:
+    		if (sFirstType == null) sFirstType = sType;
+    		
+    		String sClassname = oConfigManager.getParam(elFormat,  EL_CLASS);
+    		if (sClassname == null) {
+    			sClassname = mFormatDefaultClass.get(sType);
+    		}
+    		
+    		if (sClassname == null) {
+    			_oLogger.error("No implementation could be found to handle NameID format type '"+
+    					sType+"'");
+    			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+    		}
+    		
+    		// Create and initialize the handler:
+    		INameIDFormatHandler oHandler = createHandler(sClassname);
+    		oHandler.init(oConfigManager, elFormat, this);
+    		
+    		// Add as supported type:
+    		oFormatHandlers.put(sType, oHandler);
+    		
+    		_oLogger.info("NameIDFormat type '"+sType+"' support added through "+sClassname);
+    		
+    		elFormat = oConfigManager.getNextSection(elFormat);
+    	}
+    	
+    	
+    	// Check for valid default type:
+    	_sDefaultFormat = null;
+    	
+    	String sDefaultType = oConfigManager.getParam(elConfig, EL_ATTR_DEFAULT);
+    	if (sDefaultType != null) {
+    		if (oFormatHandlers.keySet().contains(sDefaultType)) {
+    			_sDefaultFormat = sDefaultType;
+    		} else {
+    			_oLogger.error("The configured default NameID type is not supported: '"+
+    					sDefaultType+"'");
+    			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+    		}
+    	}
 
-            if (sPersistent == null)
-            {
-                //generate persistent id
-                if (sAttributeName != null)
-                {
-                    if (attributes == null)
-                    {
-                        StringBuffer sbError = new StringBuffer("User '");
-                        sbError.append(user.getID());
-                        sbError.append("' does not have the required user attribute: ");
-                        sbError.append(sAttributeName);
-                        
-                        _logger.error(sbError.toString());
-                        throw new OAException(SystemErrors.ERROR_INTERNAL);
-                    }
-                    if (!attributes.contains(sAttributeName))
-                    {
-                        StringBuffer sbError = new StringBuffer("User '");
-                        sbError.append(user.getID());
-                        sbError.append("' does not have the required user attribute: ");
-                        sbError.append(sAttributeName);
-                        
-                        _logger.error(sbError.toString());
-                        throw new OAException(SystemErrors.ERROR_INTERNAL);
-                    }
-                    
-                    sPersistent = (String)attributes.get(sAttributeName);
-                    //DD remove the attribute when it is used as Persistent Alias
-                    attributes.remove(sAttributeName);
-                }
-                else
-                    sPersistent = user.getID();
-                
-                if (_bOpaqueEnabled && type.equals(TYPE_ALIAS_PERSISTENT_UID))
-                    sPersistent = generateOpaqueNameID(sPersistent);
-                
-                if (tgtID != null)
-                {
-                    _tgtAliasStore.putAlias(type, sEntityID, tgtID, sPersistent);
-                }
-            }
-        }
-        catch (OAException e)
-        {
-            throw e;
-        }
-        catch (Exception e)
-        {
-            _logger.fatal("Could generate user id for user with tgt: " 
-                + tgtID, e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
-        }
-        
-        return sPersistent;
-    }
-        
-    private String generateOpaqueNameID(String userID) throws OAException
-    {
-        try
-        {
-            if (_sOpaqueSalt != null)
-                userID = userID + _sOpaqueSalt;
-            
-            // the returned user ID must contain an opaque value 
-            MessageDigest oMessageDigest = _cryptoManager.getMessageDigest();
-            try
-            {
-                oMessageDigest.update(userID.getBytes(SAML2Constants.CHARSET));
-                char[] ca = Hex.encodeHex(oMessageDigest.digest());
-                userID = new String(ca);
-            }
-            catch (Exception e)
-            {
-                _logger.warn("Unable to generate SHA1 hash from user ID: " 
-                    + userID);
-                throw new OAException(SystemErrors.ERROR_INTERNAL);
-            }
-        }
-        catch (OAException e)
-        {
-            throw e;
-        }
-        catch (Exception e)
-        {
-            _logger.fatal("Could not generate opaque user id", e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
-        }
-        
-        return userID;
-    }  
-    
-    private String generateTransient(String tgtID, String sEntityID) 
-        throws OAException
-    {
-        String sTransient = null;
-        try
-        {
-            if (tgtID != null)
-            {
-                sTransient = _tgtAliasStore.getAlias(TYPE_ALIAS_TRANSIENT_UID, 
-                    sEntityID, tgtID);
-            }
-            
-            if (sTransient == null)
-            {
-                //generate new transient user id
-                do
-                {
-                    sTransient = generateRandom(_iTransientLength);
-                }
-                while(_tgtAliasStore.isAlias(TYPE_ALIAS_TRANSIENT_UID, sEntityID, 
-                    sTransient));
-                
-                if (tgtID != null)
-                {
-                    _tgtAliasStore.putAlias(TYPE_ALIAS_TRANSIENT_UID, sEntityID, 
-                        tgtID, sTransient);
-                }
-            }
-        }
-        catch (OAException e)
-        {
-            throw e;
-        }
-        catch (Exception e)
-        {
-            _logger.fatal("Could generate transient for user with tgt: " 
-                + tgtID, e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
-        }
-        
-        return sTransient;
+    	// If no handler was configured, use the first configured element 
+    	if (_sDefaultFormat == null) {
+    		_oLogger.info("Using '"+sFirstType+"' as default NameID Format type");
+    		_sDefaultFormat = sFirstType;
+    	}
+    	
+    	return oFormatHandlers;
     }
     
-    private String generateRandom(int iLength)
+    
+    private INameIDFormatHandler createHandler(String sClass)
+    	throws OAException
     {
-        StringBuffer sbGenerated = new StringBuffer();
-        for (int i = 0; i < iLength; i++)
-        {
-            int iPosition = _secureRandom.nextInt(TRANSIENT_CHARS.length);
-            sbGenerated.append(TRANSIENT_CHARS[iPosition]);
+    	INameIDFormatHandler oHandler = null;
+    	
+    	Class<?> oClass = null;
+        try {
+            oClass = Class.forName(sClass);
+        } catch (Exception e) {
+            _oLogger.error("No 'class' found with name: " + sClass, e);
+            throw new OAException(SystemErrors.ERROR_CONFIG_READ);
         }
-        return sbGenerated.toString();
+        
+        try {
+        	oHandler = (INameIDFormatHandler) oClass.newInstance();
+        } catch (Exception e) {
+            _oLogger.error("Could not create an 'INameIDFormatHandler' instance of class with name '"+
+            	sClass + "'", e); 
+            throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+        }
+        
+        return oHandler;
     }
     
-    private List<String> readConfig(IConfigurationManager configurationManager,
-        Element config) throws OAException
-    {
-        List<String> listFormats = new Vector<String>();
-        try
-        {
-            Element eFormat = configurationManager.getSection(config, "format");
-            while (eFormat != null)
-            {
-                String id = configurationManager.getParam(eFormat, "id");
-                if (id == null)
-                {
-                    _logger.error("No 'id' item found in 'format' section in configuration");
-                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-                }
-                
-                if (listFormats.contains(id))
-                {
-                    _logger.error("Configured NameID Format id is not unique: " + id);
-                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-                }
-                
-                if (id.equals(NameIDType.PERSISTENT))
-                {
-                    readConfigPersistent(configurationManager, eFormat);
-                }
-                else if (id.equals(NameIDType.TRANSIENT))
-                {
-                    readConfigTransient(configurationManager, eFormat);
-                }
-                else if (id.equals(NameIDType.EMAIL))
-                {
-                    readAttributeConfig(configurationManager, eFormat, TYPE_ALIAS_EMAIL_UID);
-                }
-                else if (id.equals(NameIDType.UNSPECIFIED))
-                {
-                    readAttributeConfig(configurationManager, eFormat, TYPE_ALIAS_UNSPECIFIED11_UID);
-                }
-                else if (id.equals(SAML20_UNSPECIFIED))
-                {//DD Also supporting urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified in NameIDPolicy
-                    readAttributeConfig(configurationManager, eFormat, TYPE_ALIAS_UNSPECIFIED20_UID);
-                }                
-                else
-                {
-                    _logger.error("Unsupported NameID Format id configured: " + id);
-                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-                }
-                
-                listFormats.add(id);
-                
-                eFormat = configurationManager.getNextSection(eFormat);
-            }
-        }
-        catch (OAException e)
-        {
-            throw e;
-        }
-        catch (Exception e)
-        {
-            _logger.fatal("Could not read config", e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
-        }
-        return listFormats;
+    
+    /**
+     * Const Initializer for default implementations.
+     * These are also all the NameIDQualifiers that are supported with default implementations
+     * See saml2-core specification section 8.3 for specified formats
+     * @return Map with default implementations for specified NameID formats
+     */
+    private static Map<String, String> createFormatDefaultClassMap() {
+    	Map<String, String> oMap = new HashMap<String, String>();
+        oMap.put(NameIDType.UNSPECIFIED, "org.asimba.util.saml2.nameid.handler.DefaultUnspecifiedFormatHandler"); //+
+        oMap.put(NameIDType.EMAIL, "org.asimba.util.saml2.nameid.handler.AttributeFormatHandler"); //+
+        oMap.put(NameIDType.X509_SUBJECT, "org.asimba.util.saml2.nameid.handler.DefaultX509SubjectNameHandler"); //_
+        oMap.put(NameIDType.WIN_DOMAIN_QUALIFIED, "org.asimba.util.saml2.nameid.handler.DefaultWindowsDomainQualifiedNameHandler"); //_
+        oMap.put(NameIDType.KERBEROS, "org.asimba.util.saml2.nameid.handler.DefaultKerberosPrincipalNameHandler"); //_
+        oMap.put(NameIDType.ENTITY, "org.asimba.util.saml2.nameid.handler.DefaultEntityIdentifierHandler"); //_
+        oMap.put(NameIDType.PERSISTENT, "org.asimba.util.saml2.nameid.handler.DefaultPersistentFormatHandler");	//+
+        oMap.put(NameIDType.TRANSIENT, "org.asimba.util.saml2.nameid.handler.DefaultTransientFormatHandler"); //+
+        
+        return Collections.unmodifiableMap(oMap);
     }
     
-    private void readConfigTransient(IConfigurationManager configurationManager, 
-        Element config) throws OAException
-    {
-        try
-        {
-            String sLength = configurationManager.getParam(config, "length");
-            if (sLength != null)
-            {
-                try
-                {
-                    _iTransientLength = Integer.parseInt(sLength);
-                }
-                catch (NumberFormatException e)
-                {
-                    _logger.error("Configured 'length' item doesn't contain a number value: " + sLength);
-                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-                }
-            }
-            else
-                _iTransientLength = DEFAULT_TRANSIENT_LENGTH;
-            
-            _logger.info("Using transient length: " + _iTransientLength);
-        }
-        catch (OAException e)
-        {
-            throw e;
-        }
-        catch (Exception e)
-        {
-            _logger.fatal("Could not read transient config", e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
-        }
+
+    /**
+     * Const Initializer for mapping of NameIDFormat type to TGT Alias Type-attribute (i.e. database table column)
+     * @return Map with mappings
+     */
+    private static Map<String, String> createFormatToTypeMap() {
+    	Map<String, String> oMap = new HashMap<String, String>();
+    	oMap.put(NameIDType.TRANSIENT, "transient_user_id");
+    	oMap.put(NameIDType.PERSISTENT, "persistent_user_id");
+    	oMap.put(NameIDType.UNSPECIFIED, "unspecified11_user_id");
+    	oMap.put("urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified", "unspecified20_user_id");
+    	oMap.put(NameIDType.EMAIL, "email_user_id");
+    	return Collections.unmodifiableMap(oMap);
     }
 
-    private void readConfigPersistent(IConfigurationManager configurationManager,
-        Element config) throws OAException
-    {
-        try
-        {
-            readAttributeConfig(configurationManager, config, TYPE_ALIAS_PERSISTENT_UID);
-            
-            Element eOpaque = configurationManager.getSection(config, "opaque");
-            if (eOpaque != null)
-            {
-                String enabled = configurationManager.getParam(eOpaque, "enabled");
-                if (enabled != null)
-                {
-                    if (enabled.equalsIgnoreCase("TRUE"))
-                        _bOpaqueEnabled = true;
-                    else if (!enabled.equalsIgnoreCase("FALSE"))
-                    {
-                        _logger.error("Invalid 'enabled' item found in 'opaque' section in configuration (must be true or false): "
-                            + enabled);
-                        throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-                    }
-                }
-                
-                if (_bOpaqueEnabled)
-                {
-                    _logger.info("Opaque enabled");
-                    
-                    _sOpaqueSalt = configurationManager.getParam(eOpaque, "salt");
-                    if (_sOpaqueSalt == null)
-                        _logger.info("No opaque 'salt' configured");
-                    else
-                        _logger.info("Using configured opaque 'salt': " + _sOpaqueSalt);
-                }
-                else
-                    _logger.warn("Opaque disabled");
-            }
-            
-            if (!_mapAttributeNames.containsKey(TYPE_ALIAS_PERSISTENT_UID) && !_bOpaqueEnabled)
-            {
-                _logger.error("Invalid Persistent configuration: No attribute configured and opaque is disabled");
-                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-            }
-        }
-        catch (OAException e)
-        {
-            throw e;
-        }
-        catch (Exception e)
-        {
-            _logger.fatal("Could not read persistent config", e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
-        }
-    }
-    
-    private void readAttributeConfig(IConfigurationManager configurationManager,
-        Element config, String type) throws OAException
-    {
-        try
-        {
-            String sAttribute = null;
-    
-            Element eAttribute = configurationManager.getSection(config, "attribute");
-            if (eAttribute != null)
-            {
-                sAttribute = configurationManager.getParam(eAttribute, "name");
-                if (sAttribute == null)
-                {
-                    _logger.error("No 'name' item found in 'attribute' section in configuration");
-                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-                }
-                
-                _mapAttributeNames.put(type, sAttribute);
-                _logger.info("Using '" + type + "' attribute: " + sAttribute);
-            }
-            
-            if (sAttribute == null)
-                _logger.info("No optional '" + type + "' attribute found in configuration");
-        }
-        catch (OAException e)
-        {
-            throw e;
-        }
-        catch (Exception e)
-        {
-            _logger.fatal("Could not read config for: " + type, e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
-        }
-    }
 }
