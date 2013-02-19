@@ -32,7 +32,7 @@ import org.opensaml.saml2.core.LogoutResponse;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleLogoutService;
-import org.opensaml.saml2.metadata.provider.ChainingMetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.w3c.dom.Element;
 
@@ -265,11 +265,11 @@ public class SAML2TGTListener implements ITGTListener, IAuthority
     {
         try
         {    
-            ChainingMetadataProvider cmp = saml2Requestor.getChainingMetadataProvider();
-            if (cmp != null)
+            MetadataProvider _oMP = saml2Requestor.getMetadataProvider();
+            if (_oMP != null)
             {
                 SPSSODescriptor spSSODescriptor = 
-                    (SPSSODescriptor)cmp.getRole(saml2Requestor.getID(), 
+                    (SPSSODescriptor)_oMP.getRole(saml2Requestor.getID(), 
                         SPSSODescriptor.DEFAULT_ELEMENT_NAME, 
                         SAMLConstants.SAML20P_NS);
                 if (spSSODescriptor != null)

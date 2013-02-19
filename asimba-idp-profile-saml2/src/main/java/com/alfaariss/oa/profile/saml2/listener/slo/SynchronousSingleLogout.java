@@ -554,7 +554,7 @@ public class SynchronousSingleLogout
         {
             String issuer = context.getInboundMessageIssuer();
             
-            if (!validateSignature(context, requestor.getChainingMetadataProvider(), issuer))
+            if (!validateSignature(context, requestor.getMetadataProvider(), issuer))
             {
                 _logger.debug("Invalid XML signature received for message from issuer: " + issuer);
                 throw new SAML2SecurityException(RequestorEvent.REQUEST_INVALID);

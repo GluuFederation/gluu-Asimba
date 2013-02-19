@@ -85,7 +85,7 @@ import org.opensaml.saml2.core.impl.SubjectConfirmationBuilder;
 import org.opensaml.saml2.core.impl.SubjectConfirmationDataBuilder;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
-import org.opensaml.saml2.metadata.provider.ChainingMetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.schema.XSString;
@@ -179,13 +179,13 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
             
             if (_saml2Requestor != null)
             {
-                ChainingMetadataProvider chainingMetadataProvider = 
-                    _saml2Requestor.getChainingMetadataProvider();
+                MetadataProvider oMP = 
+                    _saml2Requestor.getMetadataProvider();
                 
-                if (chainingMetadataProvider != null)
+                if (oMP != null)
                 {
                     _spSSODescriptor = 
-                        (SPSSODescriptor)chainingMetadataProvider.getRole(
+                        (SPSSODescriptor)oMP.getRole(
                             _saml2Requestor.getID(), 
                             SPSSODescriptor.DEFAULT_ELEMENT_NAME, 
                             SAMLConstants.SAML20P_NS);
@@ -520,11 +520,6 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
                 if (sClassRef != null)
                 {
                     listSupportedClassRefs.add(sClassRef);
-                }
-                else if (sClassRef != null)
-                {
-                    _logger.debug("Requested RequestedAuthnContext not supported: " 
-                        + sClassRef);
                 }
             }
             

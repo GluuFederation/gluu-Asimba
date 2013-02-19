@@ -44,7 +44,7 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleLogoutService;
-import org.opensaml.saml2.metadata.provider.ChainingMetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.ws.message.encoder.MessageEncodingException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
@@ -512,10 +512,10 @@ public class SingleLogout extends AbstractSAML2Profile
                 context = createEncodingContext(request, response);
             context.setInboundMessageIssuer(sRequestorID);
             context.setOutboundMessageIssuer(_sEntityID);
-            ChainingMetadataProvider metadataProvider = 
-                saml2Requestor.getChainingMetadataProvider();
-            if (metadataProvider != null)
-                context.setMetadataProvider(metadataProvider);
+            MetadataProvider oMetadataProvider = 
+                saml2Requestor.getMetadataProvider();
+            if (oMetadataProvider != null)
+                context.setMetadataProvider(oMetadataProvider);
             
             if (session.isExpired())
             {
@@ -839,9 +839,9 @@ public class SingleLogout extends AbstractSAML2Profile
         try
         {
             //DD Metadata is mandatory for asynchronous logout
-            ChainingMetadataProvider chainingMetadataProvider = 
-                requestor.getChainingMetadataProvider(); 
-            if(chainingMetadataProvider == null)
+            MetadataProvider oMetadataProvider = 
+                requestor.getMetadataProvider(); 
+            if(oMetadataProvider == null)
             {
                 _logger.warn(
                     "No ChainingMetadataProvider found for requestor: " 
@@ -850,7 +850,7 @@ public class SingleLogout extends AbstractSAML2Profile
             }
             
             SPSSODescriptor spSSODescriptor = 
-                (SPSSODescriptor)chainingMetadataProvider.getRole(
+                (SPSSODescriptor)oMetadataProvider.getRole(
                     requestor.getID(), 
                     SPSSODescriptor.DEFAULT_ELEMENT_NAME, 
                     SAMLConstants.SAML20P_NS);

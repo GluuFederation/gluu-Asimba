@@ -54,7 +54,7 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleSignOnService;
-import org.opensaml.saml2.metadata.provider.ChainingMetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.xml.XMLObject;
 import org.opensaml.xml.security.SecurityException;
@@ -429,10 +429,10 @@ public class WebBrowserSSO extends AbstractSAML2Profile
                     throw new UserException(UserEvent.REQUEST_INVALID);
                 }
                 
-                ChainingMetadataProvider metadataProvider = 
-                    saml2Requestor.getChainingMetadataProvider();
-                if (metadataProvider != null)
-                    context.setMetadataProvider(metadataProvider);
+                MetadataProvider oMetadataProvider = 
+                    saml2Requestor.getMetadataProvider();
+                if (oMetadataProvider != null)
+                    context.setMetadataProvider(oMetadataProvider);
                 
                 context.setInboundMessageIssuer(saml2Requestor.getID());
                 context.setOutboundMessageIssuer(_sEntityID);
@@ -579,7 +579,6 @@ public class WebBrowserSSO extends AbstractSAML2Profile
         }
     }
     
-    @SuppressWarnings("unchecked") //for List<String> session attribute retrieval
     private void processAuthenticationResponse(HttpServletRequest request,
         HttpServletResponse response, ISession session) throws OAException
     {
@@ -601,10 +600,10 @@ public class WebBrowserSSO extends AbstractSAML2Profile
                 context = createEncodingContext(request, response);
             context.setInboundMessageIssuer(sRequestorID);
             context.setOutboundMessageIssuer(_sEntityID);
-            ChainingMetadataProvider metadataProvider = 
-                saml2Requestor.getChainingMetadataProvider();
-            if (metadataProvider != null)
-                context.setMetadataProvider(metadataProvider);
+            MetadataProvider oMetadataProvider = 
+                saml2Requestor.getMetadataProvider();
+            if (oMetadataProvider != null)
+                context.setMetadataProvider(oMetadataProvider);
             
             AuthenticationRequestProtocol protocol = 
                 new AuthenticationRequestProtocol(session, _nameIDFormatter, 
