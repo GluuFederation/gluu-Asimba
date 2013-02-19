@@ -34,14 +34,18 @@ import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.asimba.util.saml2.metadata.provider.MetadataProviderUtil;
 import org.asimba.utility.filesystem.PathTranslator;
+import org.asimba.utility.xml.XMLUtils;
 import org.opensaml.saml2.metadata.provider.ChainingMetadataProvider;
+import org.opensaml.saml2.metadata.provider.DOMMetadataProvider;
 import org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider;
 import org.opensaml.saml2.metadata.provider.HTTPMetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.xml.parse.BasicParserPool;
 import org.opensaml.xml.parse.ParserPool;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -81,6 +85,11 @@ public class SAML2Requestor implements Serializable
     protected int _iMetadataURLTimeout;
     
     /**
+     * Metadata data 
+     */
+    protected String _sMetadata;
+    
+    /**
      * Signing mandatory.
      */
     protected boolean _bSigning;
@@ -88,7 +97,7 @@ public class SAML2Requestor implements Serializable
     /**
      * Metadata Provider.
      */
-    protected ChainingMetadataProvider _chainingMetadataProvider;
+    protected MetadataProvider _oMetadataProvider;
 
     private final static long serialVersionUID = 2093412253512956567L;
     
@@ -96,6 +105,7 @@ public class SAML2Requestor implements Serializable
     private final static String PROPERTY_METADATA_HTTP_TIMEOUT = ".metadata.http.timeout";
     private final static String PROPERTY_METADATA_HTTP_URL = ".metadata.http.url";
     private final static String METADATA_FILE = ".metadata.file";
+    private final static String METADATA = ".metadata";
     
     private Log _logger;
     
@@ -143,9 +153,10 @@ public class SAML2Requestor implements Serializable
                 }
             }
             
-            _chainingMetadataProvider = null;
+            _oMetadataProvider = null;
             _sMetadataURL = null;
             _fMetadata = null;
+            _sMetadata = null;	// metadata contents never initialized from configuration
             _iMetadataURLTimeout = HTTP_METADATA_REQUEST_TIMEOUT;
             
             Element eMetadata = configurationManager.getSection(config, "metadata");
@@ -155,8 +166,9 @@ public class SAML2Requestor implements Serializable
                     readMetadataProviders(configurationManager, eMetadata);
                 if (!listMetadataProviders.isEmpty())
                 {
-                    _chainingMetadataProvider = new ChainingMetadataProvider();
-                    _chainingMetadataProvider.setProviders(listMetadataProviders);
+                	ChainingMetadataProvider oCMP = new ChainingMetadataProvider();
+                    oCMP.setProviders(listMetadataProviders);
+                    _oMetadataProvider = oCMP;
                 }
             }
             else
@@ -191,74 +203,130 @@ public class SAML2Requestor implements Serializable
     {
         try
         {
-            _logger = LogFactory.getLog(SAML2Requestor.class);
+        	_logger = LogFactory.getLog(SAML2Requestor.class);
             _sID = requestor.getID();
-            
+
             Map<?, ?> mProperties = requestor.getProperties();
-            _bSigning = false;
-            String sSigning = (String)mProperties.get(sProfileID + PROPERTY_SIGNING);
-            if (sSigning == null)
-            {
-                _bSigning = bSigning;
-                if (_logger.isDebugEnabled())
-                {
-                    StringBuffer sbDebug = new StringBuffer("No optional '");
-                    sbDebug.append(sProfileID);
-                    sbDebug.append(PROPERTY_SIGNING);
-                    sbDebug.append("' property found for requestor with id '");
-                    sbDebug.append(_sID);
-                    sbDebug.append("'; Using default value: ");
-                    sbDebug.append(_bSigning);
-                    _logger.debug(sbDebug.toString());
-                }
-            }
-            else
-            {
-                if (sSigning.equalsIgnoreCase("TRUE"))
-                    _bSigning = true;
-                else if (!sSigning.equalsIgnoreCase("FALSE"))
-                {
-                    StringBuffer sbError = new StringBuffer("Invalid '");
-                    sbError.append(sProfileID);
-                    sbError.append(PROPERTY_SIGNING);
-                    sbError.append("' property found for requestor with id '");
-                    sbError.append(_sID);
-                    sbError.append("'; Invalid value: ");
-                    sbError.append(sSigning);
-                    
-                    _logger.error(sbError.toString());
-                    throw new OAException(SystemErrors.ERROR_INTERNAL);
-                }
-            }
-            
-            _chainingMetadataProvider = null;
-            _sMetadataURL = null;
-            _fMetadata = null;
-            _iMetadataURLTimeout = HTTP_METADATA_REQUEST_TIMEOUT;
-            
-            String sMetadataURL = (String)mProperties.get(sProfileID + PROPERTY_METADATA_HTTP_URL);
-            String sMetadataTimeout = (String)mProperties.get(sProfileID + PROPERTY_METADATA_HTTP_TIMEOUT);
-            String sMetadataFile = (String)mProperties.get(sProfileID + METADATA_FILE);
-            
-            List<MetadataProvider> listMetadataProviders = 
-                readMetadataProviders(sMetadataURL, sMetadataTimeout, sMetadataFile);
-            if (!listMetadataProviders.isEmpty())
-            {
-                _chainingMetadataProvider = new ChainingMetadataProvider();
-                _chainingMetadataProvider.setProviders(listMetadataProviders);
-            }
+        	initFromProperties(mProperties, bSigning, sProfileID);
+
+        	initMetadataProviderFromProperties(mProperties, sProfileID);
         }
-        catch (OAException e)
-        {
-            throw e;
-        }
-        catch(Exception e)
-        {
+        catch (OAException oae) {
+    		_logger.error("Exception when initializing MetadataProvider: "+oae.getMessage());
+    		throw oae;
+        } catch(Exception e) {
             _logger.fatal("Internal error while reading SAML2 attributes for requestor: " 
                 + requestor.getID(), e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
     }
+    
+    
+    /**
+     * Constructor which uses business logic requestor properties; also accept an already initialized
+     * MetadatProvider so it can be reused
+     * @param requestor
+     * @param bSigning
+     * @param sProfileID
+     * @param oMetadataProvider
+     * @throws OAException
+     */
+    public SAML2Requestor(IRequestor oRequestor, boolean bSigning, String sProfileID,
+    		MetadataProvider oMetadataProvider) 
+        throws OAException
+    {
+    	try {
+	        _logger = LogFactory.getLog(SAML2Requestor.class);
+	        _sID = oRequestor.getID();
+	        Map<?, ?> mProperties = oRequestor.getProperties();
+	
+	    	initFromProperties(mProperties, bSigning, sProfileID);
+	    	
+	    	// Skip MetadataProvider initialization if it is already provided
+	        if (oMetadataProvider == null) {
+	        	initMetadataProviderFromProperties(mProperties, sProfileID);
+	        } else {
+	        	_oMetadataProvider = oMetadataProvider;
+	        }
+    	} catch (OAException oae) {
+    		_logger.error("Exception when initializing MetadataProvider: "+oae.getMessage());
+    		throw oae;
+        } catch(Exception e) {
+            _logger.fatal("Internal error while reading SAML2 attributes for requestor: " 
+                + oRequestor.getID(), e);
+            throw new OAException(SystemErrors.ERROR_INTERNAL);
+        }
+    }
+        
+
+    /**
+     * Helper to initialize local instance from provided requestor properties
+     * @param oRequestor
+     * @param bSigning
+     * @param sProfileID
+     * @throws OAException
+     */
+    protected void initFromProperties(Map<?,?> mProperties, boolean bSigning, String sProfileID)
+    	throws OAException
+    {
+        _bSigning = false;
+        String sSigning = (String)mProperties.get(sProfileID + PROPERTY_SIGNING);
+        if (sSigning == null) {
+            _bSigning = bSigning;
+            if (_logger.isDebugEnabled()) {
+                _logger.debug("No optional '"+sProfileID+PROPERTY_SIGNING+"' property found for requestor '"+
+                				_sID+"'; Using default value: "+_bSigning);
+            }
+        } else {
+            if (sSigning.equalsIgnoreCase("TRUE")) {
+                _bSigning = true;
+            } else if (!sSigning.equalsIgnoreCase("FALSE")) {
+                _logger.error("Invalid '"+sProfileID+PROPERTY_SIGNING+"' property found for requestor '"+
+                				_sID+"'; Invalid value: "+sSigning);
+                throw new OAException(SystemErrors.ERROR_INTERNAL);
+            }
+        }
+    }
+    
+    
+    /**
+     * Helper to initialize metadataprovider from provided requestor properties
+     * @param mProperties
+     * @param sProfileID
+     * @throws OAException
+     */
+    protected void initMetadataProviderFromProperties(Map<?,?> mProperties, 
+    		String sProfileID) 
+    	throws OAException
+    {
+        _oMetadataProvider = null;
+        _sMetadataURL = null;
+        _fMetadata = null;
+        _iMetadataURLTimeout = HTTP_METADATA_REQUEST_TIMEOUT;
+        
+        String sMetadataURL = (String)mProperties.get(sProfileID + PROPERTY_METADATA_HTTP_URL);
+        String sMetadataTimeout = (String)mProperties.get(sProfileID + PROPERTY_METADATA_HTTP_TIMEOUT);
+        String sMetadataFile = (String)mProperties.get(sProfileID + METADATA_FILE);
+        _sMetadata = (String)mProperties.get(sProfileID + METADATA);
+        
+        List<MetadataProvider> listMetadataProviders = 
+            readMetadataProviders(sMetadataURL, sMetadataTimeout, sMetadataFile, _sMetadata);
+        if (!listMetadataProviders.isEmpty())
+        {
+            _oMetadataProvider = listMetadataProviders.get(0);
+
+//            try {
+//            	ChainingMetadataProvider oCMP = new ChainingMetadataProvider();
+//                oCMP.setProviders(listMetadataProviders);
+//                _oMetadataProvider = oCMP;
+//			} catch (MetadataProviderException e) {
+//				_logger.warn("Could not initialize MetadataProvider for requestor '"+_sID+"'");
+//				_oMetadataProvider = null;
+//			}
+        }
+    }
+    
+    
     
     /**
      * Returns the OA Request ID. 
@@ -275,9 +343,9 @@ public class SAML2Requestor implements Serializable
      * @return the ChainingMetadataProvider or <code>null</code> if no provider 
      * is configured.
      */
-    public ChainingMetadataProvider getChainingMetadataProvider()
+    public MetadataProvider getMetadataProvider()
     {
-        return _chainingMetadataProvider;
+        return _oMetadataProvider;
     }
     
     /**
@@ -347,6 +415,13 @@ public class SAML2Requestor implements Serializable
                 _logger.info(
                     "Using HTTP Provider Metadata: " + _sMetadataURL);
             }
+            
+            MetadataProvider domProvider = readDOMMetadataProvider(configurationManager, config, parserPool);
+            if (domProvider != null) {
+            	listMetadataProviders.add(domProvider);
+            	_logger.debug("Using static DOM Metadata Provider");
+            }
+
         }
         catch (OAException e)
         {
@@ -503,8 +578,25 @@ public class SAML2Requestor implements Serializable
         return fileProvider;
     }
     
+    
+    private MetadataProvider readDOMMetadataProvider(IConfigurationManager configurationManager, Element config,
+    		ParserPool parserPool) 
+        throws OAException
+    {
+    	String sRawMetadata = configurationManager.getParam(config, "raw");
+        if (sRawMetadata == null) {
+            _logger.warn("No optional 'raw' item in 'metadata' section found in configuration "+
+            				" for requestor with id: "+ _sID);
+            return null;
+        } else {
+        	_sMetadata = sRawMetadata;
+        	return readDOMMetadataProvider(_sMetadata, parserPool);
+        }
+    }
+    
+    
     private List<MetadataProvider> readMetadataProviders(String sMetadataURL,
-        String sMetadataTimeout, String sMetadataFile) throws OAException
+        String sMetadataTimeout, String sMetadataFile, String sMetadata) throws OAException
     {
         List<MetadataProvider> listMetadataProviders = 
             new Vector<MetadataProvider>();
@@ -529,6 +621,12 @@ public class SAML2Requestor implements Serializable
                 listMetadataProviders.add(urlProvider);
                 _logger.debug(
                     "Using HTTP Provider Metadata: " + _sMetadataURL);
+            }
+            
+            MetadataProvider domProvider = readDOMMetadataProvider(_sMetadata, parserPool);
+            if (domProvider != null) {
+            	listMetadataProviders.add(domProvider);
+            	_logger.debug("Using static DOM Metadata Provider");
             }
         }
         catch (OAException e)
@@ -601,23 +699,28 @@ public class SAML2Requestor implements Serializable
                 }
             }
 
-            try
-            {
-                urlProvider = new HTTPMetadataProvider(_sMetadataURL, 
-                    _iMetadataURLTimeout);
-                urlProvider.setParserPool(parserPool);
-                urlProvider.initialize();
-            }
-            catch (MetadataProviderException e)
-            {
-                StringBuffer sbDebug = new StringBuffer();
-                sbDebug.append("No metadata available at configured URL '");
-                sbDebug.append(_sMetadataURL);
-                sbDebug.append("': Disabling http metadata for this requestor");
-                _logger.debug(sbDebug.toString(), e);
-                
-                urlProvider = null;
-            }
+            
+            
+            
+        	urlProvider = (HTTPMetadataProvider) MetadataProviderUtil.createProviderForURL(_sMetadataURL);
+
+//        	try
+//            {
+//                urlProvider = new HTTPMetadataProvider(_sMetadataURL, 
+//                    _iMetadataURLTimeout);
+//                urlProvider.setParserPool(parserPool);
+//                urlProvider.initialize();
+//            }
+//            catch (MetadataProviderException e)
+//            {
+//                StringBuffer sbDebug = new StringBuffer();
+//                sbDebug.append("No metadata available at configured URL '");
+//                sbDebug.append(_sMetadataURL);
+//                sbDebug.append("': Disabling http metadata for this requestor");
+//                _logger.debug(sbDebug.toString(), e);
+//                
+//                urlProvider = null;
+//            }
         }
         return urlProvider;
     }
@@ -670,6 +773,32 @@ public class SAML2Requestor implements Serializable
             }
         }
         return fileProvider;
+    }
+    
+    
+    /**
+     * Create a MetadataProvider based on the static XML document of the entity
+     * @param sMetadata Metadata of the entity to create provider for
+     * @param oParserPool
+     * @return Initialized MetadataProvider for the provided metadata
+     */
+    private MetadataProvider readDOMMetadataProvider(String sMetadata, 
+    		ParserPool oParserPool) {
+    	if (sMetadata == null) return null;
+    	
+		try {
+			Document d = XMLUtils.getDocumentFromString(sMetadata);
+			Element elMetadata = d.getDocumentElement();
+			
+	    	DOMMetadataProvider oProvider = new DOMMetadataProvider(elMetadata);
+	    	oProvider.setParserPool(oParserPool);
+	    	
+	    	return oProvider;
+		} catch (OAException e) {
+			_logger.warn("Could not parse provided metadata document.");
+		}
+		
+		return null;
     }
 
 }
