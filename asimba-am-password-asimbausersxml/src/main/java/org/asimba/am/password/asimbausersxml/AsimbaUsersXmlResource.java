@@ -86,7 +86,7 @@ public class AsimbaUsersXmlResource extends AbstractResourceHandler {
 			Document oDoc = oDocBuilder.parse(_sAsimbaUsersXmlFilename);
 			
 			String sXPathToUserPassword;
-			sXPathToUserPassword = "//user[@id='"+username+"']/password";
+			sXPathToUserPassword = "//user[@id='"+username+"']/authMethod[@type='password-plain']/property[@name='password']";
 			
 			XPath xpath = XPathFactory.newInstance().newXPath();
 			XPathExpression expr = xpath.compile(sXPathToUserPassword);
@@ -94,8 +94,16 @@ public class AsimbaUsersXmlResource extends AbstractResourceHandler {
 			String result = (String) expr.evaluate(oDoc, XPathConstants.STRING);
 
 			if (result == null) {
-				_oLogger.info("Could not verify password for user "+username);
-				return false;
+				
+				// Try the old way:
+				sXPathToUserPassword = "//user[@id='"+username+"']/password";				
+				expr = xpath.compile(sXPathToUserPassword);
+				result = (String) expr.evaluate(oDoc, XPathConstants.STRING);
+				
+				if (result == null) {
+					_oLogger.info("Could not verify password for user "+username);
+					return false;
+				}
 			}
 			
 			// Is the password correct?
