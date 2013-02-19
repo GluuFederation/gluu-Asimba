@@ -24,19 +24,29 @@ package com.alfaariss.oa.util.saml2.idp;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
 import java.util.Vector;
 
+import org.asimba.util.saml2.metadata.provider.XMLObjectMetadataProvider;
 import org.opensaml.saml2.metadata.provider.ChainingMetadataProvider;
 import org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider;
 import org.opensaml.saml2.metadata.provider.HTTPMetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
+import org.opensaml.xml.XMLObject;
+import org.opensaml.xml.io.MarshallingException;
+import org.opensaml.xml.io.UnmarshallingException;
 import org.opensaml.xml.parse.BasicParserPool;
 import org.opensaml.xml.parse.ParserPool;
+import org.opensaml.xml.parse.XMLParserException;
+import org.opensaml.xml.util.XMLObjectHelper;
 
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
@@ -50,6 +60,7 @@ import com.alfaariss.oa.engine.core.idp.storage.AbstractIDP;
  * @since 1.1
  */
 public class SAML2IDP extends AbstractIDP
+	implements Serializable
 {
     
     /** Type: id */
@@ -70,6 +81,29 @@ public class SAML2IDP extends AbstractIDP
     private Boolean _boolNameIDPolicy;
     private Boolean _boolAllowCreate;    
     private String _sNameIDFormat;
+    
+    /**
+     * Element containing the parsed XMLObject of the metadata document
+     * 
+     * Does not serialize, so marshall to _sMetadata upon serialization
+     */
+    transient protected XMLObject _oMetadataXMLObject = null;
+    
+    /**
+     * Keep reference to MetadataProvider for this IDP
+     * 
+     * Does not serialize, so it is lost whenever it has been resuscitated
+     */
+    transient protected MetadataProvider _oMetadataProvider = null;
+    
+    /**
+     * Contains the string version of the XMLObject's metadata
+     * Only used for transit, so object instance can be serialized, so
+     * will be set before serializing, and will be set when un-serialized from instance
+     *   that was serialized before 
+     */
+    protected String _sMetadata = null;
+    
     
     /**
      * Creates an organization object.
@@ -159,19 +193,73 @@ public class SAML2IDP extends AbstractIDP
         return _baSourceID;
     }
     
+    
     /**
-     * Returns a chaining metadata provider with the metadata of the organization.
+     * Return whether the SAML2IDP is initialized with a MetadataProvider
+     * @return
+     */
+    public boolean isMetadataProviderSet() {
+    	return (_oMetadataProvider != null);
+    }
+    
+    public void setMetadataProvider(MetadataProvider oMetadataProvider) {
+    	_oMetadataProvider = oMetadataProvider;
+    	
+    	// Reset context:
+    	try {
+        	_sMetadata = null;
+			_oMetadataXMLObject = oMetadataProvider.getMetadata();
+		} catch (MetadataProviderException e) {
+			_logger.warn("Could not get Metadata for SAML2IDP '"+getID()+"'");
+		}
+    }
+    
+    /**
+     * Returns a metadata provider with the metadata of the organization.
      * <br>
-     * The provider contains the file and url metadata of the organization if 
-     * available and creates the metadata provider everytime this method is 
-     * called.
+     * If the provider was set externally, this provider is returned. <br/>
+     * When the SAML2IDP has been serialized/deserialized, a MetadataProvider based
+     * on the (static) metadata is returned.
+     * Otherwise, a new MetadataProvider is constructed that retrieves its
+     * metadata from the configured file- and/or url-source.
      * 
-     * @return The MetadataProvider (ChainingMetadataProvider) with the metadata 
+     * @return The initialized MetadataProvider with the metadata 
      * for this organization or NULL when no metadata is available.
      * @throws OAException If metadata is invalid or could not be accessed
      */
     public MetadataProvider getMetadataProvider() throws OAException
     {
+    	if (_oMetadataProvider != null) {
+    		return _oMetadataProvider;
+    	}
+    	
+    	// If there is a local metadata document available, return the
+    	// MetadataProvider that is based on this document
+    	if (_oMetadataXMLObject != null) {
+    		XMLObjectMetadataProvider oMP = new XMLObjectMetadataProvider(_oMetadataXMLObject);
+			oMP.initialize();
+			return oMP;
+			
+    	} else if (_sMetadata != null) {
+    		try {
+	    		BasicParserPool parserPool = new BasicParserPool();
+	            parserPool.setNamespaceAware(true);
+	            
+	            StringReader oSR = new StringReader(_sMetadata);
+            
+				_oMetadataXMLObject = XMLObjectHelper.unmarshallFromReader(parserPool, oSR);
+				
+				return new XMLObjectMetadataProvider(_oMetadataXMLObject);
+
+    		} catch (XMLParserException e) {
+				_logger.warn("XMLParser error with establishing metadata for SAML2IDP, trying file/url: "+e.getMessage());
+			} catch (UnmarshallingException e) {
+				_logger.warn("Unmarshalling exception with establishing metadata for SAML2IDP, trying file/url: "+e.getMessage());
+			}
+    	}
+    	
+    	// So we need to create a new MetadataProvider for URL or file:
+    	
         ChainingMetadataProvider chainingMetadataProvider = null;
         
         try
@@ -294,6 +382,16 @@ public class SAML2IDP extends AbstractIDP
         return _sNameIDFormat;
     }
 
+
+    /**
+     * Set Metadata of the IDP to be the provided (OpenSAML2) parsed XML document
+     * @param elMetadataDocument
+     */
+    public void setMetadataXMLObject(XMLObject oMetadataXMLObject) {
+    	_oMetadataXMLObject = oMetadataXMLObject;
+    }
+    
+    
     private HTTPMetadataProvider createHTTPMetadataProvider(String sMetadataURL,
         int iMetadataTimeout, ParserPool parserPool) 
         throws OAException
@@ -393,5 +491,37 @@ public class SAML2IDP extends AbstractIDP
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
         return fileProvider;
+    }
+    
+    
+    /**
+     * Deal with internally stored metadata stuff
+     * @param oOutputStream
+     */
+    private void writeObject(ObjectOutputStream oOutputStream)
+    		throws java.io.IOException
+    {
+		try {
+			if (_oMetadataXMLObject != null) {
+				if (_sMetadata == null) {
+				StringWriter oSW = new StringWriter();
+				XMLObjectHelper.marshallToWriter(_oMetadataXMLObject, oSW);
+				_sMetadata = oSW.toString();
+				}
+			}
+		} catch (MarshallingException e) {
+			_logger.error("Exception when marshalling XMLObject to Writer for SAML2IDP, dropping metadata: "+e.getMessage());
+			return;
+		}
+    	
+    	// Do its thing:
+    	oOutputStream.defaultWriteObject();
+    }
+    
+    
+    // TEST:
+    @Override
+    public String getFriendlyName() {
+    	return super.getFriendlyName();
     }
 }
