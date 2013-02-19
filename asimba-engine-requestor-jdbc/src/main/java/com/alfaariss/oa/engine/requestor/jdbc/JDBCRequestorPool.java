@@ -238,7 +238,7 @@ public class JDBCRequestorPool extends RequestorPool
             sbSelect.append(" WHERE ");
             sbSelect.append(sRequestorsTable);
             sbSelect.append(".");
-            sbSelect.append(JDBCRequestorPool.COLUMN_ID);
+            sbSelect.append(JDBCRequestor.COLUMN_POOLID);
             sbSelect.append("=? AND ");
             sbSelect.append(sRequestorsTable);
             sbSelect.append(".");
