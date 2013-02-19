@@ -121,6 +121,15 @@ public class SAML2Profile implements IRequestorProfile, IService
     {
         return _sID;
     }
+    
+    
+    /**
+     * Returns the configured SAML2Requestors instance for this profile
+     * @return
+     */
+    public SAML2Requestors getSAML2Requestors() {
+    	return _requestors;
+    }
    
     /**
      * @see IRequestorProfile#init(javax.servlet.ServletContext, 
