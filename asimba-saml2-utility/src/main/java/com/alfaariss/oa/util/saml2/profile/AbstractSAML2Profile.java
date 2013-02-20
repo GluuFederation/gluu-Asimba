@@ -614,7 +614,7 @@ public abstract class AbstractSAML2Profile implements ISAML2Profile, IAuthority
             if(requestor != null)
             {
                 MetadataProvider mdProvider = 
-                    requestor.getChainingMetadataProvider();
+                    requestor.getMetadataProvider();
                 if(mdProvider != null) //Metadata provider available
                 {
                     _logger.debug(
