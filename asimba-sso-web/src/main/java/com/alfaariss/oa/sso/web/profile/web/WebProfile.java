@@ -1273,6 +1273,7 @@ public class WebProfile implements ISSOProfile, IService, IAuthority
 	                    
 	                    /* add profile context as TGT-attribute */
 	                    oTGT.getAttributes().put(WebProfile.class, TGT_ATTR_TGTPROFILE, sProfileID);
+	                    oTGT.persist();
                     } else {
                     	cTGT = _cookieTool.createCookie(
                     			WebSSOServlet.TGT_COOKIE_NAME, oTGT.getId(), oRequest);
