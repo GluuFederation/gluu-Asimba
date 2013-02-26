@@ -35,6 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.asimba.utility.web.RequestorHelper;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -68,7 +69,6 @@ import com.alfaariss.oa.util.validation.TGTValidator;
 import com.alfaariss.oa.util.web.CookieTool;
 import com.alfaariss.oa.util.web.HttpUtils;
 import com.alfaariss.oa.util.web.ResponseHeader;
-import com.cozmanova.oa.util.RequestorHelper;
 
 /**
  * Web based Authentication and SSO Component.

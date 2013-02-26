@@ -68,7 +68,6 @@
   	<module>asimba-utility</module>
   	<module>asimba-engine-core</module>
   	<module>asimba-engine-sso</module>
-  	<module>asimba-cozmanova-utility</module>
   	<module>asimba-wa</module>
   	<module>asimba-sso-web</module>
     <module>asimba-sso-profile-ssoquery</module>

@@ -74,11 +74,6 @@
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
-  		<artifactId>asimba-cozmanova-utility</artifactId>
-  		<version>1.0.1-SNAPSHOT</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>org.asimba</groupId>
   		<artifactId>asimba-engine-attribute-gather-file</artifactId>
   		<version>1.0.1-SNAPSHOT</version>
   	</dependency>

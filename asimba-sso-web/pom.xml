@@ -36,11 +36,6 @@
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
-    	<artifactId>asimba-cozmanova-utility</artifactId>
-    	<version>1.0.1-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-    	<groupId>org.asimba</groupId>
     	<artifactId>asimba-wa</artifactId>
     	<version>1.0.1-SNAPSHOT</version>
     	<type>war</type>
