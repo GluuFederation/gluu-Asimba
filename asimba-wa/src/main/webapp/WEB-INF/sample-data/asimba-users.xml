@@ -1,7 +1,7 @@
 <!-- 
 	asimba-users.xml demonstration userstore
  -->
-<asimba-users>
+<asimba-users version="1.1">
 	<!-- global: define attributes that are applied to all the users -->
 	<global>
 		<country>Netherlands</country>
@@ -11,7 +11,9 @@
 				see baseline documentation for more information 
 	-->
 	<user id="asimba1" org="Asimba-Laboratory">
-		<password>asimba1</password>
+		<authMethod type="password-plain">
+			<property name="password">asimba1</property>
+		</authMethod>
 		<phonenr>+1234567890</phonenr>
 		<firstname>Alice</firstname>
 		<lastname>Simba</lastname>
@@ -19,7 +21,9 @@
 		<role>user</role>
 	</user>
 	<user id="johndoe" org="Asimba-Laboratory">
-		<password>johndoe</password>
+		<authMethod type="password-plain">
+			<property name="password">johndoe</property>
+		</authMethod>
 		<phonenr>+9876543210</phonenr>
 		<firstname>John</firstname>
 		<lastname>Doe</lastname>
