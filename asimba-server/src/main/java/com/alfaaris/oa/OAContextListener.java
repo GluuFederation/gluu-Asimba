@@ -31,7 +31,7 @@
  * 
  */
 
-package com.alfaariss.oa;
+package com.alfaaris.oa;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,6 +47,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asimba.utility.filesystem.PathTranslator;
 
+import com.alfaariss.oa.OAException;
+import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.engine.core.EngineLauncher;
 
 /**

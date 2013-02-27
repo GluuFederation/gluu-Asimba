@@ -20,7 +20,7 @@
  * Asimba - Serious Open Source SSO - More information on www.asimba.org
  * 
  */
-package com.alfaariss.oa;
+package com.alfaaris.oa;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -38,6 +38,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Element;
 
+import com.alfaariss.oa.OAException;
+import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.IComponent;
 import com.alfaariss.oa.api.IService;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;

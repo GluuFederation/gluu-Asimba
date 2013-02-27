@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>asimba-server-baseline</artifactId>
+    <groupId>org.asimba</groupId>
+    <version>1.0.1-SNAPSHOT</version>
+  </parent>
+  <artifactId>asimba-server</artifactId>
+  <name>asimba-server</name>
+  <description>Servlet components of AsimbaSSO Server</description>
+  <url>http://www.asimba.org</url>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  <dependencies>
+    <dependency>
+    	<groupId>org.asimba</groupId>
+    	<artifactId>asimba-engine-core</artifactId>
+    	<version>1.0.1-SNAPSHOT</version>
+    </dependency>
+  	<dependency>
+  		<groupId>javax.servlet</groupId>
+  		<artifactId>servlet-api</artifactId>
+  		<scope>provided</scope>
+  	</dependency>
+  </dependencies>
+</project>
