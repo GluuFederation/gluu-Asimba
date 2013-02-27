@@ -42,7 +42,9 @@
 		<link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/default.css" type="text/css" />
 		<link rel="shortcut icon" href="${pageContext.request.contextPath}/static/images/logo.ico"  type="image/x-icon" />
 		<title>
-			<c:out value="${requestScope.serverInfo.organization.friendlyName}"/>			
+			<c:if test="${requestScope.serverInfo != null}">
+				<c:out value="${requestScope.serverInfo.organization.friendlyName}"/>
+			</c:if>			
 		</title>
 	</head>
 	<body onload="document.forms[0].submit()">
@@ -54,9 +56,11 @@
 					id="headerlogo" />
 				<h1><fmt:message bundle='${messages}' key='page_title'/></h1>
 			</div>
-			<div id="subheader">
-				<c:out value="${requestScope.serverInfo.organization.friendlyName}"/>
-			</div>		
+			<c:if test="${requestScope.serverInfo != null}">
+				<div id="subheader">
+					<c:out value="${requestScope.serverInfo.organization.friendlyName}"/>
+				</div>
+			</c:if>		
 			<div id="content">	
 				<div id="contentHeader">	
 					<h2>
@@ -81,21 +85,23 @@
 		                	<c:if test="${requestScope.SAMLResponse != null}">
 		                		<input type="hidden" name="SAMLResponse" value="${requestScope.SAMLResponse}"/>
 		                	</c:if>	 
-		                	<noscript>               		
-			                    <input type="submit" value="Continue" />
-		                    </noscript>
-	                    </fieldset>	
+	                    </fieldset>
+	                    <noscript>               		
+			              <input type="submit" value="Continue" />
+		                </noscript>	
 					</form>
 				</div>
 			</div>
-			<div id="footer">
-				<div id="footer1">
-					<c:out value="${requestScope.serverInfo.friendlyName}"/> (<c:out value="${requestScope.serverInfo.ID}"/>)
+			<c:if test="${requestScope.serverInfo != null}">
+				<div id="footer">
+					<div id="footer1">
+						<c:out value="${requestScope.serverInfo.friendlyName}"/> (<c:out value="${requestScope.serverInfo.ID}"/>)
+					</div>
+					<div id="footer2">	
+						<a href="http://www.asimba.org">Asimba</a> - Serious Open Source SSO				
+					</div>
 				</div>
-				<div id="footer2">	
-					<a href="http://www.asimba.org">Asimba</a> - Serious Open Source SSO				
-				</div>
-			</div>
+			</c:if>
 		</div>
 	</body>
 </html>

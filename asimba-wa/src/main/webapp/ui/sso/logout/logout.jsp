@@ -45,7 +45,7 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		
 		<c:if test="${requestScope.logoutState == 'USER_LOGOUT_IN_PROGRESS'}">
-			<meta http-equiv="REFRESH" content="5;URL='/openaselect/sso/logout/force?asid=${requestScope.asid}'">
+			<meta http-equiv="REFRESH" content="5;URL='${pageContext.request.contextPath}/sso/logout/force?asid=${requestScope.asid}'">
 		</c:if>
 		
 		<link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/default.css" type="text/css" />
