@@ -102,14 +102,14 @@ public class OAServlet extends HttpServlet implements IComponent
         }
         catch(OAException e)
         {           
-            _logger.fatal("Error starting OA server", e);
+            _logger.fatal("Error starting Asimba Server", e);
             stop(); //Stop started profiles and helpers
             throw new ServletException(
                 SystemErrors.toHexString(e.getCode()));
         }
         catch (Exception e)
         {           
-            _logger.fatal("Error starting OA server", e);
+            _logger.fatal("Error starting Asimba Server", e);
             stop(); //Stop started profiles and helpers
             throw new ServletException(
                 SystemErrors.toHexString(SystemErrors.ERROR_INTERNAL));
