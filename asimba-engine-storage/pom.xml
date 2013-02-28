@@ -4,7 +4,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.1.0</version>
   </parent>
   <artifactId>asimba-engine-storage</artifactId>
   <name>asimba-engine-storage</name>
@@ -21,12 +21,12 @@
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-api</artifactId>
-    	<version>1.0.1-SNAPSHOT</version>
+    	<version>1.1.0</version>
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-utility</artifactId>
-    	<version>1.0.1-SNAPSHOT</version>
+    	<version>1.1.0</version>
     </dependency>
   </dependencies>
 </project>
