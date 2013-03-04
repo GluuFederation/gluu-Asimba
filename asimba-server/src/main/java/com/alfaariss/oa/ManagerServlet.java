@@ -20,7 +20,7 @@
  * Asimba - Serious Open Source SSO - More information on www.asimba.org
  * 
  */
-package com.alfaaris.oa;
+package com.alfaariss.oa;
 
 import java.io.IOException;
 import java.util.Enumeration;

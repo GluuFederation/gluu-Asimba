@@ -31,7 +31,7 @@
  * 
  */
 
-package com.alfaaris.oa;
+package com.alfaariss.oa;
 
 import java.io.File;
 import java.io.FileInputStream;
