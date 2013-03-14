@@ -80,11 +80,11 @@
     	<artifactId>axis2-transport-local</artifactId>
     	<version>1.6.1</version>
     </dependency>
-    <dependency>
+<!--     <dependency>
     	<groupId>org.opensaml</groupId>
     	<artifactId>opensaml</artifactId>
     </dependency>
-    <dependency>
+ -->    <dependency>
     	<groupId>xml-apis</groupId>
     	<artifactId>xml-apis</artifactId>
     	<scope>runtime</scope>

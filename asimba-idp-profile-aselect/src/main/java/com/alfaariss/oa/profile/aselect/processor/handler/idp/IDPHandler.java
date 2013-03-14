@@ -70,6 +70,9 @@ import com.alfaariss.oa.util.validation.SessionValidator;
  */
 public class IDPHandler extends AbstractAPIHandler
 {   
+    private final static String SESSION_PROXY_ARP_TARGET = "arp_target";
+    private final static String PARAM_ARP_TARGET = "arp_target";
+    
     /**
      * IDPHandler Constructor
      *
@@ -359,6 +362,16 @@ public class IDPHandler extends AbstractAPIHandler
                 _logger.debug(sbError.toString());
             }
             
+            String sArpTarget = (String)oRequest.getParameter(PARAM_ARP_TARGET);
+            if (sArpTarget != null)
+            {
+                StringBuffer sbError = new StringBuffer("Optional '");
+                sbError.append(PARAM_ARP_TARGET);
+                sbError.append("' found in request: ");
+                sbError.append(sArpTarget);
+                _logger.debug(sbError.toString());
+            }
+            
             IResponse oResponse = oBinding.getResponse();
             if (oResponse == null)
             {
@@ -442,7 +455,10 @@ public class IDPHandler extends AbstractAPIHandler
                             ASelectErrors.ERROR_ASELECT_SERVER_INVALID_REQUEST);
                     }
                     
+                    //DD Signature data contains the request parameters ordered alfabetically
                     StringBuffer sbSignature = new StringBuffer(sASelectServer);
+                    if (sArpTarget != null)
+                        sbSignature.append(sArpTarget);
                     if (sCountry != null)
                         sbSignature.append(sCountry);
                     if (sForcedLogon != null)
@@ -520,7 +536,10 @@ public class IDPHandler extends AbstractAPIHandler
                 //set supplied uid as forced user id
                 if (sUid != null)
                     oSession.setForcedUserID(sUid);
-                            
+                     
+                if (sArpTarget != null)
+                    oAttributes.put(ProxyAttributes.class, SESSION_PROXY_ARP_TARGET, sArpTarget);
+                
                 if (sRemoteOrganization != null)
                 {
                     //set supplied organization as forced organization

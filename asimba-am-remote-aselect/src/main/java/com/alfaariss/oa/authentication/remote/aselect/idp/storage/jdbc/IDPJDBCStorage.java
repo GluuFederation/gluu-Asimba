@@ -62,6 +62,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
     private final static String COLUMN_LANGUAGE = "language";
     private final static String COLUMN_ASYNCHRONOUS_LOGOUT = "asynchronouslogout";
     private final static String COLUMN_SYNCHRONOUS_LOGOUT = "synchronouslogout";
+    private final static String COLUMN_SEND_ARP_TARGET = "send_arp_target";
     
     private String _sID;
     private String _sTable;
@@ -181,8 +182,8 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     resultSet.getString(COLUMN_COUNTRY),
                     resultSet.getString(COLUMN_LANGUAGE),
                     resultSet.getBoolean(COLUMN_ASYNCHRONOUS_LOGOUT),
-                    resultSet.getBoolean(COLUMN_SYNCHRONOUS_LOGOUT)
-                    );
+                    resultSet.getBoolean(COLUMN_SYNCHRONOUS_LOGOUT),
+                    resultSet.getBoolean(COLUMN_SEND_ARP_TARGET));
                 listIDPs.add(idp);
             }
         }
@@ -253,8 +254,8 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     resultSet.getString(COLUMN_COUNTRY),
                     resultSet.getString(COLUMN_LANGUAGE),
                     resultSet.getBoolean(COLUMN_ASYNCHRONOUS_LOGOUT),
-                    resultSet.getBoolean(COLUMN_SYNCHRONOUS_LOGOUT)
-                    );
+                    resultSet.getBoolean(COLUMN_SYNCHRONOUS_LOGOUT),
+                    resultSet.getBoolean(COLUMN_SEND_ARP_TARGET));
             }
         }
         catch(Exception e)
@@ -292,10 +293,67 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
      */
     public IIDP getIDP(Object id, String type) throws OAException
     {
-        if (type.equals(COLUMN_ID))
-            return getIDP(String.valueOf(id));
-        //else not supported
-        return null;
+    	Connection connection = null;
+        PreparedStatement pSelect = null;
+        ResultSet resultSet = null;
+        ASelectIDP oASelectIDP = null;
+        try
+        {
+            connection = _dataSource.getConnection();
+            
+            StringBuffer sbSelect = new StringBuffer(_querySelectAll);
+            sbSelect.append(" AND ");
+            sbSelect.append(type);
+            sbSelect.append("=?");
+            pSelect = connection.prepareStatement(sbSelect.toString());
+            pSelect.setBoolean(1, true);
+            pSelect.setObject(2, id);
+            resultSet = pSelect.executeQuery();
+            if (resultSet.next())
+            {
+                oASelectIDP = new ASelectIDP(
+                    resultSet.getString(COLUMN_ID),
+                    resultSet.getString(COLUMN_FRIENDLYNAME),
+                    resultSet.getString(COLUMN_SERVER_ID),
+                    resultSet.getString(COLUMN_URL),
+                    resultSet.getInt(COLUMN_LEVEL),
+                    resultSet.getBoolean(COLUMN_SIGNING),
+                    resultSet.getString(COLUMN_COUNTRY),
+                    resultSet.getString(COLUMN_LANGUAGE),
+                    resultSet.getBoolean(COLUMN_ASYNCHRONOUS_LOGOUT),
+                    resultSet.getBoolean(COLUMN_SYNCHRONOUS_LOGOUT),
+                    resultSet.getBoolean(COLUMN_SEND_ARP_TARGET)
+                    );
+            }
+        }
+        catch(Exception e)
+        {
+            _logger.fatal("Internal error during retrieval of IDP with id: " + id, e);
+            throw new OAException(SystemErrors.ERROR_INTERNAL);
+        }
+        finally
+        {
+            try
+            {
+                if (pSelect != null)
+                    pSelect.close();
+            }
+            catch (Exception e)
+            {
+                _logger.error("Could not close select statement", e);
+            }
+                        
+            try
+            {
+                if (connection != null)
+                    connection.close();
+            }
+            catch (Exception e)
+            {
+                _logger.error("Could not close connection", e);
+            }
+        }
+        return oASelectIDP;
     }
 
     private void createQueries() throws OAException
@@ -314,7 +372,8 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             sbSelectAllOrgs.append(COLUMN_COUNTRY).append(",");
             sbSelectAllOrgs.append(COLUMN_LANGUAGE).append(",");
             sbSelectAllOrgs.append(COLUMN_ASYNCHRONOUS_LOGOUT).append(",");
-            sbSelectAllOrgs.append(COLUMN_SYNCHRONOUS_LOGOUT);
+            sbSelectAllOrgs.append(COLUMN_SYNCHRONOUS_LOGOUT).append(",");
+            sbSelectAllOrgs.append(COLUMN_SEND_ARP_TARGET);
             sbSelectAllOrgs.append(" FROM ");
             sbSelectAllOrgs.append(_sTable);
             

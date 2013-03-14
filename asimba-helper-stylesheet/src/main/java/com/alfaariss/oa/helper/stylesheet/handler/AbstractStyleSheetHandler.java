@@ -32,6 +32,7 @@ import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
+import com.alfaariss.oa.api.attribute.ISessionAttributes;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.requestor.IRequestor;
 import com.alfaariss.oa.api.session.ISession;
@@ -39,6 +40,7 @@ import com.alfaariss.oa.engine.core.Engine;
 import com.alfaariss.oa.engine.core.requestor.RequestorPool;
 import com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory;
 import com.alfaariss.oa.helper.stylesheet.StyleSheetException;
+import com.alfaariss.oa.util.session.ProxyAttributes;
 
 /**
  * Returns a stylesheet by redirects.
@@ -50,6 +52,7 @@ import com.alfaariss.oa.helper.stylesheet.StyleSheetException;
  */
 abstract public class AbstractStyleSheetHandler implements IStyleSheetHandler
 {
+	private final static String SESSION_PROXY_ARP_TARGET = "arp_target";
     /** name of the location property */
     protected final static String PROPERTY_LOCATION = ".location";
     /** name of the mobile location property */
@@ -142,6 +145,8 @@ abstract public class AbstractStyleSheetHandler implements IStyleSheetHandler
         String sStyleSheet = null;
         try
         {
+        	ISessionAttributes sessionAttributes = session.getAttributes();
+        	
             String sRequestorID = session.getRequestorId();
             IRequestor requestor = _oRequestorPoolFactory.getRequestor(sRequestorID);
             if (requestor == null)
@@ -150,53 +155,92 @@ abstract public class AbstractStyleSheetHandler implements IStyleSheetHandler
                 throw new StyleSheetException(SystemErrors.ERROR_INTERNAL);
             }
             
+            String sArpTarget = (String)sessionAttributes.get(ProxyAttributes.class, SESSION_PROXY_ARP_TARGET);
+            
             //resolve mobile location 
             if (isWireless)
             {
-                if(_htMobileRequestorStyleSheets != null && _htMobileRequestorStyleSheets.containsKey(sRequestorID))
-                    sStyleSheet = _htMobileRequestorStyleSheets.get(sRequestorID);
-                else if(requestor.isProperty(_sHelperID + PROPERTY_LOCATION_MOBILE))
-                    sStyleSheet = (String)requestor.getProperty(_sHelperID + PROPERTY_LOCATION_MOBILE);
-                if (sStyleSheet == null)
+            	if (sArpTarget != null)
+            	{//resolve location from config by with requestor id is the value of the arp_target
+            		sArpTarget = sArpTarget.replaceAll("@", "_");
+            		
+            		StringBuffer sbArpTarget = new StringBuffer(_sHelperID);
+            		sbArpTarget.append(PROPERTY_LOCATION_MOBILE);
+            		sbArpTarget.append(".");
+            		sbArpTarget.append(sArpTarget);
+            		if (requestor.isProperty(sbArpTarget.toString()))
+            		{//check if the [helper id].location.[arp_target] is configured as requestor property
+            			sStyleSheet = (String)requestor.getProperty(sbArpTarget.toString());
+            		}
+            	}
+            	if (sStyleSheet == null)
                 {
-                    RequestorPool oPool = 
-                        _oRequestorPoolFactory.getRequestorPool(sRequestorID);
-                    if (oPool == null)
-                    {
-                        _logger.warn("No requestor pool found for requestor with id: " 
-                            + sRequestorID);
-                        throw new StyleSheetException(SystemErrors.ERROR_INTERNAL);
-                    }
+            		if(_htMobileRequestorStyleSheets != null && _htMobileRequestorStyleSheets.containsKey(sRequestorID))
+            			sStyleSheet = _htMobileRequestorStyleSheets.get(sRequestorID);
+            		else if(requestor.isProperty(_sHelperID + PROPERTY_LOCATION_MOBILE))
+            			sStyleSheet = (String)requestor.getProperty(_sHelperID + PROPERTY_LOCATION_MOBILE);
+            		
+            		if (sStyleSheet == null) {
+            			RequestorPool oPool = _oRequestorPoolFactory.getRequestorPool(sRequestorID);
+	                    if (oPool == null) {
+	                        _logger.warn("No requestor pool found for requestor with id: " + sRequestorID);
+	                        throw new StyleSheetException(SystemErrors.ERROR_INTERNAL);
+	                    }
                     
-                    if (_htMobileRequestorPoolStyleSheets != null && _htMobileRequestorPoolStyleSheets.containsKey(oPool.getID()))
-                        sStyleSheet = _htMobileRequestorPoolStyleSheets.get(oPool.getID());
-                    else if (oPool.isProperty(_sHelperID + PROPERTY_LOCATION_MOBILE))
-                        sStyleSheet = (String)oPool.getProperty(_sHelperID + PROPERTY_LOCATION_MOBILE);   
+	                    if (_htMobileRequestorPoolStyleSheets != null && _htMobileRequestorPoolStyleSheets.containsKey(oPool.getID()))
+	                        sStyleSheet = _htMobileRequestorPoolStyleSheets.get(oPool.getID());
+	                    else if (oPool.isProperty(_sHelperID + PROPERTY_LOCATION_MOBILE))
+	                        sStyleSheet = (String)oPool.getProperty(_sHelperID + PROPERTY_LOCATION_MOBILE);
+            		}
                 }
             }
             else
             {
-                if (_htRequestorStyleSheets != null && _htRequestorStyleSheets.containsKey(sRequestorID))
-                    sStyleSheet = _htRequestorStyleSheets.get(sRequestorID);
-                else if (requestor.isProperty(_sHelperID + PROPERTY_LOCATION))
-                    sStyleSheet = (String)requestor.getProperty(_sHelperID + PROPERTY_LOCATION);
-                
-                if (sStyleSheet == null)
-                {//resolve location from pool: first try configured; second try requestor pool property 
-                    RequestorPool oPool = 
-                        _oRequestorPoolFactory.getRequestorPool(sRequestorID);
-                    if (oPool == null)
-                    {
-                        _logger.warn("No requestor pool found for requestor with id: " 
-                            + sRequestorID);
-                        throw new StyleSheetException(SystemErrors.ERROR_INTERNAL);
-                    }
-                    
-                    if (_htRequestorPoolStyleSheets != null && _htRequestorPoolStyleSheets.containsKey(oPool.getID()))
-                        sStyleSheet = _htRequestorPoolStyleSheets.get(oPool.getID());
-                    else if (oPool.isProperty(_sHelperID + PROPERTY_LOCATION))
-                        sStyleSheet = (String)oPool.getProperty(_sHelperID + PROPERTY_LOCATION);
-                }
+            	if (sArpTarget != null)
+            	{//resolve location from config by with requestor id is the value of the arp_target
+            		sArpTarget = sArpTarget.replaceAll("@", "_");
+            		
+            		StringBuffer sbArpTarget = new StringBuffer(_sHelperID);
+            		sbArpTarget.append(PROPERTY_LOCATION);
+            		sbArpTarget.append(".");
+            		sbArpTarget.append(sArpTarget);
+            		
+            		if (requestor.isProperty(sbArpTarget.toString()))
+            		{//check if the [helper id].location.[arp_target] is configured as requestor property
+            			sStyleSheet = (String)requestor.getProperty(sbArpTarget.toString());
+            			_logger.debug("Found specific stylesheet by 'arp_target': " + sStyleSheet);
+            		}
+            		else
+            		{
+            			_logger.debug("No requestor property found with name: " + sbArpTarget.toString());
+            		}
+            	}
+            	
+            	if (sStyleSheet == null)
+            	{
+            		if (_htRequestorStyleSheets != null && _htRequestorStyleSheets.containsKey(sRequestorID))
+                        sStyleSheet = _htRequestorStyleSheets.get(sRequestorID);
+                    else if (requestor.isProperty(_sHelperID + PROPERTY_LOCATION))
+                        sStyleSheet = (String)requestor.getProperty(_sHelperID + PROPERTY_LOCATION);
+            		
+            		if (sStyleSheet == null)
+            		{//resolve location from pool: first try configured; second try requestor pool property 
+                        RequestorPool oPool = 
+                                _oRequestorPoolFactory.getRequestorPool(sRequestorID);
+            			
+                        if (oPool == null)
+                        {
+                            _logger.warn("No requestor pool found for requestor with id: " 
+                                + sRequestorID);
+                            throw new StyleSheetException(SystemErrors.ERROR_INTERNAL);
+                        }
+                        
+                        if (_htRequestorPoolStyleSheets != null && _htRequestorPoolStyleSheets.containsKey(oPool.getID()))
+                            sStyleSheet = _htRequestorPoolStyleSheets.get(oPool.getID());
+                        else if (oPool.isProperty(_sHelperID + PROPERTY_LOCATION))
+                            sStyleSheet = (String)oPool.getProperty(_sHelperID + PROPERTY_LOCATION);
+            		}
+            	}
             }
         }
         catch (StyleSheetException e)

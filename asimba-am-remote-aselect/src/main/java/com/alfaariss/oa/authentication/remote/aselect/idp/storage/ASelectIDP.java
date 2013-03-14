@@ -43,7 +43,8 @@ public class ASelectIDP extends AbstractIDP
     private boolean _bASynchronousLogout;
     private boolean _bSynchronousLogout;
     private int _iLevel;
-
+    private boolean _bArpTargetEnabled;
+    
     /**
      * Creates an ASelectOrganization object.
      * @param sOrganizationID The organization id.
@@ -56,11 +57,12 @@ public class ASelectIDP extends AbstractIDP
      * @param sLanguage Optional Language parameter.
      * @param bASynchronousLogout TRUE if asynchronous logout is supported.
      * @param bSynchronousLogout TRUE if synchronous logout is supported.
+     * @param bArpTargetEnabled True if arp_target is enabled. 
      */
     public ASelectIDP(String sOrganizationID, String sFriendlyname, 
         String sServerID, String sURL, int iLevel, boolean bDoSigning, 
         String sCountry, String sLanguage, boolean bASynchronousLogout,
-        boolean bSynchronousLogout)
+        boolean bSynchronousLogout, boolean bArpTargetEnabled)
     {
         super(sOrganizationID, sFriendlyname);
         _sServerID = sServerID;
@@ -71,6 +73,7 @@ public class ASelectIDP extends AbstractIDP
         _sLanguage = sLanguage;
         _bASynchronousLogout = bASynchronousLogout;
         _bSynchronousLogout = bSynchronousLogout;
+        _bArpTargetEnabled = bArpTargetEnabled;
     }
     /**
      * @return TRUE if requests must be signed.
@@ -137,6 +140,16 @@ public class ASelectIDP extends AbstractIDP
         return _bSynchronousLogout;
     }
 
+    /**
+     * Returns TRUE arp_target parameter is supported for the organization.
+     * 
+     * @return TRUE if arp_target parameter must be send.
+     */
+    public boolean isArpTargetEnabled()
+    {
+        return _bArpTargetEnabled;
+    }
+    
     /**
      * @see java.lang.Object#toString()
      */

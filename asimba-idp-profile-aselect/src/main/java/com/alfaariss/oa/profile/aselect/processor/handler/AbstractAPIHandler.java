@@ -1214,7 +1214,7 @@ public class AbstractAPIHandler implements IAuthority
             catch (Exception e)
             {
                 _logger.warn(
-                    "Unable to generate SHA1 hash from user ID: " 
+                    "Unable to generate '"+oMessageDigest.getAlgorithm()+"' hash from user ID: " 
                     + sUid, e);
                 throw new OAException(SystemErrors.ERROR_INTERNAL);
             }

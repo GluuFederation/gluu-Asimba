@@ -418,6 +418,7 @@ public class SPHandler extends AbstractAPIHandler
                             ASelectErrors.ERROR_ASELECT_SERVER_INVALID_REQUEST);
                     }
                     
+                    //DD Signature data contains the request parameters ordered alfabetically 
                     StringBuffer sbSignature = new StringBuffer(sASelectServer);
                     sbSignature.append(sAppId);
                     sbSignature.append(sAppUrl);

@@ -212,9 +212,22 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
                 }
             }
             
+            boolean bSendArpTarget = false;
+            String sSendArpTarget = configManager.getParam(config, "send_arp_target");
+            if (sSendArpTarget != null)
+            {
+                if (sSendArpTarget.equalsIgnoreCase("TRUE"))
+                    bSendArpTarget = true;
+                else if (!sSendArpTarget.equalsIgnoreCase("FALSE"))
+                {
+                    _logger.error("Invalid 'send_arp_target' parameter found in configuration, must be 'true' or 'false': " + sSigning);
+                    throw new OAException(SystemErrors.ERROR_INIT);
+                }
+            }
+            
             oASelectIDP = new ASelectIDP(sOrganizationID, 
                 sFriendlyname, sServerID, sURL, iLevel, bDoSigning, sCountry, 
-                sLanguage, bASynchronousLogout, bSynchronousLogout);
+                sLanguage, bASynchronousLogout, bSynchronousLogout, bSendArpTarget);
         }
         catch (OAException e)
         {
@@ -223,7 +236,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
         catch (Exception e)
         {
             _logger.fatal("Internal error during create", e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
+            throw new OAException(SystemErrors.ERROR_INTERNAL, e);
         } 
         return oASelectIDP;
     }

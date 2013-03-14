@@ -127,7 +127,7 @@ public class DefaultSelector implements ISelector
         catch (Exception e)
         {
             _logger.fatal("Internal error during start", e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
+            throw new OAException(SystemErrors.ERROR_INTERNAL, e);
         }
     }
 
@@ -184,7 +184,7 @@ public class DefaultSelector implements ISelector
         catch (Exception e)
         {
             _logger.fatal("Internal error during resolve", e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
+            throw new OAException(SystemErrors.ERROR_INTERNAL, e);
         }
         
         return oSelectedOrganization;
@@ -228,7 +228,7 @@ public class DefaultSelector implements ISelector
         catch (Exception e)
         {
             _logger.fatal("Internal error during forward", e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
+            throw new OAException(SystemErrors.ERROR_INTERNAL, e);
         }
     }
 }

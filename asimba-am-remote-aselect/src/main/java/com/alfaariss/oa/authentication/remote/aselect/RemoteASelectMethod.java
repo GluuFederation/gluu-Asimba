@@ -23,6 +23,7 @@
 package com.alfaariss.oa.authentication.remote.aselect;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Collection;
@@ -45,9 +46,11 @@ import com.alfaariss.oa.UserEvent;
 import com.alfaariss.oa.UserException;
 import com.alfaariss.oa.api.attribute.IAttributes;
 import com.alfaariss.oa.api.attribute.ISessionAttributes;
+import com.alfaariss.oa.api.authentication.IAuthenticationProfile;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.logging.IAuthority;
 import com.alfaariss.oa.api.session.ISession;
+import com.alfaariss.oa.api.session.SessionState;
 import com.alfaariss.oa.api.sso.logout.IASLogout;
 import com.alfaariss.oa.api.tgt.ITGT;
 import com.alfaariss.oa.api.user.IUser;
@@ -57,6 +60,8 @@ import com.alfaariss.oa.authentication.remote.aselect.logout.LogoutManager;
 import com.alfaariss.oa.authentication.remote.aselect.selector.ISelector;
 import com.alfaariss.oa.engine.core.attribute.AttributeException;
 import com.alfaariss.oa.engine.core.attribute.UserAttributes;
+import com.alfaariss.oa.engine.core.authentication.AuthenticationProfile;
+import com.alfaariss.oa.engine.core.authentication.factory.IAuthenticationProfileFactory;
 import com.alfaariss.oa.engine.core.idp.IDPStorageManager;
 import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
 import com.alfaariss.oa.engine.core.tgt.factory.ITGTAliasStore;
@@ -84,6 +89,7 @@ public class RemoteASelectMethod extends AbstractRemoteMethod implements IASLogo
     private final static String SESSION_AVAILABLE_ORGANIZATIONS = "available_organizations";
     private final static String SESSION_PROXY_REQUIRED_LEVEL = "required_level";
     private final static String SESSION_LOGOUT_ORGANIZATION = "aslogout_organization";//contains a ASelectOrganization object
+    private final static String SESSION_PROXY_ARP_TARGET = "arp_target";
     
     private final static String SINGLE_LOGOUT = "slo";
     private final static String AUTHENTICATE = "authenticate";
@@ -113,7 +119,9 @@ public class RemoteASelectMethod extends AbstractRemoteMethod implements IASLogo
     private final static String PARAM_SIGNATURE = "signature";
     private final static String PARAM_REMOTE_ORGANIZATION = "remote_organization";
     private final static String PARAM_REQUIRED_LEVEL = "required_level";
-
+    private final static String PARAM_ARP_TARGET = "arp_target";
+    
+    private IAuthenticationProfileFactory _authNProfileFactory;
     private String _sMyOrganization;
     private ISelector _oSelector;
     private boolean _bFallback;
@@ -121,6 +129,7 @@ public class RemoteASelectMethod extends AbstractRemoteMethod implements IASLogo
     private IIDPStorage _idpStorage;
     private LogoutManager _logoutManager;
     private ITGTAliasStore _aliasStoreIDPRole;
+    private String _sForceAuthNProfile;
     
     /**
      * Constructor.
@@ -131,6 +140,7 @@ public class RemoteASelectMethod extends AbstractRemoteMethod implements IASLogo
         _htAttributeMapper = new Hashtable<String, String>();
         _bFallback = false;
         _logoutManager = null;
+        _sForceAuthNProfile = null;
     }
     
     /**
@@ -142,6 +152,8 @@ public class RemoteASelectMethod extends AbstractRemoteMethod implements IASLogo
         try
         {
             super.start(oConfigurationManager, eConfig);
+            
+            _authNProfileFactory = _engine.getAuthenticationProfileFactory();
             
             Element eSelector = _configurationManager.getSection(eConfig, "selector");
             if (eSelector == null)
@@ -164,22 +176,22 @@ public class RemoteASelectMethod extends AbstractRemoteMethod implements IASLogo
                 catch (InstantiationException e)
                 {
                     _logger.error("Can't create an instance of the configured class: " + sSelectorClass, e);
-                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+                    throw new OAException(SystemErrors.ERROR_CONFIG_READ, e);
                 }
                 catch (IllegalAccessException e)
                 {
                     _logger.error("Configured class can't be accessed: " + sSelectorClass, e);
-                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+                    throw new OAException(SystemErrors.ERROR_CONFIG_READ, e);
                 }
                 catch (ClassNotFoundException e)
                 {
                     _logger.error("Configured class doesn't exist: " + sSelectorClass, e);
-                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+                    throw new OAException(SystemErrors.ERROR_CONFIG_READ, e);
                 }
                 catch (ClassCastException e)
                 {
                     _logger.error("Configured class isn't of type 'ISelector': " + sSelectorClass, e);
-                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+                    throw new OAException(SystemErrors.ERROR_CONFIG_READ, e);
                 }
                 
                 _oSelector.start(_configurationManager, eSelector);
@@ -271,6 +283,12 @@ public class RemoteASelectMethod extends AbstractRemoteMethod implements IASLogo
                 
                 _engine.getTGTFactory().addListener(_logoutManager);
             }
+            
+            Element eReplay = _configurationManager.getSection(eConfig, "replay");
+            if (eReplay != null)
+            {
+                readReplay(eReplay);
+            }
         }
         catch (OAException e)
         {
@@ -346,6 +364,9 @@ public class RemoteASelectMethod extends AbstractRemoteMethod implements IASLogo
         {
             oAttributes.remove(RemoteASelectMethod.class, _sMethodId+SESSION_SELECTED_ORGANIZATION);
             _logger.debug("User returned from organization by using browser back button");
+            
+            if (performReplay(oSession, oAttributes))
+                return UserEvent.AUTHN_METHOD_IN_PROGRESS;
         }
         
         //Authenticate
@@ -933,6 +954,14 @@ public class RemoteASelectMethod extends AbstractRemoteMethod implements IASLogo
                 }
             }
             
+            if (oASelectOrganization.isArpTargetEnabled())
+            {
+                String sArpTarget = resolveArpTarget(oAttributes, 
+                    oSession.getRequestorId());
+                if (sArpTarget != null)
+                    htRequest.put(PARAM_ARP_TARGET, sArpTarget);
+            }
+            
             if (oASelectOrganization.doSigning())
             {
                 String sSignature = createSignature(htRequest);
@@ -1182,6 +1211,12 @@ public class RemoteASelectMethod extends AbstractRemoteMethod implements IASLogo
                         this, null));
                     
                     oUserEvent = UserEvent.USER_CANCELLED;
+                    _logger.debug("User returned from organization where the cancel button was used");
+                    
+                    oSession.getAttributes().remove(RemoteASelectMethod.class, _sMethodId+SESSION_SELECTED_ORGANIZATION);
+                    
+                    if (performReplay(oSession, oSession.getAttributes()))
+                        return UserEvent.AUTHN_METHOD_IN_PROGRESS;
                 }
                 else
                 {                 
@@ -1364,6 +1399,97 @@ public class RemoteASelectMethod extends AbstractRemoteMethod implements IASLogo
             target.put(sName, oValue);
         }
         return target;
+    }
+    
+    private String resolveArpTarget(ISessionAttributes oAttributes, String requestor)
+    {
+        String sArpTarget = null;
+        try
+        {
+            sArpTarget = (String)oAttributes.get(ProxyAttributes.class, SESSION_PROXY_ARP_TARGET);
+            if (sArpTarget == null)
+            {
+                StringBuffer sbArpTarget = new StringBuffer();
+                sbArpTarget.append(URLEncoder.encode(requestor, "UTF-8"));
+                sbArpTarget.append("@");
+                sbArpTarget.append(URLEncoder.encode(_sMyOrganization, "UTF-8"));
+                sArpTarget = sbArpTarget.toString();
+            }
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            _logger.warn("No support for UTF-8", e);
+        }
+        
+        return sArpTarget;
+    }
+    
+    /**
+     * Returns false when replay is not performed.
+     * If replay is performed and user authentication should not proceed, a userevent should be returned. 
+     */
+    private boolean performReplay(ISession oSession, ISessionAttributes oAttributes) 
+        throws OAException
+    {   
+        boolean bPerformed = false;
+        if (_sForceAuthNProfile != null)
+        {
+            AuthenticationProfile forceAuthNProfile = _authNProfileFactory.getProfile(_sForceAuthNProfile);
+            if (forceAuthNProfile == null)
+            {
+                _logger.error("AuthenticationProfile is not available: " + _sForceAuthNProfile);
+                throw new OAException(SystemErrors.ERROR_INTERNAL);
+            }
+            
+            if (!forceAuthNProfile.isEnabled())
+            {
+                _logger.error("AuthenticationProfile is disabled: " + _sForceAuthNProfile);
+                throw new OAException(SystemErrors.ERROR_INTERNAL);
+            }
+            
+            List<IAuthenticationProfile> listProfiles = new Vector<IAuthenticationProfile>();
+            listProfiles.add(forceAuthNProfile);
+            
+            oSession.setState(SessionState.AUTHN_NOT_SUPPORTED);
+            oSession.setAuthNProfiles(listProfiles);
+            oSession.setSelectedAuthNProfile(forceAuthNProfile);
+            
+            //Reset forced organizations which is set by authn.entree.wayf
+            if (oAttributes.contains(ProxyAttributes.class, ProxyAttributes.FORCED_ORGANIZATIONS))
+                oAttributes.remove(ProxyAttributes.class, ProxyAttributes.FORCED_ORGANIZATIONS);
+            
+            oSession.persist();
+            
+            bPerformed = true;
+        }
+        
+        return bPerformed;
+    }
+    
+    private void readReplay(Element eConfig) throws OAException
+    {
+        Element eForceProfile = _configurationManager.getSection(eConfig, "forceprofile");
+        if (eForceProfile != null)
+        {
+            _sForceAuthNProfile = _configurationManager.getParam(eForceProfile, "id");
+            if (_sForceAuthNProfile == null)
+            {
+                _logger.error("No 'id' parameter in 'forceprofile' configured");
+                throw new OAException(SystemErrors.ERROR_INIT);
+            }
+            
+            AuthenticationProfile forceAuthNProfile = _authNProfileFactory.getProfile(_sForceAuthNProfile);
+            if (forceAuthNProfile == null)
+            {
+                _logger.error("AuthenticationProfile is not available: " + _sForceAuthNProfile);
+                throw new OAException(SystemErrors.ERROR_INIT);
+            }
+            
+            if (!forceAuthNProfile.isEnabled())
+            {
+                _logger.warn("AuthenticationProfile is disabled: " + _sForceAuthNProfile);
+            }
+        }        
     }
 
 }
