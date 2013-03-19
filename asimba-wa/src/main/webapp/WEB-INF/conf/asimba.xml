@@ -459,7 +459,6 @@
 							<length>16</length>
 						</format>
 						<format id="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" />
-						<format id="urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified" />
 						
 <!-- 						<format id="urn:oasis:names:tc:SAML:1.1:nameid-format:email">
 							<attribute name="email"/>
@@ -496,7 +495,6 @@
 							<length>16</length>
 						</format>
 						<format id="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" />
-						<format id="urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified" />
 						
 						<!-- dopey adds: -->
 <!-- 						<format id="urn:oasis:names:tc:SAML:1.1:nameid-format:email">
