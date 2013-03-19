@@ -4,7 +4,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>1.1.1-SNAPSHOT</version>
+    <version>1.1.1</version>
   </parent>
   <artifactId>asimba-am-password</artifactId>
   <name>asimba-am-password</name>
@@ -21,32 +21,32 @@
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-api</artifactId>
-    	<version>1.1.1-SNAPSHOT</version>
+    	<version>1.1.1</version>
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-engine-core</artifactId>
-    	<version>1.1.1-SNAPSHOT</version>
+    	<version>1.1.1</version>
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-utility</artifactId>
-    	<version>1.1.1-SNAPSHOT</version>
+    	<version>1.1.1</version>
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-engine-sso</artifactId>
-    	<version>1.1.1-SNAPSHOT</version>
+    	<version>1.1.1</version>
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-sso-web</artifactId>
-    	<version>1.1.1-SNAPSHOT</version>
+    	<version>1.1.1</version>
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-wa</artifactId>
-    	<version>1.1.1-SNAPSHOT</version>
+    	<version>1.1.1</version>
     	<type>war</type>
     </dependency>
     
