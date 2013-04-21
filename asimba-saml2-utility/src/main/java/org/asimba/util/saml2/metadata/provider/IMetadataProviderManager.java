@@ -100,8 +100,10 @@ public interface IMetadataProviderManager {
 	 * 
 	 * @param sSourceRef Source Reference or ID of a MetadataProvider
 	 * @param oMDP MetadataProvider to link to the source
+	 * @param oTimer The RefreshTimer that is managed with the 
+	 * 	refreshing MetadataProvider
 	 */
-	public void setProviderFor(String sSourceRef, MetadataProvider oMDP)
+	public void setProviderFor(String sSourceRef, MetadataProvider oMDP, Timer oTimer)
 			throws OAException;
 	
 	/**
@@ -120,4 +122,9 @@ public interface IMetadataProviderManager {
 	 */
 	public List<IIDP> getIDPs(String sSourceRef);
 	
+	
+	/**
+	 * Clean up all of the the resources of MetadataProviderManager
+	 */
+	public void destroy();
 }

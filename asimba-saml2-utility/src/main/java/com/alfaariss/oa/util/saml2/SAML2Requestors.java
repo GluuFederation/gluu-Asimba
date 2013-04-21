@@ -37,7 +37,17 @@ import com.alfaariss.oa.engine.core.Engine;
 import com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory;
 
 /**
- * Requestors object.
+ * SAML2 Requestors, used to manage SAML2Requestor instances.
+ * 
+ * When configured through ConfigManager, the SAML2Requestors are loaded only on startup
+ * and SAML2Requestors are maintained in a locally cached HashMap.
+ * When configured through other means (JDBC), each time a Requestor is asked for,
+ * it is instantiated.
+ * 
+ *  Note that a SAML2Requestors instance is always tied to a ProfileID, typically the
+ *  SAML2 IDP Profile for which the SAML2Requestors are managed
+ *  
+ * @author mdobrinic
  * @author MHO
  * @author Alfa & Ariss
  */
@@ -142,7 +152,11 @@ public class SAML2Requestors
     }
     
     /**
-     * Returns a SAML2 requestor object with SAML2 specific config items.
+     * Returns a SAML2 Requestor instance, with SAML2 specific config items.
+     * The SAML2Requestor is either instantiated on server startup (through ConfigManager),
+     * or when no SAML2Requestors were estblished on startup using ConfigManager, a new
+     * SAML2Requestor instance is created on the fly (typically when using a JDBC source for 
+     * Requestor configuration)
      *
      * @param oRequestor The OA requestor object.
      * @return SAML2Requestor or <code>null</code> if supplied IRequestor is <code>null</code>.
@@ -151,16 +165,16 @@ public class SAML2Requestors
      */
     public SAML2Requestor getRequestor(IRequestor oRequestor) throws OAException
     {
-        SAML2Requestor requestor = null;
+        SAML2Requestor oSAML2Requestor = null;
         try
         {
             if (oRequestor == null)
                 return null;
             
-            requestor = _mapRequestors.get(oRequestor.getID());
-            if (requestor == null)
-                requestor = new SAML2Requestor(oRequestor, _bDefaultSigning, 
-                    _sProfileID);
+            oSAML2Requestor = _mapRequestors.get(oRequestor.getID());
+            if (oSAML2Requestor == null) {
+                oSAML2Requestor = new SAML2Requestor(oRequestor, _bDefaultSigning, _sProfileID);
+            }
         }
         catch (OAException e)
         {
@@ -173,7 +187,7 @@ public class SAML2Requestors
                 + oRequestor.getID(), e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
-        return requestor;
+        return oSAML2Requestor;
     }
     
     private Map<String, SAML2Requestor> readRequestors(IConfigurationManager 
@@ -189,7 +203,7 @@ public class SAML2Requestors
             while (eRequestor != null)
             {
                 SAML2Requestor requestor = new SAML2Requestor(configurationManager, 
-                    eRequestor, _bDefaultSigning);
+                    eRequestor, _bDefaultSigning, _sProfileID);
 
                 if (requestorPoolFactory.getRequestor(requestor.getID()) == null)
                 {

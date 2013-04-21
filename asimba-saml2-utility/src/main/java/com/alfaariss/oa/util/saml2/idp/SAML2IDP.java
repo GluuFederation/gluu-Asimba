@@ -32,12 +32,15 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
+import java.util.Timer;
 import java.util.Vector;
 
+import org.apache.commons.httpclient.HttpClient;
+import org.asimba.util.saml2.metadata.provider.IMetadataProviderManager;
+import org.asimba.util.saml2.metadata.provider.MetadataProviderUtil;
 import org.asimba.util.saml2.metadata.provider.XMLObjectMetadataProvider;
+import org.asimba.utility.filesystem.PathTranslator;
 import org.opensaml.saml2.metadata.provider.ChainingMetadataProvider;
-import org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider;
-import org.opensaml.saml2.metadata.provider.HTTPMetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.xml.XMLObject;
@@ -81,6 +84,9 @@ public class SAML2IDP extends AbstractIDP
     private Boolean _boolNameIDPolicy;
     private Boolean _boolAllowCreate;    
     private String _sNameIDFormat;
+    
+    /** When set, MetadataProvider is/must be managed through _oMPM */
+    private IMetadataProviderManager _oMPM;
     
     /**
      * Element containing the parsed XMLObject of the metadata document
@@ -126,8 +132,9 @@ public class SAML2IDP extends AbstractIDP
     public SAML2IDP(String sID, byte[] baSourceID, String sFriendlyName,
         String sMetadataFile, String sMetadataURL, 
         int iMetadataTimeout, Boolean useACSIndex, Boolean useAllowCreate, 
-        Boolean useScoping, Boolean useNameIDPolicy, String forceNameIDFormat) 
-        throws OAException
+        Boolean useScoping, Boolean useNameIDPolicy, String forceNameIDFormat,
+        IMetadataProviderManager oMPM) 
+        		throws OAException
     {
         super(sID, sFriendlyName);
         
@@ -182,6 +189,9 @@ public class SAML2IDP extends AbstractIDP
         _boolNameIDPolicy = useNameIDPolicy;
         _boolAllowCreate = useAllowCreate;
         _sNameIDFormat = forceNameIDFormat;
+        
+        // Keep reference to MetadataProviderManager as it was passed
+        _oMPM = oMPM;
     }
     
     /**
@@ -202,6 +212,11 @@ public class SAML2IDP extends AbstractIDP
     	return (_oMetadataProvider != null);
     }
     
+    /**
+     * Set MetadataProvider for this SAML2IDP
+     * Note: no responsibility is taken for managing it; must have been taken care of
+     * @param oMetadataProvider
+     */
     public void setMetadataProvider(MetadataProvider oMetadataProvider) {
     	_oMetadataProvider = oMetadataProvider;
     	
@@ -252,39 +267,45 @@ public class SAML2IDP extends AbstractIDP
 				return new XMLObjectMetadataProvider(_oMetadataXMLObject);
 
     		} catch (XMLParserException e) {
-				_logger.warn("XMLParser error with establishing metadata for SAML2IDP, trying file/url: "+e.getMessage());
+				_logger.warn("XMLParser exception with establishing metadata for SAML2IDP, trying file/url: "+e.getMessage());
 			} catch (UnmarshallingException e) {
 				_logger.warn("Unmarshalling exception with establishing metadata for SAML2IDP, trying file/url: "+e.getMessage());
 			}
     	}
+
+    	MetadataProvider oMP = null;
     	
-    	// So we need to create a new MetadataProvider for URL or file:
+    	// Can we get a managed MetadataProvider?
+    	if (_oMPM != null) {
+    		oMP = _oMPM.getProviderFor(_sID);
+    		
+    		// When successfull, be done.
+    		if (oMP != null) {
+    			_oMetadataProvider = oMP;
+    			return _oMetadataProvider;
+    		}
+    	}
     	
-        ChainingMetadataProvider chainingMetadataProvider = null;
-        
         try
         {
             BasicParserPool parserPool = new BasicParserPool();
             parserPool.setNamespaceAware(true);
-            
-            List<MetadataProvider> listMetadataProviders = 
-                new Vector<MetadataProvider>();
-            
-            MetadataProvider mpFile = createFileMetadataProvider(_sMetadataFile, 
-                parserPool);
-            if (mpFile != null)
-                listMetadataProviders.add(mpFile);
-            
-            MetadataProvider mpHttp = createHTTPMetadataProvider(_sMetadataURL, 
-                _iMetadataTimeout, parserPool);
-            if (mpHttp != null)
-                listMetadataProviders.add(mpHttp);
-            
-            if (!listMetadataProviders.isEmpty())
-            {
-                chainingMetadataProvider = new ChainingMetadataProvider();
-                chainingMetadataProvider.setProviders(listMetadataProviders);
+
+            oMP = createFileMetadataProvider(_sMetadataFile, parserPool, _oMPM);
+            if (oMP != null) {
+            	_oMetadataProvider = oMP;
+            	return _oMetadataProvider;
             }
+
+            // No file, try HTTP:
+            oMP = createHTTPMetadataProvider(_sMetadataURL, _iMetadataTimeout, parserPool, _oMPM);
+            if (oMP != null) {
+            	_oMetadataProvider = oMP;
+            	return _oMetadataProvider;
+            }
+         
+            _logger.warn("No MetadataProvider could be created for SAML2IDP "+_sID);
+            return null;
         }
         catch (OAException e)
         {
@@ -295,7 +316,6 @@ public class SAML2IDP extends AbstractIDP
             _logger.fatal("Internal error while creating metadata providers", e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
-        return chainingMetadataProvider;
     }
     
     /**
@@ -392,105 +412,97 @@ public class SAML2IDP extends AbstractIDP
     }
     
     
-    private HTTPMetadataProvider createHTTPMetadataProvider(String sMetadataURL,
-        int iMetadataTimeout, ParserPool parserPool) 
+    private MetadataProvider createHTTPMetadataProvider(String sMetadataURL,
+        int iMetadataTimeout, ParserPool parserPool, IMetadataProviderManager oMPM) 
         throws OAException
     {
-        HTTPMetadataProvider urlProvider = null;
+        MetadataProvider oProvider = null;
         
-        if (sMetadataURL == null)
-        {
+        if (sMetadataURL == null) {
             return null;
         }
-          
-        URL urlTarget = null;
-        try
-        {
-            urlTarget = new URL(sMetadataURL);
-        }
-        catch (MalformedURLException e)
-        {
-            _logger.error(
-                "Invalid 'url' item in 'http' section found in configuration: " 
+        
+        // Check URL format
+        URL oURLTarget = null;
+        try {
+            oURLTarget = new URL(sMetadataURL);
+        } catch (MalformedURLException e) {
+            _logger.error("Invalid 'url' item in 'http' section found in configuration: " 
                 + sMetadataURL, e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
         
-        try
-        {
-            URLConnection urlConnection = urlTarget.openConnection();
-            urlConnection.setConnectTimeout(3000);
-            urlConnection.setReadTimeout(3000);
-            urlConnection.connect();
-        }
-        catch (IOException e)
-        {
-            _logger.warn(
-                "Could not connect to metadata url: " + sMetadataURL, e);
+        // Set (configurable) timeout settings
+        try {
+            URLConnection oURLConnection = oURLTarget.openConnection();
+            if (iMetadataTimeout == 0) {
+	            oURLConnection.setConnectTimeout(3000);
+	            oURLConnection.setReadTimeout(3000);
+            } else {
+            	oURLConnection.setConnectTimeout(iMetadataTimeout);
+	            oURLConnection.setReadTimeout(iMetadataTimeout);
+            }
+            
+            oURLConnection.connect();
+        } catch (IOException e) {
+            _logger.warn("Could not connect to metadata url: " + _sMetadataURL +
+            		"(using timout "+(iMetadataTimeout==0?"3000":iMetadataTimeout) +"ms)", e);
         }
         
-        try
-        {
-            urlProvider = new HTTPMetadataProvider(sMetadataURL, 
-                iMetadataTimeout);
-            urlProvider.setParserPool(parserPool);
-            urlProvider.initialize();
-        }
-        catch (MetadataProviderException e)
-        {
-            StringBuffer sbDebug = new StringBuffer();
-            sbDebug.append("No metadata available at configured URL '");
-            sbDebug.append(sMetadataURL);
-            sbDebug.append("': Disabling http metadata for this IDP");
-            _logger.warn(sbDebug.toString(), e);
-            
-            urlProvider = null;
-        }
-
-        return urlProvider;
+        // Establish dedicated refresh timer:
+        Timer oRefreshTimer = new Timer("Metadata_IDP-"+_sID+"-Timer", true);
+        
+        // Establish HttpClient
+    	HttpClient oHttpClient = new HttpClient();
+        
+        if (iMetadataTimeout > 0) {
+            // Set configured Timeout settings
+        	oHttpClient.getParams().setSoTimeout(iMetadataTimeout);
+        }        
+        
+    	oProvider = MetadataProviderUtil.createProviderForURL(sMetadataURL, parserPool, 
+    			oRefreshTimer, oHttpClient);
+    	
+    	// Start managing it:
+    	if (oMPM != null) {
+    		oMPM.setProviderFor(_sID, oProvider, oRefreshTimer);
+    	}
+    	
+        return oProvider;
     }
     
-    private FilesystemMetadataProvider createFileMetadataProvider(
-        String sMetadataFile, ParserPool parserPool) 
+    
+    private MetadataProvider createFileMetadataProvider(
+        String sMetadataFile, ParserPool parserPool, IMetadataProviderManager oMPM) 
         throws OAException
     {
-        FilesystemMetadataProvider fileProvider = null;
-        if (sMetadataFile == null)
-        {
+        MetadataProvider oProvider = null;
+        if (sMetadataFile == null) {
             return null;
         }
 
+        // Establish real filename (filter virtual mounts)
+    	sMetadataFile = PathTranslator.getInstance().map(sMetadataFile);
+    	
+    	// Check whether file exists
         File fMetadata = new File(sMetadataFile);
-        if (!fMetadata.exists())
-        {
-            _logger.error("Configured metadata 'file' doesn't exist: " 
-                + sMetadataFile);
+        if (!fMetadata.exists()) {
+            _logger.error("Configured metadata 'file' doesn't exist: " + sMetadataFile);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
         
-        try
-        {
-            fileProvider = new FilesystemMetadataProvider(fMetadata);
-        }
-        catch (MetadataProviderException e)
-        {
-            _logger.error("No metadata available in configured file: " 
-                + sMetadataFile, e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
-        }
+        // Establish dedicated refresh timer:
+        Timer oRefreshTimer = new Timer("Metadata_IDP-"+_sID+"-Timer", true);
         
-        fileProvider.setParserPool(parserPool);
-        try
-        {
-            fileProvider.initialize();
-        }
-        catch (MetadataProviderException e)
-        {
-            _logger.error("No metadata available in configured file: " 
-                + sMetadataFile, e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
-        }
-        return fileProvider;
+    	oProvider = MetadataProviderUtil.createProviderForFile(sMetadataFile, parserPool, 
+    			oRefreshTimer);
+        
+    	// Start managing it:
+    	if (oMPM != null) {
+    		oMPM.setProviderFor(_sID, oProvider, oRefreshTimer);
+    	}
+        
+        return oProvider;
     }
     
     

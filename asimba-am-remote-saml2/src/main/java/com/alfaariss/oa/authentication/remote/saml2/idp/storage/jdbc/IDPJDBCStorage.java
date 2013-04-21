@@ -28,6 +28,10 @@ import java.sql.ResultSet;
 import java.util.List;
 import java.util.Vector;
 
+import org.asimba.util.saml2.metadata.provider.IMetadataProviderManager;
+import org.asimba.util.saml2.metadata.provider.management.StandardMetadataProviderManager;
+import org.asimba.util.saml2.metadata.provider.management.MdMgrManager;
+import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -102,7 +106,22 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
         
         createQueries();
         
+        // Instantiate MetadataProviderManager
+        // Set with ID of this IDPStorage instance
+        StandardMetadataProviderManager oMPM = new StandardMetadataProviderManager();
+        MdMgrManager.getInstance().setMetadataProviderManager(_sID, oMPM);
+        
         _logger.info("Started storage with id: " + _sID);
+    }
+    
+    @Override
+    public void stop() {
+        // Clean up the MetadataProviderManager:
+        MdMgrManager.getInstance().deleteMetadataProviderManager(_sID);
+    	
+    	super.stop();
+        
+    	_logger.info("Stopped storage with id: " + _sID);
     }
     
     /**
@@ -130,6 +149,9 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
         PreparedStatement pSelect = null;
         ResultSet resultSet = null;
         List<IIDP> listIDPs = new Vector<IIDP>();
+        
+        IMetadataProviderManager oMPM = MdMgrManager.getInstance().getMetadataProviderManager(_sID);
+        
         try
         {
             connection = _dataSource.getConnection();
@@ -165,7 +187,8 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     resultSet.getInt(COLUMN_METADATA_TIMEOUT),
                     boolACSIndex, boolAllowCreate, 
                     boolScoping, boolNameIDPolicy,
-                    resultSet.getString(COLUMN_NAMEIDFORMAT));
+                    resultSet.getString(COLUMN_NAMEIDFORMAT),
+                    oMPM);
                 listIDPs.add(idp);
             }
         }
@@ -337,6 +360,9 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
         PreparedStatement pSelect = null;
         ResultSet resultSet = null;
         SAML2IDP saml2IDP = null;
+        
+        IMetadataProviderManager oMPM = MdMgrManager.getInstance().getMetadataProviderManager(_sID);
+        
         try
         {
             connection = _dataSource.getConnection();
@@ -372,7 +398,8 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     resultSet.getInt(COLUMN_METADATA_TIMEOUT),
                     boolACSIndex, boolAllowCreate, 
                     boolScoping, boolNameIDPolicy,
-                    resultSet.getString(COLUMN_NAMEIDFORMAT));
+                    resultSet.getString(COLUMN_NAMEIDFORMAT),
+                    oMPM);
             }
         }
         catch(OAException e)
@@ -415,6 +442,9 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
         PreparedStatement pSelect = null;
         ResultSet resultSet = null;
         SAML2IDP saml2IDP = null;
+        
+        IMetadataProviderManager oMPM = MdMgrManager.getInstance().getMetadataProviderManager(_sID);
+        
         try
         {
             connection = _dataSource.getConnection();
@@ -450,7 +480,8 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     resultSet.getInt(COLUMN_METADATA_TIMEOUT),
                     boolACSIndex, boolAllowCreate, 
                     boolScoping, boolNameIDPolicy,
-                    resultSet.getString(COLUMN_NAMEIDFORMAT));
+                    resultSet.getString(COLUMN_NAMEIDFORMAT),
+                    oMPM);
             }
         }
         catch(OAException e)

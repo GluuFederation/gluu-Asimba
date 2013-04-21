@@ -97,7 +97,10 @@ public class MetadataProviderUtil {
     private static Timer getTimer(Timer oTimer) {
 		if (oTimer == null) {
 			if (_oSharedTimer == null) {
-				_oSharedTimer = new Timer();
+				// Create named timer as daemon thread
+				// Be warned that this is not managed anywhere!
+				_oSharedTimer = new Timer("MetadataProviderUtil-Timer", true);
+				_oLogger.info("Creating static Timer thread for MetadataProviderUtil: ");
 			}
 			if (_oLogger.isTraceEnabled()) {
 				_oLogger.trace("Using shared Timer instance.");
@@ -195,7 +198,27 @@ public class MetadataProviderUtil {
     	return createProviderForURL(sMetadataSource, 
     			DEFAULT_PARSERPOOL, DEFAULT_TIMER, DEFAULT_HTTPCLIENT);
 	}
-    
+
+	/**
+	 * Wrapper that uses HttpProvider with specified timeout, default parserpool and timer
+	 * @param sMetadataSource
+	 * @param oParserPool
+	 * @param oTimer
+	 * @return
+	 * @throws OAException
+	 */
+    public static MetadataProvider createProviderForURL(String sMetadataSource, int iTimeoutMs)
+		throws OAException
+	{
+    	HttpClient oHttpClient;
+    	
+    	oHttpClient = new HttpClient();
+    	oHttpClient.getParams().setSoTimeout(iTimeoutMs);
+    	
+    	return createProviderForURL(sMetadataSource, 
+    			DEFAULT_PARSERPOOL, DEFAULT_TIMER, oHttpClient);
+	}
+
     
     /**
      * Establich MetadataProvider for provided filename
@@ -231,7 +254,7 @@ public class MetadataProviderUtil {
 			
 			oFileMetadataProvider.setParserPool(oParserPool);
 			oFileMetadataProvider.initialize();
-			
+
 		} catch (MetadataProviderException e) {
 			_oLogger.error("Exception when creating HTTPMetadataProvider: "+e.getMessage());
 			throw new OAException(SystemErrors.ERROR_INTERNAL);

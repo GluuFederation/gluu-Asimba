@@ -39,6 +39,8 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.asimba.util.saml2.metadata.provider.management.StandardMetadataProviderManager;
+import org.asimba.util.saml2.metadata.provider.management.MdMgrManager;
 import org.opensaml.Configuration;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
@@ -250,6 +252,11 @@ public class SAML2Profile implements IRequestorProfile, IService
                 _oSAML2TGTListener = null;
             }
             
+            // Instantiate MetadataProviderManager
+            // Set with ID of this SAML2-profile instance
+            StandardMetadataProviderManager oMPM = new StandardMetadataProviderManager();
+            MdMgrManager.getInstance().setMetadataProviderManager(_sID, oMPM);
+            
             signMetaData(); 
         }
         catch (OAException e)
@@ -356,6 +363,9 @@ public class SAML2Profile implements IRequestorProfile, IService
         
         if (_requestors != null)
             _requestors.destroy();
+        
+        // Clean up the MetadataProviderManager:
+        MdMgrManager.getInstance().deleteMetadataProviderManager(_sID);
     }
     
     private ISAML2Profile createProfile(IConfigurationManager 

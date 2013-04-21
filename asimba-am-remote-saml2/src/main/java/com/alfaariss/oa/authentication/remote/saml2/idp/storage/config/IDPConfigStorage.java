@@ -34,6 +34,9 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Map;
 
+import org.asimba.util.saml2.metadata.provider.IMetadataProviderManager;
+import org.asimba.util.saml2.metadata.provider.management.StandardMetadataProviderManager;
+import org.asimba.util.saml2.metadata.provider.management.MdMgrManager;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -79,6 +82,11 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
             _sID = DEFAULT_ID;
         }
         
+        // Instantiate MetadataProviderManager
+        // Set with ID of this IDPStorage instance
+        StandardMetadataProviderManager oMPM = new StandardMetadataProviderManager();
+        MdMgrManager.getInstance().setMetadataProviderManager(_sID, oMPM);
+        
         super.start(configManager, config);
         
         Enumeration<?> enumIDPs = _htIDPs.elements();
@@ -121,6 +129,9 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
         if (_mapIDPsOnSourceID != null)
             _mapIDPsOnSourceID.clear();
         
+        // Clean up the MetadataProviderManager:
+        MdMgrManager.getInstance().deleteMetadataProviderManager(_sID);
+        
         super.stop();
     }
 
@@ -132,6 +143,8 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
         throws OAException
     {
         SAML2IDP saml2IDP = null;
+        
+        IMetadataProviderManager oMPM = MdMgrManager.getInstance().getMetadataProviderManager(_sID);
         
         try
         {
@@ -336,7 +349,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
             
             saml2IDP = new SAML2IDP(sID, baSourceID, sFriendlyName, 
                 sMetadataFile, sMetadataURL, iMetadataURLTimeout, boolACSIndex, 
-                boolAllowCreate, boolScoping, boolNameIDPolicy, sNameIDFormat);
+                boolAllowCreate, boolScoping, boolNameIDPolicy, sNameIDFormat, oMPM);
         }
         catch (OAException e)
         {
