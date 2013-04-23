@@ -86,7 +86,7 @@ public class SAML2IDP extends AbstractIDP
     private String _sNameIDFormat;
     
     /** When set, MetadataProvider is/must be managed through _oMPM */
-    private IMetadataProviderManager _oMPM;
+    transient private IMetadataProviderManager _oMPM;
     
     /**
      * Element containing the parsed XMLObject of the metadata document
@@ -264,7 +264,10 @@ public class SAML2IDP extends AbstractIDP
             
 				_oMetadataXMLObject = XMLObjectHelper.unmarshallFromReader(parserPool, oSR);
 				
-				return new XMLObjectMetadataProvider(_oMetadataXMLObject);
+				XMLObjectMetadataProvider oMP = new XMLObjectMetadataProvider(_oMetadataXMLObject);
+				oMP.initialize();
+				
+				return oMP; 
 
     		} catch (XMLParserException e) {
 				_logger.warn("XMLParser exception with establishing metadata for SAML2IDP, trying file/url: "+e.getMessage());
@@ -293,19 +296,24 @@ public class SAML2IDP extends AbstractIDP
 
             oMP = createFileMetadataProvider(_sMetadataFile, parserPool, _oMPM);
             if (oMP != null) {
+            	_logger.info("Using File MetadataProvider: "+_sMetadataFile);
             	_oMetadataProvider = oMP;
-            	return _oMetadataProvider;
+            } else {
+	            // No file, try HTTP:
+	            oMP = createHTTPMetadataProvider(_sMetadataURL, _iMetadataTimeout, parserPool, _oMPM);
+	            if (oMP != null) {
+	            	_logger.info("Using HTTP MetadataProvider: "+_sMetadataURL);
+	            	_oMetadataProvider = oMP;
+	            }
             }
-
-            // No file, try HTTP:
-            oMP = createHTTPMetadataProvider(_sMetadataURL, _iMetadataTimeout, parserPool, _oMPM);
-            if (oMP != null) {
-            	_oMetadataProvider = oMP;
-            	return _oMetadataProvider;
+            
+            if (_oMetadataProvider == null) {
+                _logger.warn("No MetadataProvider could be created for SAML2IDP "+_sID);
+                return null;
             }
+            
+        	return _oMetadataProvider;
          
-            _logger.warn("No MetadataProvider could be created for SAML2IDP "+_sID);
-            return null;
         }
         catch (OAException e)
         {
@@ -514,18 +522,26 @@ public class SAML2IDP extends AbstractIDP
     		throws java.io.IOException
     {
 		try {
-			if (_oMetadataXMLObject != null) {
-				if (_sMetadata == null) {
-				StringWriter oSW = new StringWriter();
-				XMLObjectHelper.marshallToWriter(_oMetadataXMLObject, oSW);
-				_sMetadata = oSW.toString();
+			if (_sMetadata == null) {
+				// Create the MetadataXMLObject so we can extract the XML-string from it:
+				if (_oMetadataXMLObject == null && _oMetadataProvider != null) {
+					_oMetadataXMLObject = _oMetadataProvider.getMetadata();
+				}
+				
+				if (_oMetadataXMLObject != null) {
+					StringWriter oSW = new StringWriter();
+					XMLObjectHelper.marshallToWriter(_oMetadataXMLObject, oSW);
+					_sMetadata = oSW.toString();
 				}
 			}
 		} catch (MarshallingException e) {
 			_logger.error("Exception when marshalling XMLObject to Writer for SAML2IDP, dropping metadata: "+e.getMessage());
 			return;
+		} catch (MetadataProviderException e) {
+			_logger.error("Exception when serializing and retrieving Metadata for SAML2IDP '"+_sID+"':" +e.getMessage());
+			throw new IOException(e);
 		}
-    	
+		
     	// Do its thing:
     	oOutputStream.defaultWriteObject();
     }
