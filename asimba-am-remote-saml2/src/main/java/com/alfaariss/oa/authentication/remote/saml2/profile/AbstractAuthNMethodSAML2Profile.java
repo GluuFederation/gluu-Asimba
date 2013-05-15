@@ -289,14 +289,17 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
                 String sUserOrganization = sNameQualifier;
                 if (sUserOrganization == null)
                 {
-                    if (sSPNameQualifier != null && !_sMyOrganizationID.equals(sSPNameQualifier)) 
+                	String sLocalEntityId = _entityDescriptor.getEntityID();
+                	
+                	// If provided SPNameQualifier is not the same as our SP EntityId:
+                    if (sSPNameQualifier != null && !sLocalEntityId.equals(sSPNameQualifier)) 
                     {
-                        //try SPNameQualifier
+                        //..then the UserOrg can be assumed to be scoped within provided SPNameQualif
                         sUserOrganization = sSPNameQualifier;
                     }
                     else
                     {
-                        //use org ID
+                        //..otherwise UserOrg is not explicitly provided; make it to be the RemoteIDP-ID
                         sUserOrganization = idpID;
                     }
                 }
