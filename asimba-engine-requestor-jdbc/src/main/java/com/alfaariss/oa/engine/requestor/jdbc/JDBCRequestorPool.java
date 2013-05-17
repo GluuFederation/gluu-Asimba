@@ -26,7 +26,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
@@ -34,6 +37,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.alfaariss.oa.SystemErrors;
+import com.alfaariss.oa.api.requestor.IRequestor;
+import com.alfaariss.oa.engine.core.requestor.Requestor;
 import com.alfaariss.oa.engine.core.requestor.RequestorException;
 import com.alfaariss.oa.engine.core.requestor.RequestorPool;
 
@@ -218,17 +223,43 @@ public class JDBCRequestorPool extends RequestorPool
         }
     }
 
+    
+    private class __Requestor {
+    	public String _sID;
+    	public String _sFriendlyname;
+    	public boolean _bEnabled;
+    	public Properties _oProps = new Properties();
+    	
+    	public __Requestor(String sID, String sFriendlyname, boolean bEnabled) {
+    		_sID = sID;
+    		_sFriendlyname = sFriendlyname;
+    		_bEnabled = bEnabled;
+    	}
+    	public IRequestor toRequestor() {
+    		return new Requestor(_sID, _sFriendlyname, _bEnabled, _oProps);
+    	}
+    }
+    
     private void addRequestors(DataSource oDataSource, String sPoolsTable, 
-        String sRequestorsTable, String sRequestorPropertiesTable) throws RequestorException
+            String sRequestorsTable, String sRequestorPropertiesTable) throws RequestorException
     {
         Connection oConnection = null;
         PreparedStatement oPreparedStatement = null;
         ResultSet rsRequestor = null;
         ResultSet rsProperties = null;
-        try
-        {
-            oConnection = oDataSource.getConnection();
         
+        /** Map from RequestorId->__Requestor */
+        Map<String, __Requestor> mRequestors = new HashMap<String, __Requestor>();
+
+        try {
+	        oConnection = oDataSource.getConnection();
+	        
+            // Get the Requestors from the Pool, order by RequestorId:
+	        //  SELECT (requestorpool_requestor).* 
+	        //  FROM (requestorpool_requestor),(requestorpool_pool) 
+	        //  WHERE (requestorpool_requestor.pool_id)=? 
+	        //  AND (requestorpool_requestor).pool_id=(requestorpool_pool).id 
+	        //  ORDER BY (requestorpool_requestor).id
             StringBuffer sbSelect = new StringBuffer("SELECT ");
             sbSelect.append(sRequestorsTable).append(".*");
             sbSelect.append(" FROM ");
@@ -236,50 +267,95 @@ public class JDBCRequestorPool extends RequestorPool
             sbSelect.append(",");
             sbSelect.append(sPoolsTable);
             sbSelect.append(" WHERE ");
-            sbSelect.append(sRequestorsTable);
-            sbSelect.append(".");
-            sbSelect.append(JDBCRequestor.COLUMN_POOLID);
-            sbSelect.append("=? AND ");
-            sbSelect.append(sRequestorsTable);
-            sbSelect.append(".");
-            sbSelect.append(JDBCRequestor.COLUMN_POOLID);
-            sbSelect.append("=");
-            sbSelect.append(sPoolsTable);
-            sbSelect.append(".");
-            sbSelect.append(JDBCRequestorPool.COLUMN_ID);
-            
-            oPreparedStatement = oConnection.prepareStatement(sbSelect.toString());
-            oPreparedStatement.setString(1, _sID);
-            rsRequestor = oPreparedStatement.executeQuery();
-            
-            while (rsRequestor.next())
-            {
-                String sID = rsRequestor.getString(COLUMN_ID);
-                StringBuffer sbSelectProperties = new StringBuffer("SELECT ");
-                sbSelectProperties.append(sRequestorPropertiesTable).append(".*");
-                sbSelectProperties.append(" FROM ");
-                sbSelectProperties.append(sRequestorPropertiesTable);            
-                sbSelectProperties.append(" WHERE ");
-                sbSelectProperties.append(sRequestorPropertiesTable);
-                sbSelectProperties.append(".");
-                sbSelectProperties.append(JDBCRequestor.COLUMN_PROPERTY_REQUESTOR_ID);
-                sbSelectProperties.append("=?");
-                
-                oPreparedStatement = oConnection.prepareStatement(
-                    sbSelectProperties.toString());
-                oPreparedStatement.setString(1, sID);
-                rsProperties = oPreparedStatement.executeQuery();
-                
-                JDBCRequestor oJDBCRequestor = new JDBCRequestor(
-                    rsRequestor, rsProperties);
-                super.addRequestor(oJDBCRequestor.getRequestor());
-                rsProperties.close();
-               
+            sbSelect.append(sRequestorsTable).append(".").append(JDBCRequestor.COLUMN_POOLID).append("=? AND ");
+            sbSelect.append(sRequestorsTable).append(".").append(JDBCRequestor.COLUMN_POOLID).append("=")
+            	.append(sPoolsTable).append(".").append(JDBCRequestorPool.COLUMN_ID);
+            sbSelect.append(" ORDER BY ").append(sRequestorsTable).append(".").append(JDBCRequestor.COLUMN_ID);
+
+            // Get the properties of all the requestors, order by RequestorId
+			//  SELECT (requestorpool_requestor).id, (requestorpool_requestor_properties).name, (requestorpool_requestor_properties).value
+            //  FROM
+            //  (requestorpool_pool) INNER JOIN (requestorpool_requestor) ON (requestorpool_requestor).pool_id=(requestorpool_pool).id
+            //  LEFT OUTER JOIN (requestorpool_requestor_properties) ON (requestorpool_requestor).id=(requestorpool_requestor_properties).requestor_id
+            //  WHERE (requestorpool_requestor).pool_id=?
+            //  ORDER BY (requestorpool_requestor).id
+            // Assert indexes are available on 
+            // - requestorpool_requestor.pool_id
+            // - requestorpool_requestor_properties.requestor_id
+       
+            StringBuffer sbSelectProperties = new StringBuffer("SELECT ");
+            sbSelectProperties.append(sRequestorsTable).append(".").append(JDBCRequestor.COLUMN_ID).append(", ");
+            sbSelectProperties.append(sRequestorPropertiesTable).append(".").append(JDBCRequestor.COLUMN_PROPERTY_NAME).append(", ");
+            sbSelectProperties.append(sRequestorPropertiesTable).append(".").append(JDBCRequestor.COLUMN_PROPERTY_VALUE);
+            sbSelectProperties.append(" FROM ");
+            sbSelectProperties.append(sPoolsTable).append(" INNER JOIN ");
+            sbSelectProperties.append(sRequestorsTable)
+            	.append(" ON ").append(sRequestorsTable).append(".").append(JDBCRequestor.COLUMN_POOLID).append("=")
+            		.append(sPoolsTable).append(".").append(JDBCRequestorPool.COLUMN_ID);
+            sbSelectProperties.append(" LEFT OUTER JOIN ")
+            	.append(sRequestorPropertiesTable)
+            	.append(" ON ").append(sRequestorsTable).append(".").append(JDBCRequestor.COLUMN_ID).append("=")
+            		.append(sRequestorPropertiesTable).append(".").append(JDBCRequestor.COLUMN_PROPERTY_REQUESTOR_ID);
+            sbSelectProperties.append(" WHERE ");
+            sbSelectProperties.append(sRequestorsTable).append(".").append(JDBCRequestor.COLUMN_POOLID).append("=?");
+            sbSelectProperties.append(" ORDER BY ").append(sRequestorsTable).append(".").append(JDBCRequestor.COLUMN_ID);
+	        
+            // Perform database queries
+	        oPreparedStatement = oConnection.prepareStatement(sbSelect.toString());
+	        oPreparedStatement.setString(1, _sID);
+	        
+	        if (_logger.isTraceEnabled()) {
+	        	_logger.trace("SQL(1): "+sbSelect.toString() + " [params: "+_sID+"]");
+	        }
+	        
+	        rsRequestor = oPreparedStatement.executeQuery();
+	        
+	        // Create Requestors in Map: 
+            while (rsRequestor.next()) {
+            	String sID = rsRequestor.getString(COLUMN_ID);
+            	String sFriendlyName = rsRequestor.getString(COLUMN_FRIENDLYNAME);
+            	boolean bEnabled = rsRequestor.getBoolean(COLUMN_ENABLED);
+            	
+            	__Requestor oRequestor = new __Requestor(sID, sFriendlyName, bEnabled);
+            	mRequestors.put(sID, oRequestor);
             }
-        }
-        catch (RequestorException e)
-        {
-            throw e;
+            
+	        // Now add properties to Requestors in Map 
+            oPreparedStatement = oConnection.prepareStatement(sbSelectProperties.toString());
+	        oPreparedStatement.setString(1, _sID);
+	        
+	        if (_logger.isTraceEnabled()) {
+	        	_logger.trace("SQL(2): "+sbSelectProperties.toString() + " [params: "+_sID+"]");
+	        }
+	        
+	        rsProperties = oPreparedStatement.executeQuery();
+	        
+	        __Requestor oCurReq = null;
+	        while (rsProperties.next()) {
+	        	String sID = rsProperties.getString(JDBCRequestor.COLUMN_ID);
+	        	String sKey = rsProperties.getString(JDBCRequestor.COLUMN_PROPERTY_NAME);
+	        	String sValue = rsProperties.getString(JDBCRequestor.COLUMN_PROPERTY_VALUE);
+	        	
+	        	if (oCurReq==null || (! oCurReq._sID.equals(sID))) {
+	        		if (oCurReq != null) {
+	        			addRequestor(oCurReq.toRequestor());
+	        		}
+	        		oCurReq = mRequestors.get(sID);
+
+	        		assert(oCurReq != null);	// or database would have returned inconsistent results..
+	        	}
+	        	
+	        	if (sKey != null) {
+	        		oCurReq._oProps.put(sKey, sValue);
+	        	}
+	        }
+
+	        // Also add the last one:
+	        if (oCurReq != null) {
+	        	addRequestor(oCurReq.toRequestor());
+	        }
+
+	        // That's it.
         }
         catch (SQLException e)
         {
@@ -325,8 +401,9 @@ public class JDBCRequestorPool extends RequestorPool
                 _logger.error("Could not close connection", e);
             }
         }
+        
     }
-    
+
     
     private void addProperties(DataSource oDataSource, 
         String sPoolPropertiesTable) throws RequestorException
@@ -362,7 +439,7 @@ public class JDBCRequestorPool extends RequestorPool
                 Object value = rsProperties.getString(JDBCRequestorPool.COLUMN_PROPERTY_VALUE);
                 _properties.put(sName, value);
             }
-            _logger.debug("Retrieved properties: " + _properties);
+            _logger.debug("Retrieved requestorpool-properties: " + _properties);
         }
         catch (SQLException e)
         {
