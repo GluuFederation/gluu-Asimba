@@ -59,8 +59,8 @@ import com.alfaariss.oa.util.validation.SessionValidator;
  */
 public class StyleSheetEngine
 {
-    private final static String DEFAULT_CSS = "/openaselect/etc/css/default.css";
-    private final static String DEFAULT_MOBILE_CSS = "/openaselect/etc/css/mobile.css";
+    private final static String DEFAULT_CSS = "/asimba-wa/etc/css/default.css";
+    private final static String DEFAULT_MOBILE_CSS = "/asimba-wa/etc/css/mobile.css";
     private final static String WURFL_CAPABILITY_IS_WIRELESS_DEVICE = "is_wireless_device";
     
     private static Log _logger;
