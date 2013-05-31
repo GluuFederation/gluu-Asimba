@@ -1,0 +1,15 @@
+Changelog asimba-am-remote-saml2
+
+
+===== Version 1.1.2
+
+- Added database attribute 'date_last_modified' for fresh check on metadata reloading
+
+Update scripts:
+* MySQL 
+ALTER TABLE `saml2_orgs` ADD COLUMN `date_last_modified` DATETIME NULL AFTER `nameidformat` ;
+
+
+* PostgreSQL
+ALTER TABLE saml2_orgs ADD COLUMN date_last_modified timestamp without time zone;
+ 

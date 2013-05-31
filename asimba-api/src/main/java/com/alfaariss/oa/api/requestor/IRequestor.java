@@ -21,11 +21,13 @@
  * 
  */
 package com.alfaariss.oa.api.requestor;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 
 import com.alfaariss.oa.api.IManagebleItem;
+import com.alfaariss.oa.api.IModifyableItem;
 
 /**
  * An interface for OA requestors.
@@ -39,7 +41,7 @@ import com.alfaariss.oa.api.IManagebleItem;
  * @author Alfa & Ariss
  *
  */
-public interface IRequestor extends IManagebleItem, Serializable 
+public interface IRequestor extends IManagebleItem, Serializable, IModifyableItem
 {
     
     /**

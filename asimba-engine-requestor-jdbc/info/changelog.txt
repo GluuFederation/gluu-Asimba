@@ -1,0 +1,30 @@
+Changelog asimba-engine-requestor-jdbc
+
+
+===== Version 1.1.2
+
+- Added database attribute 'date_last_modified' for caching purposes
+
+Update scripts:
+* MySQL 
+ALTER TABLE `requestorpool_requestor` ADD COLUMN `date_last_modified` DATETIME NULL AFTER `enabled` ;
+ALTER TABLE `requestorpool_pool` ADD COLUMN `date_last_modified` DATETIME NULL AFTER `releasepolicy` ;
+
+ALTER TABLE `requestorpool_pool` ADD INDEX `idx_requestorpool_pool_date_last_modified` (`date_last_modified` ASC) ;
+ALTER TABLE `requestorpool_requestor` ADD INDEX `idx_requestorpool_requestor_date_last_modified` (`date_last_modified` ASC) ;
+
+
+* PostgreSQL
+ALTER TABLE requestorpool_requestor ADD COLUMN date_last_modified timestamp without time zone;
+ALTER TABLE requestorpool_pool ADD COLUMN date_last_modified timestamp without time zone;
+
+CREATE INDEX idx_requestorpool_requestor_date_last_modified
+  ON requestorpool_requestor
+  USING btree
+  (date_last_modified);
+  
+CREATE INDEX idx_requestorpool_pool_date_last_modified
+  ON requestorpool_pool
+  USING btree
+  (date_last_modified);
+ 

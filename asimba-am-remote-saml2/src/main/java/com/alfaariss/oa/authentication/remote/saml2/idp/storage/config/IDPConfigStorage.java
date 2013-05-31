@@ -30,6 +30,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Map;
@@ -37,6 +38,8 @@ import java.util.Map;
 import org.asimba.util.saml2.metadata.provider.IMetadataProviderManager;
 import org.asimba.util.saml2.metadata.provider.management.StandardMetadataProviderManager;
 import org.asimba.util.saml2.metadata.provider.management.MdMgrManager;
+import org.joda.time.DateTime;
+import org.joda.time.format.ISODateTimeFormat;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -162,6 +165,20 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
             {
                 _logger.error("No 'friendlyname' item found in 'organization' section in configuration");
                 throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+            }
+            
+            String sDateLastModified = configManager.getParam(config, "lastmodified");
+            Date dLastModified = null;
+            
+            if (sDateLastModified != null) {
+            	// Convert to java.util.Date
+            	try {
+	            	DateTime dt = ISODateTimeFormat.dateTimeNoMillis().parseDateTime(sDateLastModified);
+            		dLastModified = dt.toDate();
+            	} catch (IllegalArgumentException iae) {
+            		_logger.info("Invalid 'lastmodified' timestamp provided: "+sDateLastModified+"; ignoring.");
+            		dLastModified = null;
+            	}
             }
             
             String sMetadataURL = null;
@@ -349,7 +366,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
             
             saml2IDP = new SAML2IDP(sID, baSourceID, sFriendlyName, 
                 sMetadataFile, sMetadataURL, iMetadataURLTimeout, boolACSIndex, 
-                boolAllowCreate, boolScoping, boolNameIDPolicy, sNameIDFormat, oMPM);
+                boolAllowCreate, boolScoping, boolNameIDPolicy, sNameIDFormat, dLastModified, oMPM);
         }
         catch (OAException e)
         {

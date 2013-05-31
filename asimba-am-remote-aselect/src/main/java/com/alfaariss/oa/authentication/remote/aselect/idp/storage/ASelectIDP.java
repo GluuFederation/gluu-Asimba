@@ -64,7 +64,7 @@ public class ASelectIDP extends AbstractIDP
         String sCountry, String sLanguage, boolean bASynchronousLogout,
         boolean bSynchronousLogout, boolean bArpTargetEnabled)
     {
-        super(sOrganizationID, sFriendlyname);
+        super(sOrganizationID, sFriendlyname, null);
         _sServerID = sServerID;
         _sURL = sURL;
         _iLevel = iLevel;

@@ -22,10 +22,13 @@
  */
 package com.alfaariss.oa.engine.requestor.configuration;
 
+import java.util.Date;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.DateTime;
+import org.joda.time.format.ISODateTimeFormat;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -251,8 +254,22 @@ public class ConfigurationPool extends RequestorPool
                 properties = readExtendedProperties(
                     oConfigurationManager, eProperties);
             }            
-                     
-            oRequestor = new Requestor(sID, sFriendlyName, bEnabled, properties);
+               
+            String sDateLastModified = oConfigurationManager.getParam(eConfig, "lastmodified");
+            Date dLastModified = null;
+            
+            if (sDateLastModified != null) {
+            	// Convert to java.util.Date
+            	try {
+	            	DateTime dt = ISODateTimeFormat.dateTimeNoMillis().parseDateTime(sDateLastModified);
+            		dLastModified = dt.toDate();
+            	} catch (IllegalArgumentException iae) {
+            		_logger.info("Invalid 'lastmodified' timestamp provided: "+sDateLastModified+"; ignoring.");
+            		dLastModified = null;
+            	}
+            }
+            
+            oRequestor = new Requestor(sID, sFriendlyName, bEnabled, properties, dLastModified);
             _logger.info("Found: " + oRequestor);
         }
         catch (RequestorException e)

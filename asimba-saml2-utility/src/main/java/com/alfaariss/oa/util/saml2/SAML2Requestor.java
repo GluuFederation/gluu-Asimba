@@ -28,6 +28,7 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -41,6 +42,8 @@ import org.asimba.util.saml2.metadata.provider.MetadataProviderUtil;
 import org.asimba.util.saml2.metadata.provider.management.MdMgrManager;
 import org.asimba.utility.filesystem.PathTranslator;
 import org.asimba.utility.xml.XMLUtils;
+import org.joda.time.DateTime;
+import org.joda.time.format.ISODateTimeFormat;
 import org.opensaml.saml2.metadata.provider.ChainingMetadataProvider;
 import org.opensaml.saml2.metadata.provider.DOMMetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
@@ -151,6 +154,21 @@ public class SAML2Requestor implements Serializable
                 }
             }
             
+            String sDateLastModified = configurationManager.getParam(config, "lastmodified");
+            Date dLastModified = null;
+            
+            if (sDateLastModified != null) {
+            	// Convert to java.util.Date
+            	try {
+	            	DateTime dt = ISODateTimeFormat.dateTimeNoMillis().parseDateTime(sDateLastModified);
+            		dLastModified = dt.toDate();
+            	} catch (IllegalArgumentException iae) {
+            		_logger.info("Invalid 'lastmodified' timestamp provided: "+sDateLastModified+"; ignoring.");
+            		dLastModified = null;
+            	}
+            }
+
+            
             _oMetadataProvider = null;
             _sMetadataURL = null;
             _fMetadata = null;
@@ -168,7 +186,7 @@ public class SAML2Requestor implements Serializable
             	
             	// Try to get MetadataProvider from manager
             	if (oMPM != null) {
-            		oMP = oMPM.getProviderFor(_sID);
+            		oMP = oMPM.getProviderFor(_sID, dLastModified);
             	}
             	
             	if (oMP == null) {
@@ -237,7 +255,7 @@ public class SAML2Requestor implements Serializable
         	
         	// Try to get MetadataProvider from manager
         	if (oMPM != null) {
-        		oMP = oMPM.getProviderFor(_sID);
+        		oMP = oMPM.getProviderFor(_sID, requestor.getLastModified());
         	}
         	
         	if (oMP == null) {
@@ -313,7 +331,7 @@ public class SAML2Requestor implements Serializable
 	        	
 	        	// Try to get MetadataProvider from manager
 	        	if (oMPM != null) {
-	        		oMP = oMPM.getProviderFor(_sID);
+	        		oMP = oMPM.getProviderFor(_sID, oRequestor.getLastModified());
 	        	}
 	        	
 	        	if (oMP == null) {

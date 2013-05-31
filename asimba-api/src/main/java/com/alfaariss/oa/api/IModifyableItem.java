@@ -2,7 +2,7 @@
  * Asimba Server
  * 
  * Copyright (C) 2012 Asimba
- * Copyright (C) 2007-2009 Alfa & Ariss B.V.
+ * Copyright (C) 2007-2008 Alfa & Ariss B.V.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,31 +20,30 @@
  * Asimba - Serious Open Source SSO - More information on www.asimba.org
  * 
  */
-package com.alfaariss.oa.engine.core.idp.storage;
+package com.alfaariss.oa.api;
 
-import java.io.Serializable;
+import java.util.Date;
 
-import com.alfaariss.oa.api.IModifyableItem;
 
 /**
- * Minimal IDP interface.
- * @author MHO
- * @author Alfa & Ariss
- * @since 1.4
+ * IModifyableItem is an interface for items that implement a
+ * DateLastModified property
+ * 
+ * @author mdobrinic
+ * @author Cozmanova bv
+ *
  */
-public interface IIDP extends Serializable, IModifyableItem
-{
-    /**
-     * Retrieve the ID.
-     * @return The ID of the item.
-     */
-    public String getID();
+public interface IModifyableItem {
 
-    /**
-     * Retrieve the friendlyName.
-     * @return The friendly name of this item.
-     */
-    public String getFriendlyName();
-    
-    
+	/**
+	 * Get the LastModified attribute of the instance
+	 * @return Date with the timestamp that the instance has last changed, or null when this is unknown
+	 */
+	public Date getLastModified();
+	
+	/**
+	 * Set the LastModified attribute of the instance
+	 * @param Date with the timestamp that the instance has last changed, or null when this is unknown
+	 */
+	public void setLastModified(Date dLastModified);
 }

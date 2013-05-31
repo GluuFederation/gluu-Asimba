@@ -31,16 +31,14 @@ import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.List;
+import java.util.Date;
 import java.util.Timer;
-import java.util.Vector;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.asimba.util.saml2.metadata.provider.IMetadataProviderManager;
 import org.asimba.util.saml2.metadata.provider.MetadataProviderUtil;
 import org.asimba.util.saml2.metadata.provider.XMLObjectMetadataProvider;
 import org.asimba.utility.filesystem.PathTranslator;
-import org.opensaml.saml2.metadata.provider.ChainingMetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.xml.XMLObject;
@@ -133,10 +131,10 @@ public class SAML2IDP extends AbstractIDP
         String sMetadataFile, String sMetadataURL, 
         int iMetadataTimeout, Boolean useACSIndex, Boolean useAllowCreate, 
         Boolean useScoping, Boolean useNameIDPolicy, String forceNameIDFormat,
-        IMetadataProviderManager oMPM) 
+        Date dLastModified, IMetadataProviderManager oMPM) 
         		throws OAException
     {
-        super(sID, sFriendlyName);
+        super(sID, sFriendlyName, dLastModified);
         
         _baSourceID = baSourceID;
         _sMetadataFile = sMetadataFile;
@@ -280,7 +278,7 @@ public class SAML2IDP extends AbstractIDP
     	
     	// Can we get a managed MetadataProvider?
     	if (_oMPM != null) {
-    		oMP = _oMPM.getProviderFor(_sID);
+    		oMP = _oMPM.getProviderFor(_sID, _dLastModified);
     		
     		// When successfull, be done.
     		if (oMP != null) {

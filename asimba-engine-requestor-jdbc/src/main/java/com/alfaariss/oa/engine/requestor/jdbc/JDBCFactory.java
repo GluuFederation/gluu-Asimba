@@ -25,8 +25,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 import javax.sql.DataSource;
@@ -85,6 +89,26 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
     private String _sQuerySelectAllRequestors;
     private String _sQuerySelectAllEnabledRequestors;
     
+    /** Setting to control requestorpool-cache; default: false */
+    protected boolean _isCacheEnabled;
+    
+    /**
+     * RequestorPool Cache entries 
+     */
+    private class RequestorPoolEntry {
+    	public Date _dLastModified;
+    	public RequestorPool _oRequestorPool;
+    	
+    	public RequestorPoolEntry(Date dLastModified, RequestorPool oRequestorPool) {
+    		_dLastModified = dLastModified;
+    		_oRequestorPool = oRequestorPool;
+    	}
+    }
+    
+    /** Map with PoolId->RequestorPool for caching purposes */
+    private Map<String, RequestorPoolEntry> _mRequestorPoolMap;
+
+    
 	/**
 	 * Creates the object.
 	 */
@@ -106,6 +130,8 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
         _sQuerySelectAllEnabledRequestorpools = null;
         _sQuerySelectAllRequestors = null;
         _sQuerySelectAllEnabledRequestors = null;
+        
+        _isCacheEnabled = false;
 	}
 
     /**
@@ -127,9 +153,37 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
             oResultSet = oPreparedStatement.executeQuery();
             if (oResultSet.next())
             {
+            	String sPoolId = oResultSet.getString(JDBCRequestorPool.COLUMN_ID);
+            	
+            	// Work with cache:
+            	if (_isCacheEnabled) {
+            		RequestorPoolEntry oRPE = _mRequestorPoolMap.get(sPoolId);
+            		
+            		if (oRPE != null) {
+                		long lCachedDateLastModified = oRPE._dLastModified.getTime();
+                		long lRealDateLastModified = getMostRecentDate(
+                				oResultSet.getTimestamp("date_last_modified"), oResultSet.getTimestamp("requestor_date"));
+            			
+                		if (lRealDateLastModified > 0 && (lRealDateLastModified <= lCachedDateLastModified)) {
+                			// Cached version is recent; RequestorPool established: return it
+                			 _logger.debug("Retrieved requestorpool from cache: " + sPoolId);
+                			return oRPE._oRequestorPool;
+                		}
+            		}
+            		// No cached RequestorPool, or RequestorPool is expired
+            	}
+            	
                 oRequestorPool = new JDBCRequestorPool(oResultSet, _oDataSource, 
                     _sPoolsTable, _sRequestorsTable, _sRequestorPropertiesTable, 
                     _sAuthenticationTable, _sPoolPropertiesTable);
+                
+                if (_isCacheEnabled) {
+                	// Add to or update cache
+                	Date dLastModified = oResultSet.getDate(JDBCRequestorPool.COLUMN_DATE_LAST_MODIFIED); 
+                	RequestorPoolEntry oRPE = new RequestorPoolEntry(dLastModified, oRequestorPool);
+                	
+                	_mRequestorPoolMap.put(oRequestorPool.getID(), oRPE);
+                }
             }
             
             if (oRequestorPool != null)
@@ -354,10 +408,26 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
     public void start(IConfigurationManager oConfigurationManager, Element eConfig) throws OAException
     {
         Connection oConnection = null;
-        
+       
         try
         {
             _configurationManager = oConfigurationManager;
+
+        	// Manage a cache: Map< PoolID -> JDBCRequestorPoolEntry-instance >
+        	Element elCache = _configurationManager.getSection(eConfig, "cache");
+        	if (elCache != null) {
+        		String sEnabled =_configurationManager.getParam(elCache, "enabled");
+        		if ("true".equalsIgnoreCase(sEnabled)) {
+        			_isCacheEnabled = true;
+        		} else if (! "false".equalsIgnoreCase(sEnabled)) {
+        			_logger.warn("Invalid value for cache@enabled: "+sEnabled);
+        		}
+        	}
+        	
+        	if (_isCacheEnabled) {
+    			_mRequestorPoolMap = new HashMap<String, RequestorPoolEntry>();
+    			_logger.info("Enabling RequestorPool cache");
+        	}
             
             Element eResource = _configurationManager.getSection(eConfig, "resource");
             if (eResource == null)
@@ -632,6 +702,12 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
         _sQuerySelectAllEnabledRequestorpools = null;
         _sQuerySelectAllRequestors = null;
         _sQuerySelectAllEnabledRequestors = null;
+
+        // Clean up cache
+        if (_mRequestorPoolMap != null) {
+        	_mRequestorPoolMap.clear();
+        	_mRequestorPoolMap = null;
+        }
     }
 
     /**
@@ -1282,6 +1358,11 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
     {
         StringBuffer sbSelectPool = new StringBuffer("SELECT ");
         sbSelectPool.append(_sPoolsTable).append(".*");
+        if (_isCacheEnabled) {
+        	// Backwards compatibility; it is possible that the attribute does not exist
+        	sbSelectPool.append(",").append(_sRequestorsTable).append(".").append(JDBCRequestor.COLUMN_DATELASTMODIFIED)
+        		.append(" AS requestor_date");
+        }
         sbSelectPool.append(" FROM ");
         sbSelectPool.append(_sRequestorsTable);
         sbSelectPool.append(",");
@@ -1375,6 +1456,27 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
         sbSelectAllEnabledRequestors.append(" =? ");
         _sQuerySelectAllEnabledRequestors = sbSelectAllEnabledRequestors.toString();
         _logger.debug("Using select all enabled requestors query: " + _sQuerySelectAllEnabledRequestors);
+    }
+    
+    
+    /**
+     * Establish the most recent timestamp from the two Timestamps; returns -1 when 
+     * @param ts1 Value for date 1; may be null
+     * @param ts2 Value for date 2; may be null
+     * @return Most recent date in ms since 1970, or -1 when it could not be established
+     */
+    private long getMostRecentDate(Timestamp ts1, Timestamp ts2) {
+    	// Both null? Then we don't know
+    	if (ts1 == null && ts2 == null) return -1;
+
+    	// Not both null, but tsPool is null? Then tsRequestors contains the time we want
+    	if (ts1 == null) return ts2.getTime(); 
+    	// Or tsPool is it when tsRequestors is null...
+    	if (ts2 == null) return ts1.getTime();
+
+    	// So, both are non-null; which one is most recent:
+    	if (ts1.before(ts2)) return ts2.getTime();
+    	return ts1.getTime();
     }
 
 }

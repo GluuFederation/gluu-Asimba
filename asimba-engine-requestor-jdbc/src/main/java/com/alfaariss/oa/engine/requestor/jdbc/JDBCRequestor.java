@@ -24,6 +24,7 @@ package com.alfaariss.oa.engine.requestor.jdbc;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
@@ -53,6 +54,8 @@ public class JDBCRequestor
     public static final String COLUMN_ENABLED = "enabled";
     /** pool_id */
     public static final String COLUMN_POOLID = "pool_id";   
+    /** date last modified */
+    public static final String COLUMN_DATELASTMODIFIED = "date_last_modified";
     
     /** Requestor ID */
     public static final String COLUMN_PROPERTY_REQUESTOR_ID = "requestor_id";
@@ -131,7 +134,14 @@ public class JDBCRequestor
             }
             _logger.debug("Retrieved properties: " + prop);
 
-            oRequestor = new Requestor(sID, sFriendlyName, bEnabled, prop);
+            Date dLastModified = null;
+        	try {
+        		dLastModified = rsRequestor.getTimestamp(JDBCRequestor.COLUMN_DATELASTMODIFIED);
+        	} catch (Exception e) {
+        		_logger.info("No "+JDBCRequestor.COLUMN_DATELASTMODIFIED+" column found for requestor '"+sID+"'; ignoring.");
+        	}
+            
+            oRequestor = new Requestor(sID, sFriendlyName, bEnabled, prop, dLastModified);
         }
         catch (RequestorException e)
         {

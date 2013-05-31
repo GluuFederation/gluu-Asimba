@@ -23,6 +23,7 @@
 package com.alfaariss.oa.engine.core.requestor;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 
@@ -42,6 +43,9 @@ public class Requestor implements IRequestor
     private String _sFriendlyName;    
     private boolean _bEnabled;  
     private Properties _properties;
+    
+    /** Timestamp of the date the item was last modified, or null when unknown */
+    protected Date _dLastModified;
 
     /**
      * Create an empty  <code>Requestor</code>.
@@ -51,6 +55,7 @@ public class Requestor implements IRequestor
         this._sID = null;
         this._sFriendlyName = null;
         this._bEnabled = false;
+        this._dLastModified = null;
         _properties = new Properties();
     }       
 
@@ -62,11 +67,13 @@ public class Requestor implements IRequestor
      * @param properties The extended requestor properties.
      */
     public Requestor (String id, String friendlyName, 
-        boolean enabled, Properties properties)
+        boolean enabled, Properties properties, Date dLastModified)
     {
         this._sID = id;
         this._sFriendlyName = friendlyName;
         this._bEnabled = enabled;
+        this._dLastModified = dLastModified;
+        
         _properties = properties;
     }
     
@@ -117,6 +124,21 @@ public class Requestor implements IRequestor
     public boolean isProperty(String name)
     {
         return _properties.containsKey(name);
+    }
+    
+    /**
+     * @see IRequestor#getLastModified() 
+     */
+    public Date getLastModified() {
+    	return _dLastModified;
+    }
+
+    /**
+     * @see IRequestor#setLastModified()
+     * @param dLastModified
+     */
+    public void setLastModified(Date dLastModified) {
+    	_dLastModified = dLastModified;
     }
     
     /**

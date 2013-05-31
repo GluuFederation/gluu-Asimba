@@ -26,10 +26,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
@@ -59,6 +59,7 @@ public class JDBCRequestorPool extends RequestorPool
     public static final String COLUMN_FRIENDLYNAME = "friendlyname";
     /** enabled */
     public static final String COLUMN_ENABLED = "enabled";
+    
     /** preauthorization */
     public static final String COLUMN_PREAUTHORIZATION = "preauthz_profile_id";
     /** postauthorization */
@@ -82,6 +83,9 @@ public class JDBCRequestorPool extends RequestorPool
     
     /** Order by id column */
     public static final String COLUMN_ORDER_ID = "order_id";
+    
+    /** Date Last Modified of RequestorPool */
+    public static final String COLUMN_DATE_LAST_MODIFIED = "date_last_modified"; 
     
     private static Log _logger;
     
@@ -228,15 +232,17 @@ public class JDBCRequestorPool extends RequestorPool
     	public String _sID;
     	public String _sFriendlyname;
     	public boolean _bEnabled;
+    	public Date _dLastModified;
     	public Properties _oProps = new Properties();
     	
-    	public __Requestor(String sID, String sFriendlyname, boolean bEnabled) {
+    	public __Requestor(String sID, String sFriendlyname, boolean bEnabled, Date dLastModified) {
     		_sID = sID;
     		_sFriendlyname = sFriendlyname;
     		_bEnabled = bEnabled;
+    		_dLastModified = dLastModified;
     	}
     	public IRequestor toRequestor() {
-    		return new Requestor(_sID, _sFriendlyname, _bEnabled, _oProps);
+    		return new Requestor(_sID, _sFriendlyname, _bEnabled, _oProps, _dLastModified);
     	}
     }
     
@@ -309,14 +315,27 @@ public class JDBCRequestorPool extends RequestorPool
 	        }
 	        
 	        rsRequestor = oPreparedStatement.executeQuery();
+
+	        boolean dateLastModifiedExists = true;
 	        
-	        // Create Requestors in Map: 
+	        // Create Requestors in Map:
             while (rsRequestor.next()) {
-            	String sID = rsRequestor.getString(COLUMN_ID);
-            	String sFriendlyName = rsRequestor.getString(COLUMN_FRIENDLYNAME);
-            	boolean bEnabled = rsRequestor.getBoolean(COLUMN_ENABLED);
+            	String sID = rsRequestor.getString(JDBCRequestor.COLUMN_ID);
+            	String sFriendlyName = rsRequestor.getString(JDBCRequestor.COLUMN_FRIENDLYNAME);
+            	boolean bEnabled = rsRequestor.getBoolean(JDBCRequestor.COLUMN_ENABLED);
             	
-            	__Requestor oRequestor = new __Requestor(sID, sFriendlyName, bEnabled);
+            	// Implement date_last_modified column as optional
+            	Date dLastModified = null;
+            	if (dateLastModifiedExists) {
+	            	try {
+	            		dLastModified = rsRequestor.getTimestamp(JDBCRequestor.COLUMN_DATELASTMODIFIED);
+	            	} catch (Exception e) {
+	            		_logger.info("No "+JDBCRequestor.COLUMN_DATELASTMODIFIED+" column found; ignoring.");
+	            		dateLastModifiedExists = false;
+	            	}
+            	}
+            	
+            	__Requestor oRequestor = new __Requestor(sID, sFriendlyName, bEnabled, dLastModified);
             	mRequestors.put(sID, oRequestor);
             }
             

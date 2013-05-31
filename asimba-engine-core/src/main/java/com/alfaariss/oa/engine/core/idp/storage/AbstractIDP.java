@@ -22,8 +22,12 @@
  */
 package com.alfaariss.oa.engine.core.idp.storage;
 
+import java.util.Date;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import com.alfaariss.oa.api.requestor.IRequestor;
 
 /**
  * Abstract IDP implementation.
@@ -41,6 +45,9 @@ abstract public class AbstractIDP implements IIDP
     /** Friendly name of the IDP */
     protected String _sFriendlyName;
     
+    /** last modified date of of the IDP; or null if unknown */
+    protected Date _dLastModified;
+    
     /**
      * Constructor. 
      */
@@ -54,11 +61,12 @@ abstract public class AbstractIDP implements IIDP
      * @param id The IDP ID.
      * @param friendlyname The IDP friendly name. 
      */
-    public AbstractIDP(String id, String friendlyname)
+    public AbstractIDP(String id, String friendlyname, Date dLastModified)
     {
         _logger = LogFactory.getLog(this.getClass());
         _sID = id;
         _sFriendlyName = friendlyname;
+        _dLastModified = dLastModified;
     }
     
     /**
@@ -77,6 +85,22 @@ abstract public class AbstractIDP implements IIDP
         return _sID;
     }
 
+    /**
+     * @see IModifyable#getLastModified() 
+     */
+    public Date getLastModified() {
+    	return _dLastModified;
+    }
+
+    /**
+     * @see IModifyable#setLastModified()
+     * @param dLastModified
+     */
+    public void setLastModified(Date dLastModified) {
+    	_dLastModified = dLastModified;
+    }
+
+    
     /**
      * @see java.lang.Object#toString()
      */

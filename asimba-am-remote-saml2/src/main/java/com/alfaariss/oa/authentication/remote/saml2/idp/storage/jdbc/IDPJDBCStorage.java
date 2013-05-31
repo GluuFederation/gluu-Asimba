@@ -25,13 +25,13 @@ package com.alfaariss.oa.authentication.remote.saml2.idp.storage.jdbc;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Date;
 import java.util.List;
 import java.util.Vector;
 
 import org.asimba.util.saml2.metadata.provider.IMetadataProviderManager;
-import org.asimba.util.saml2.metadata.provider.management.StandardMetadataProviderManager;
 import org.asimba.util.saml2.metadata.provider.management.MdMgrManager;
-import org.opensaml.saml2.metadata.provider.MetadataProvider;
+import org.asimba.util.saml2.metadata.provider.management.StandardMetadataProviderManager;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -65,6 +65,9 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
     private final static String COLUMN_NAMEIDPOLICY = "nameidpolicy";
     private final static String COLUMN_ALLOW_CREATE = "allow_create";
     private final static String COLUMN_NAMEIDFORMAT = "nameidformat";
+    /** date last modified */
+    public static final String COLUMN_DATELASTMODIFIED = "date_last_modified";
+
     
     private final static String DEFAULT_ID = "saml2";
     private String _sID;
@@ -154,6 +157,8 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
         
         try
         {
+	        boolean dateLastModifiedExists = true;
+	        
             connection = _dataSource.getConnection();
             
             pSelect = connection.prepareStatement(_sQuerySelectAll);
@@ -178,6 +183,17 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                 boolean bNameIDPolicy = resultSet.getBoolean(COLUMN_NAMEIDPOLICY);
                 Boolean boolNameIDPolicy = new Boolean(bNameIDPolicy);
                 
+                // Implement date_last_modified column as optional
+            	Date dLastModified = null;
+            	if (dateLastModifiedExists) {
+	            	try {
+	            		dLastModified = resultSet.getTimestamp(COLUMN_DATELASTMODIFIED);
+	            	} catch (Exception e) {
+	            		_logger.info("No "+COLUMN_DATELASTMODIFIED+" column found; ignoring.");
+	            		dateLastModifiedExists = false;
+	            	}
+            	}
+                
                 SAML2IDP idp = new SAML2IDP(
                     resultSet.getString(COLUMN_ID),
                     resultSet.getBytes(COLUMN_SOURCEID),
@@ -188,6 +204,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     boolACSIndex, boolAllowCreate, 
                     boolScoping, boolNameIDPolicy,
                     resultSet.getString(COLUMN_NAMEIDFORMAT),
+                    dLastModified,
                     oMPM);
                 listIDPs.add(idp);
             }
@@ -276,7 +293,8 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             sbSelectIDPs.append(COLUMN_ALLOW_CREATE).append(",");
             sbSelectIDPs.append(COLUMN_SCOPING).append(",");
             sbSelectIDPs.append(COLUMN_NAMEIDPOLICY).append(",");
-            sbSelectIDPs.append(COLUMN_NAMEIDFORMAT);
+            sbSelectIDPs.append(COLUMN_NAMEIDFORMAT).append(",");
+            sbSelectIDPs.append(COLUMN_DATELASTMODIFIED);
             sbSelectIDPs.append(" FROM ");
             sbSelectIDPs.append(_sTable);
             
@@ -390,6 +408,14 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                 boolean bNameIDPolicy = resultSet.getBoolean(COLUMN_NAMEIDPOLICY);
                 Boolean boolNameIDPolicy = new Boolean(bNameIDPolicy);
                 
+                Date dLastModified = null;
+            	try {
+            		dLastModified = resultSet.getTimestamp(COLUMN_DATELASTMODIFIED);
+            	} catch (Exception e) {
+            		_logger.info("No "+COLUMN_DATELASTMODIFIED+" column found for SAML2IDP '"+id+"'; ignoring.");
+            	}
+
+                
                 saml2IDP = new SAML2IDP(id, 
                     resultSet.getBytes(COLUMN_SOURCEID),
                     resultSet.getString(COLUMN_FRIENDLYNAME),
@@ -399,6 +425,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     boolACSIndex, boolAllowCreate, 
                     boolScoping, boolNameIDPolicy,
                     resultSet.getString(COLUMN_NAMEIDFORMAT),
+                    dLastModified,
                     oMPM);
             }
         }
@@ -472,6 +499,13 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                 boolean bNameIDPolicy = resultSet.getBoolean(COLUMN_NAMEIDPOLICY);
                 Boolean boolNameIDPolicy = new Boolean(bNameIDPolicy);
                 
+                Date dLastModified = null;
+            	try {
+            		dLastModified = resultSet.getTimestamp(COLUMN_DATELASTMODIFIED);
+            	} catch (Exception e) {
+            		_logger.info("No "+COLUMN_DATELASTMODIFIED+" column found for SAML2IDP with sourceid '"+baSourceID+"'; ignoring.");
+            	}
+                
                 saml2IDP = new SAML2IDP(resultSet.getString(COLUMN_ID),
                     baSourceID,
                     resultSet.getString(COLUMN_FRIENDLYNAME),
@@ -481,6 +515,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     boolACSIndex, boolAllowCreate, 
                     boolScoping, boolNameIDPolicy,
                     resultSet.getString(COLUMN_NAMEIDFORMAT),
+                    dLastModified,
                     oMPM);
             }
         }

@@ -1,6 +1,7 @@
 package org.asimba.util.saml2.metadata.provider.management;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,7 @@ import java.util.Timer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asimba.util.saml2.metadata.provider.IMetadataProviderManager;
+import org.joda.time.DateTime;
 import org.opensaml.saml2.common.Extensions;
 import org.opensaml.saml2.metadata.EntitiesDescriptor;
 import org.opensaml.saml2.metadata.EntityDescriptor;
@@ -154,7 +156,7 @@ public class StandardMetadataProviderManager implements
 	/**
 	 * {@inheritDoc}
 	 */
-	public MetadataProvider getProviderFor(String sSourceRef)
+	public MetadataProvider getProviderFor(String sSourceRef, Date dLastModified)
 			throws OAException
 	{
 		StoredMetadataProvider oSMP = _hmSpecificProviders.get(sSourceRef);
@@ -166,6 +168,28 @@ public class StandardMetadataProviderManager implements
 		// Touch MetadataProvider access:
 		oSMP.touch();
 
+		MetadataProvider oMP = oSMP._oProvider;
+
+		// Does the metadata need to be refreshed?
+		if (dLastModified != null) {
+			// Can the metadata be refreshed?
+			if (oMP instanceof AbstractReloadingMetadataProvider) {
+				AbstractReloadingMetadataProvider oARMP = (AbstractReloadingMetadataProvider) oMP;
+			
+				try {
+					DateTime dtLastRefresh = oARMP.getLastRefresh();
+					
+					if (dtLastRefresh.isBefore(new DateTime(dLastModified))) {
+						oARMP.refresh();
+					}
+					
+				} catch (MetadataProviderException e) {
+					_oLogger.error("Error reloading metadata for provider "+sSourceRef+":"+e.getMessage());
+					return null;
+				}
+			}
+		}
+		
 		// And return instance
 		return oSMP._oProvider;
 	}
@@ -409,7 +433,7 @@ public class StandardMetadataProviderManager implements
 			// No MetadataProviderManager needed, as the SAML2IDP MetadataProvider is already managed
 			oSAML2IDP = new SAML2IDP(oED.getEntityID(), null,
 					sFriendlyname, sMetadataFile, sMetadataURL, iMetadataTimeout,
-					useACSIndex, bAllowCreate, bUseScoping, bUseNameIDPolicy, sForceNameIDFormat, null);
+					useACSIndex, bAllowCreate, bUseScoping, bUseNameIDPolicy, sForceNameIDFormat, new Date(), null);
 
 			// Instead, set the SAML2IDP's metadata to live XML-document's format
 			oSAML2IDP.setMetadataXMLObject(oED);

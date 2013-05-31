@@ -21,6 +21,7 @@
  */
 package org.asimba.util.saml2.metadata.provider;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Timer;
 
@@ -89,9 +90,11 @@ public interface IMetadataProviderManager {
 	 * or null if the MetadataProvider was not available
 	 * 
 	 * @param sSourceRef Source Reference or ID of a MetadataProvider
+	 * @param dLastModified Timestamp of last modification of service; when this is more recent than
+	 *   the last refresh-date of the Metadata, the Metadata is refreshed
 	 * @return true if exists, false if not
 	 */
-	public MetadataProvider getProviderFor(String sSourceRef)
+	public MetadataProvider getProviderFor(String sSourceRef, Date dLastModified)
 			throws OAException;
 
 	/**
