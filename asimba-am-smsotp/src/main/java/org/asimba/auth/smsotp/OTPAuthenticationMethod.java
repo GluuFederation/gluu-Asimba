@@ -577,6 +577,7 @@ public class OTPAuthenticationMethod
 
             // Check is user is registered for OTPAuthenticationMethod
             if(!oUser.isAuthenticationRegistered(_sMethodID)) {
+            	_oLogger.warn("Authentication Method is not registered for this user; aborting login attempt.");
                 throw new UserException(UserEvent.AUTHN_METHOD_NOT_REGISTERED);
             }
             
