@@ -1,0 +1,14 @@
+Test case description
+==============================
+
+
+1) Ensure the database contains at least two requestorpools
+
+2) Ensure there is
+	a) one requestorpool that contains no requestors
+	b) one requestorpool that contains requestors (see 3)
+	
+3) Ensure at least one requestorpool contains 
+	a) a requestor without properties
+	b) a requestor with one or more properties
+ 
