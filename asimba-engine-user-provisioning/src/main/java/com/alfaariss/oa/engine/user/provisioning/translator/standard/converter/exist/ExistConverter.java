@@ -59,12 +59,18 @@ public class ExistConverter implements IConverter
     
 	/**
 	 * Converts the value to a boolean value.
+	 * This means: whenever oValue is a String that is non-empty and non-null,
+	 * a Boolean.TRUE is returned.
+	 * This means that when oValue is a Boolean with value false, Boolean.FALSE is returned.
 	 * @see IConverter#convert(java.lang.Object)
 	 */
 	public Object convert(Object oValue)
     {
         if (oValue == null)
             return Boolean.FALSE;
+        
+        if (oValue instanceof Boolean && oValue.equals(Boolean.FALSE))
+    		return Boolean.FALSE;
         
         if (!(oValue instanceof String))
         {
