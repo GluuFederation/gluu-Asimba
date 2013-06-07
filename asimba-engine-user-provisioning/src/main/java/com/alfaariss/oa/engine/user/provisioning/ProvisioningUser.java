@@ -37,6 +37,8 @@ import com.alfaariss.oa.engine.core.user.AbstractUser;
 public class ProvisioningUser extends AbstractUser 
 {
     private static final long serialVersionUID = -9019776671693257312L;
+    
+    /** Map of AuthenticationMethods and whether they are available to the user or not */
     private HashMap<String, Boolean> _mapRegistered;
     
     /**
@@ -49,6 +51,17 @@ public class ProvisioningUser extends AbstractUser
     {
         super(sOrganization, sUserId, bEnabled);
         _mapRegistered = new HashMap<String, Boolean>();
+    }
+    
+    
+    /**
+     * Copy constructor, initialize from another instance
+     * @param oProvisioningUser Other ProvisioningUser instance to initialize from
+     */
+    public ProvisioningUser(ProvisioningUser oProvisioningUser)
+    {
+    	super(oProvisioningUser.getOrganization(), oProvisioningUser.getID(), oProvisioningUser.isEnabled());
+    	_mapRegistered = new HashMap<String, Boolean>(oProvisioningUser._mapRegistered);
     }
     
     /**

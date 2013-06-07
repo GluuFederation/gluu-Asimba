@@ -149,7 +149,7 @@ public class LogoutProfile extends AbstractAuthNMethodSAML2Profile
     {
     	SAML2TimestampWindow oAuthnInstant = null; // this is not used in logout profile
     	
-        super.init(null, null, entityDescriptor, mapper, store, sMethodID, conditionsWindow, oAuthnInstant);
+        super.init(null, null, entityDescriptor, mapper, store, sMethodID, conditionsWindow, oAuthnInstant, null);
     }
     
     /**

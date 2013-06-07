@@ -38,6 +38,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.LogFactory;
+import org.asimba.authentication.remote.provisioning.aselect.CredentialResponseUserStorage;
+import org.asimba.utility.attributes.AttributeHelper;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -65,6 +67,8 @@ import com.alfaariss.oa.engine.core.authentication.factory.IAuthenticationProfil
 import com.alfaariss.oa.engine.core.idp.IDPStorageManager;
 import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
 import com.alfaariss.oa.engine.core.tgt.factory.ITGTAliasStore;
+import com.alfaariss.oa.engine.user.provisioning.ProvisioningUser;
+import com.alfaariss.oa.engine.user.provisioning.translator.standard.StandardProfile;
 import com.alfaariss.oa.sso.authentication.web.IWebAuthenticationMethod;
 import com.alfaariss.oa.util.logging.UserEventLogItem;
 import com.alfaariss.oa.util.session.ProxyAttributes;
@@ -98,28 +102,28 @@ public class RemoteASelectMethod extends AbstractRemoteMethod implements IASLogo
     private static final String ERROR_ASELECT_SERVER_UNKNOWN_TGT = "0007";
     private final static String ERROR_ASELECT_CANCEL = "0040";
     
-    private final static String PARAM_REQUEST = "request";
-    private final static String PARAM_RID = "rid";
-    private final static String PARAM_FORCED = "forced_logon";
-    private final static String PARAM_LOCAL_AS_URL = "local_as_url";
-    private final static String PARAM_LOCAL_ORG = "local_organization";
-    private final static String PARAM_ASELECTSERVER = "a-select-server";
-    private final static String PARAM_UID = "uid";
-    private final static String PARAM_COUNTRY = "country";
-    private final static String PARAM_LANGUAGE = "language";
-    private final static String PARAM_RESULTCODE = "result_code";
-    private final static String PARAM_AS_URL = "as_url";
-    private final static String PARAM_ASELECTCREDENTIALS = "aselect_credentials";
-    private final static String PARAM_ORGANIZATION = "organization";
-    private final static String PARAM_AUTHSP_LEVEL = "authsp_level";
-    private final static String PARAM_AUTHSP = "authsp";
-    private final static String PARAM_APP_LEVEL = "app_level";
-    private final static String PARAM_TGT_EXP_TIME = "tgt_exp_time";
-    private final static String PARAM_ATTRIBUTES = "attributes";
-    private final static String PARAM_SIGNATURE = "signature";
-    private final static String PARAM_REMOTE_ORGANIZATION = "remote_organization";
-    private final static String PARAM_REQUIRED_LEVEL = "required_level";
-    private final static String PARAM_ARP_TARGET = "arp_target";
+    public final static String PARAM_REQUEST = "request";
+    public final static String PARAM_RID = "rid";
+    public final static String PARAM_FORCED = "forced_logon";
+    public final static String PARAM_LOCAL_AS_URL = "local_as_url";
+    public final static String PARAM_LOCAL_ORG = "local_organization";
+    public final static String PARAM_ASELECTSERVER = "a-select-server";
+    public final static String PARAM_UID = "uid";
+    public final static String PARAM_COUNTRY = "country";
+    public final static String PARAM_LANGUAGE = "language";
+    public final static String PARAM_RESULTCODE = "result_code";
+    public final static String PARAM_AS_URL = "as_url";
+    public final static String PARAM_ASELECTCREDENTIALS = "aselect_credentials";
+    public final static String PARAM_ORGANIZATION = "organization";
+    public final static String PARAM_AUTHSP_LEVEL = "authsp_level";
+    public final static String PARAM_AUTHSP = "authsp";
+    public final static String PARAM_APP_LEVEL = "app_level";
+    public final static String PARAM_TGT_EXP_TIME = "tgt_exp_time";
+    public final static String PARAM_ATTRIBUTES = "attributes";
+    public final static String PARAM_SIGNATURE = "signature";
+    public final static String PARAM_REMOTE_ORGANIZATION = "remote_organization";
+    public final static String PARAM_REQUIRED_LEVEL = "required_level";
+    public final static String PARAM_ARP_TARGET = "arp_target";
     
     private IAuthenticationProfileFactory _authNProfileFactory;
     private String _sMyOrganization;
@@ -130,6 +134,9 @@ public class RemoteASelectMethod extends AbstractRemoteMethod implements IASLogo
     private LogoutManager _logoutManager;
     private ITGTAliasStore _aliasStoreIDPRole;
     private String _sForceAuthNProfile;
+    
+    /** Provisioning Profile for a Remote ASelect user */ 
+    protected StandardProfile _oRemoteASelectUserProvisioningProfile;
     
     /**
      * Constructor.
@@ -288,6 +295,20 @@ public class RemoteASelectMethod extends AbstractRemoteMethod implements IASLogo
             if (eReplay != null)
             {
                 readReplay(eReplay);
+            }
+            
+            // Configure how a RemoteASelectUser is provisioned
+            Element elProvisioning = oConfigurationManager.getSection(eConfig, "provisioning");
+            if (elProvisioning == null) {
+            	_oRemoteASelectUserProvisioningProfile = null;
+            	_logger.info("Default Remote ASelect User provisioning");
+            } else {
+            	_oRemoteASelectUserProvisioningProfile = new StandardProfile();
+            	// Instantiate the profile without external storage provider, as this must
+            	// be taken from an assertion that is presented on demand
+            	_oRemoteASelectUserProvisioningProfile.start(oConfigurationManager, elProvisioning, null);
+            	
+            	_logger.info("Remote ASelect User provisioning configured.");
             }
         }
         catch (OAException e)
@@ -1294,7 +1315,18 @@ public class RemoteASelectMethod extends AbstractRemoteMethod implements IASLogo
                 IUser oUser = oSession.getUser();
                 if (oUser == null)
                 {
-                    oUser = new ASelectRemoteUser(sRemoteOrganization, sRemoteUID, getID(), sASelectCredentials);
+                	if (_oRemoteASelectUserProvisioningProfile == null) {
+                		oUser = new ASelectRemoteUser(sRemoteOrganization, sRemoteUID, getID(), sASelectCredentials);
+                	} else {
+                		// Perform provisioning based on retrieved attributes
+                		CredentialResponseUserStorage oCRUS = new CredentialResponseUserStorage(htResponse);
+                		
+                		ProvisioningUser oProvisioningUser = 
+                				_oRemoteASelectUserProvisioningProfile.getUser(oCRUS, 
+                						sRemoteOrganization, sRemoteUID);
+                		
+                		oUser = new ASelectRemoteUser(oProvisioningUser, getID(), sASelectCredentials);
+                	}
                     oSession.setUser(oUser);
                 }
                 
@@ -1357,7 +1389,8 @@ public class RemoteASelectMethod extends AbstractRemoteMethod implements IASLogo
                 {
                     _logger.debug("Remote A-Select Organization returned serialized attributes: " 
                         + sRemoteAttributes);
-                    IAttributes oRemoteAttributes = deserializeAttributes(sRemoteAttributes, oAttributes);
+                    IAttributes oRemoteAttributes = 
+                    		AttributeHelper.deserializeAttributes(sRemoteAttributes, CHARSET, oAttributes);
                     oAttributes = mapAttributes(oRemoteAttributes, oUser.getAttributes());
                 }
                 else

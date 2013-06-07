@@ -22,34 +22,55 @@
  */
 package com.alfaariss.oa.authentication.remote.aselect;
 
-import com.alfaariss.oa.authentication.remote.bean.RemoteUser;
+import com.alfaariss.oa.authentication.remote.bean.RemoteProvisioningUser;
+import com.alfaariss.oa.engine.user.provisioning.ProvisioningUser;
 
 /**
- * Remote A-Select user.
+ * Remote A-Select user
+ * 
+ * Based on RemoteProvisioningUser, as the user can be provisioned through
+ * the provided authentication and attribute context of the remote IDP
+ *
+ * @author mdobrinic
  * @author MHO
  * @author Alfa & Ariss
  * @since 1.4
  */
-public class ASelectRemoteUser extends RemoteUser
+public class ASelectRemoteUser extends RemoteProvisioningUser
 {
     /** serialVersionUID */
-    private static final long serialVersionUID = -7084900438659203978L;
+    private static final long serialVersionUID = -7084900438659203979L;
     
     private String _sCredentials;
     
     /**
-     * Creates the user object.
+     * Creates the user object
+     * 
+     * By default, the user account is enabled.
      *
      * @param organization the user organization
      * @param userId The unique remote user ID
      * @param methodID Method id
      * @param credentials A-Select credentials
      */
-    public ASelectRemoteUser (String organization, String userId, String methodID, String credentials)
+    public ASelectRemoteUser (String organization, String userId, String methodID, 
+    		String credentials) 
     {
-        super(organization, userId, methodID);
+        super(organization, userId, true, methodID);
         _sCredentials = credentials;
     }
+    
+    
+    /**
+     * Constructor that initializes from a ProvisioningUser instance
+     */
+    public ASelectRemoteUser(ProvisioningUser oProvisioningUser, String sMethodId, 
+    		String sCredentials) 
+    {
+    	super(oProvisioningUser, sMethodId);
+    	_sCredentials = sCredentials;
+    }
+    
     
     /**
      * Returns the A-Select credentials retrieved during authentication from the remote organization. 

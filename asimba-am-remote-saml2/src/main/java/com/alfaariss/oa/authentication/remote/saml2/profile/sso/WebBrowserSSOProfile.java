@@ -87,6 +87,7 @@ import com.alfaariss.oa.authentication.remote.saml2.beans.SAMLRemoteUser;
 import com.alfaariss.oa.authentication.remote.saml2.profile.AbstractAuthNMethodSAML2Profile;
 import com.alfaariss.oa.authentication.remote.saml2.util.ResponseValidator;
 import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
+import com.alfaariss.oa.engine.user.provisioning.translator.standard.StandardProfile;
 import com.alfaariss.oa.util.saml2.SAML2ConditionsWindow;
 import com.alfaariss.oa.util.saml2.SAML2Exchange;
 import com.alfaariss.oa.util.saml2.SAML2SecurityException;
@@ -131,9 +132,11 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
         EntityDescriptor entityDescriptor, IIDMapper mapper, 
         IIDPStorage orgStorage, String sMethodID, 
         SAML2ConditionsWindow conditionsWindow,
-        SAML2TimestampWindow oAuthnInstant) throws OAException
+        SAML2TimestampWindow oAuthnInstant,
+        StandardProfile oRemoteSAMLUserProvisioningProfile) throws OAException
     {
-        super.init(configurationManager,config,entityDescriptor,mapper,orgStorage,sMethodID,conditionsWindow, oAuthnInstant);
+        super.init(configurationManager,config,entityDescriptor,mapper,orgStorage,sMethodID,conditionsWindow, 
+        		oAuthnInstant, oRemoteSAMLUserProvisioningProfile);
         
         //check if OA Server 1.5 is used
         _bCompatible =  isCompatible();
@@ -407,7 +410,7 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
      *  
      * @param request Servlet request object
      * @param session AuthN session
-     * @param authnSessionOrganization IdP who the repsonse supplied
+     * @param authnSessionOrganization IdP who was selected to provide the response
      * @param attributeMapper Optional attribute mapper object
      * @return User Event
      * @throws OAException If response handling results in an internal error.
@@ -449,13 +452,10 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
             
             //Resolve Issuer
             String sOrgID = context.getInboundMessageIssuer();
-            if (authnSessionOrganization.getID().equals(sOrgID))
-            {
+            if (authnSessionOrganization.getID().equals(sOrgID)) {
                 samlResponseOrganization = authnSessionOrganization;
-            }
-            else
-            {
-                _logger.debug("Response issuer not found in organization store");
+            } else {
+                _logger.debug("Response issuer was not the same as who the AuthnRequest was sent to.");
                 return UserEvent.AUTHN_METHOD_FAILED;
             }
             
@@ -643,32 +643,23 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
             return UserEvent.AUTHN_METHOD_FAILED;
         }
         
-        IUser oAssertionUser = createUserFromSubject(subject, _sMethodID, samlResponseOrganization.getID());
+        IUser oAssertionUser = createUserFromAssertion(assertion, _sMethodID, samlResponseOrganization.getID());
         
         IUser oSessionUser = session.getUser();
-        if (oSessionUser == null && oAssertionUser == null)
-        {
+        if (oSessionUser == null && oAssertionUser == null) {
             //No user found: error
             _logger.debug("Response user conditions not met (no user found)");
             return UserEvent.AUTHN_METHOD_FAILED;
         }
-        else if (oSessionUser == null)
-        {
-            oSessionUser = createUserFromSubject(subject, _sMethodID, authnSessionOrganization.getID());
-            if (oSessionUser == null)
-            {
-                _logger.debug("No user in subject");
-                return UserEvent.AUTHN_METHOD_FAILED;
-            }
-        }
-        else if (oSessionUser != null && oAssertionUser != null)
-        {
+        else if (oSessionUser != null && oAssertionUser != null) {
             //verify UID
-            if (!oSessionUser.getID().equals(oAssertionUser.getID()))
-            {
+            if (!oSessionUser.getID().equals(oAssertionUser.getID())) {
                 _logger.debug("Response user conditions not met (UID has changed during remote authN)");
                 return UserEvent.AUTHN_METHOD_FAILED;
             }
+        }
+        else if (oSessionUser == null) {
+            oSessionUser = oAssertionUser;
         }
   
         if (assertion.getAuthnStatements().size() < 1)

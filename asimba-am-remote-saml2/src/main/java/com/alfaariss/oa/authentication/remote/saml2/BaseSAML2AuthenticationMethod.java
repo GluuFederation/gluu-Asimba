@@ -54,6 +54,7 @@ import com.alfaariss.oa.engine.core.Engine;
 import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
 import com.alfaariss.oa.engine.core.tgt.factory.ITGTAliasStore;
 import com.alfaariss.oa.engine.core.tgt.factory.ITGTFactory;
+import com.alfaariss.oa.engine.user.provisioning.translator.standard.StandardProfile;
 import com.alfaariss.oa.sso.authentication.web.IWebAuthenticationMethod;
 import com.alfaariss.oa.util.logging.UserEventLogItem;
 import com.alfaariss.oa.util.saml2.NameIDFormatter;
@@ -153,6 +154,10 @@ public abstract class BaseSAML2AuthenticationMethod implements
     
     /** TGT Event listener processing synchronous logouts */
     private LogoutManager _logoutManager;
+    
+    /** Provisioning Profile for a remote SAML user */
+    protected StandardProfile _oRemoteSAMLUserProvisioningProfile;
+
     
     /**
      * Default constructor. Initializes loggers and attribute mapper.
@@ -313,6 +318,21 @@ public abstract class BaseSAML2AuthenticationMethod implements
                 {
                     _logger.info("Logout: disabled");
                 }
+                
+                // Configure how a RemoteSAMLUser is provisioned
+                Element elProvisioning = oConfigurationManager.getSection(eConfig, "provisioning");
+                if (elProvisioning == null) {
+                	_oRemoteSAMLUserProvisioningProfile = null;
+                	_logger.info("Default Remote SAML User provisioning");
+                } else {
+                	_oRemoteSAMLUserProvisioningProfile = new StandardProfile();
+                	// Instantiate the profile without external storage provider, as this must
+                	// be taken from an assertion that is presented on demand
+                	_oRemoteSAMLUserProvisioningProfile.start(oConfigurationManager, elProvisioning, null);
+                	
+                	_logger.info("Remote SAML User provisioning configured.");
+                }
+                 
             }
         }
         catch (OAException e)

@@ -176,7 +176,7 @@ public class LogoutManager implements ITGTListener, IAuthority
             _profile = new LogoutProfile(SAMLConstants.SAML2_SOAP11_BINDING_URI);
             _profile.init(configurationManager, null, 
                 SAML2Exchange.getEntityDescriptor(), idMapper, 
-                _store, _sMethodID, null, null);
+                _store, _sMethodID, null, null, null);
         }
     }
 

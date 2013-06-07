@@ -26,19 +26,23 @@ import java.util.List;
 import java.util.Vector;
 
 import com.alfaariss.oa.api.user.IUser;
-import com.alfaariss.oa.engine.core.user.AbstractUser;
+import com.alfaariss.oa.authentication.remote.bean.RemoteProvisioningUser;
+import com.alfaariss.oa.engine.user.provisioning.ProvisioningUser;
 
 /**
- * SAML User object.
+ * SAML User object
  * 
+ * Updated to be a RemoteProvisioningUser to support dynamic provisioning from
+ * remote SAML source
+ * 
+ * @author mdobrinic
  * @author MHO
  * @author jre
  * @since 1.0
  */
-public class SAMLRemoteUser extends AbstractUser
+public class SAMLRemoteUser extends RemoteProvisioningUser
 {
-    private static final long serialVersionUID = -760508002735952152L;
-    private String _sMethodID;
+    private static final long serialVersionUID = -760508002735952153L;
     private String _sFormat;
     private List<String> _vSessionIndexes;
     private String _sNameQualifier;
@@ -50,24 +54,45 @@ public class SAMLRemoteUser extends AbstractUser
      * 
      * @param sOrganization Organization ID, in the SAML case the NameQualifier of the NameID.
      * @param sUserId The UID, in the SAML case the NameID.
-     * @param sMethodID The authentication method.
+     * @param sMethodId The authentication method.
      * @param sFormat The ID format, in the SAML case the Format of the NameID.
      * @param sNameQualifier User namequalifier
      * @param sSPNameQualifier User SP namequalifier
      * @param sIDP The ID of the IdP known by this OAS, where the user was authenticated by. (can be a proxy)
      */
     public SAMLRemoteUser(String sOrganization, String sUserId, 
-        String sMethodID, String sFormat, String sNameQualifier, 
+        String sMethodId, String sFormat, String sNameQualifier, 
         String sSPNameQualifier, String sIDP)
     {
-        super(sOrganization, sUserId, true);
-        _sMethodID = sMethodID;
+        super(sOrganization, sUserId, true, sMethodId);
         _sFormat = sFormat;
         _vSessionIndexes = new Vector<String>();
         _sNameQualifier = sNameQualifier;
         _sSPNameQualifier = sSPNameQualifier;
         _sIDP = sIDP;
     }  
+    
+    /**
+     * Constructor that initializes from a ProvisioningUser instance
+     * 
+     * @param oProvisioningUser Instance of ProvisioningUser to initialize from
+     * @param sMethodId The authentication method.
+     * @param sFormat The ID format, in the SAML case the Format of the NameID.
+     * @param sNameQualifier User namequalifier
+     * @param sSPNameQualifier User SP namequalifier
+     * @param sIDP The ID of the IdP known by this OAS, where the user was authenticated by. (can be a proxy)
+     */
+    public SAMLRemoteUser(ProvisioningUser oProvisioningUser,
+    		String sMethodId, String sFormat, String sNameQualifier, 
+            String sSPNameQualifier, String sIDP)
+    {
+    	super(oProvisioningUser, sMethodId);
+    	_sFormat = sFormat;
+        _vSessionIndexes = new Vector<String>();
+        _sNameQualifier = sNameQualifier;
+        _sSPNameQualifier = sSPNameQualifier;
+        _sIDP = sIDP;
+    }
 
     /**
      * Returns the organization where the user was authenticated.
@@ -85,21 +110,11 @@ public class SAMLRemoteUser extends AbstractUser
      *
      * @param sOrganization the user organization
      * @param sUserId The unique remote user ID.
-     * @param sMethodID Method id
+     * @param sMethodId Method id
      */
-    public SAMLRemoteUser(String sOrganization, String sUserId, String sMethodID)
+    public SAMLRemoteUser(String sOrganization, String sUserId, String sMethodId)
     {
-        super(sOrganization, sUserId, true);
-        _sMethodID = sMethodID;
-    }
-    
-    /**
-     * Returns <code>method != null && method equals this.method</code>.
-     * @see IUser#isAuthenticationRegistered(java.lang.String)
-     */
-    public boolean isAuthenticationRegistered(String method)
-    {
-        return (method != null && method.equals(_sMethodID));
+        super(sOrganization, sUserId, true, sMethodId);
     }
     
     /**

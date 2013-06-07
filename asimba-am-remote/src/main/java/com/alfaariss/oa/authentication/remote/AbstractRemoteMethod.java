@@ -67,7 +67,7 @@ import com.alfaariss.oa.sso.authentication.web.IWebAuthenticationMethod;
 abstract public class AbstractRemoteMethod implements IWebAuthenticationMethod
 {
     /** UTF-8 */
-    protected final static String CHARSET = "UTF-8";
+    public final static String CHARSET = "UTF-8";
     /** Server engine */
     protected Engine _engine;
     /** Configuration manager */
@@ -389,71 +389,6 @@ abstract public class AbstractRemoteMethod implements IWebAuthenticationMethod
     }
     
 
-    /**
-     * Deserializes remote attributes.
-     * 
-     * @param sSerializedAttributes the serialized attributes string.
-     * @param oAttributes the attributes object to which the attributes will be added.
-     * @return UserAttributes object containing the serialized attributes.
-     * @throws OAException if deserialization fails.
-     */
-    //Suppresswarnings is unchecked because the (Vector<String>) cast will generate a warning.
-    @SuppressWarnings("unchecked")
-    protected IAttributes deserializeAttributes(String sSerializedAttributes, 
-        IAttributes oAttributes) throws OAException
-    {
-        try
-        {
-            //base64 decode
-            byte[] baUserAttrs = Base64.decodeBase64(sSerializedAttributes.getBytes(CHARSET));
-            String sDecodedUserAttrs = new String(baUserAttrs, CHARSET);
-            
-            //decode & and = chars
-            String[] saAttrs = sDecodedUserAttrs.split("&");
-            for (int i = 0; i < saAttrs.length; i++)
-            {
-                int iEqualChar = saAttrs[i].indexOf("=");
-                String sKey = "";
-                String sValue = "";
-                Vector<String> vVector = null;
-                
-                if (iEqualChar > 0)
-                {
-                    sKey = URLDecoder.decode(
-                        saAttrs[i].substring(0 , iEqualChar), CHARSET);
-                    
-                    sValue = URLDecoder.decode(
-                        saAttrs[i].substring(iEqualChar + 1), CHARSET);
-                    
-                    if (sKey.endsWith("[]"))
-                    {  //its a multi-valued attribute
-                        // Strip [] from sKey
-                        sKey = sKey.substring(0, sKey.length() - 2);
-                        
-                        if ((vVector = (Vector<String>)oAttributes.get(sKey)) == null)
-                            vVector = new Vector<String>();                                
-                        
-                        vVector.add(sValue);
-                    }                        
-                }
-                else
-                    sKey = URLDecoder.decode(saAttrs[i], CHARSET);
-                
-                if (vVector != null)
-                    //store multivalue attribute
-                    oAttributes.put(sKey, vVector);
-                else
-                    //store singlevalue attribute
-                    oAttributes.put(sKey, sValue);
-            }
-        }
-        catch (Exception e)
-        {
-            _logger.fatal("Internal error during deserialization of attributes", e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
-        }
-        return oAttributes;
-    }
     
     /**
      * Creates a signature over the supplied attributes in the map.

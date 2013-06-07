@@ -175,15 +175,26 @@ public class StandardProfile implements IProfile
     
     /**
      * Returns the user object.
+     * (Wrapper for getUser(IExternalStorage, String, String))
      * @see IProfile#getUser(java.lang.String, java.lang.String)
      */
     public ProvisioningUser getUser(
         String sOrganization, String id) throws UserException
     {
+    	return getUser(_oExternalStorage, sOrganization, id);
+    }
+    
+    /**
+     * Returns the user object, using the provided ExternalStorage
+     * as userstore
+     */
+    public ProvisioningUser getUser(IExternalStorage oExternalStorage,
+        String sOrganization, String id) throws UserException
+    {
         ProvisioningUser oProvisioningUser = null;
         try
         {
-            Hashtable<String, Object> htFields = _oExternalStorage.getFields(
+            Hashtable<String, Object> htFields = oExternalStorage.getFields(
                 id, _vAllFields);
             
             Boolean boolEnabled = (Boolean)getValue(_itemEnabled, htFields);
@@ -226,6 +237,7 @@ public class StandardProfile implements IProfile
         
         return oProvisioningUser;
     }
+
     
     /**
      * Stops the object.

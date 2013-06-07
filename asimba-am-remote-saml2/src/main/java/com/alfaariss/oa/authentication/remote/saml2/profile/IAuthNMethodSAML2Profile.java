@@ -30,11 +30,13 @@ import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.idmapper.IIDMapper;
 import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
+import com.alfaariss.oa.engine.user.provisioning.translator.standard.StandardProfile;
 import com.alfaariss.oa.util.saml2.SAML2ConditionsWindow;
 
 /**
  * SAML AuthN profiles should implement this interface.
  *
+ * @author mdobrinic
  * @author jre
  * @author Alfa & Ariss
  */
@@ -51,13 +53,15 @@ public interface IAuthNMethodSAML2Profile
      * @param sMethodID The authentication method id
      * @param conditionsWindow Conditions acceptance window 
      * @param oAuthnInstantWindow Acceptance window for AuthnStmt/AuthnInstant value
+     * @param oRemoteSAMLUserProvisioningProfile ProvisioningProfile to use when instantiating new
+     *   users as a result of authentication at a remote IDP
      * @throws OAException If initialization fails.
      */
     public void init(IConfigurationManager configManager, Element config,
         EntityDescriptor entityDescriptor, IIDMapper mapper, 
         IIDPStorage orgStorage, String sMethodID, 
-        SAML2ConditionsWindow conditionsWindow,
-        SAML2TimestampWindow oAuthnInstantWindow)
+        SAML2ConditionsWindow conditionsWindow, SAML2TimestampWindow oAuthnInstantWindow,
+        StandardProfile oRemoteSAMLUserProvisioningProfile)
         throws OAException;
     
     /**

@@ -33,6 +33,7 @@ import javax.xml.namespace.QName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.asimba.authentication.remote.provisioning.saml2.AssertionUserStorage;
 import org.asimba.util.saml2.assertion.SAML2TimestampWindow;
 import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObject;
@@ -42,6 +43,7 @@ import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.common.impl.SAMLObjectContentReference;
 import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
 import org.opensaml.common.xml.SAMLConstants;
+import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.Attribute;
 import org.opensaml.saml2.core.AttributeStatement;
 import org.opensaml.saml2.core.Audience;
@@ -115,6 +117,8 @@ import com.alfaariss.oa.engine.core.attribute.UserAttributes;
 import com.alfaariss.oa.engine.core.crypto.CryptoManager;
 import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
 import com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory;
+import com.alfaariss.oa.engine.user.provisioning.ProvisioningUser;
+import com.alfaariss.oa.engine.user.provisioning.translator.standard.StandardProfile;
 import com.alfaariss.oa.util.saml2.SAML2ConditionsWindow;
 import com.alfaariss.oa.util.saml2.crypto.SAML2CryptoUtils;
 import com.alfaariss.oa.util.saml2.idp.SAML2IDP;
@@ -187,14 +191,18 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
     /** Is OA Server 1.5 compaible */ 
     protected boolean _bCompatible;
     
+    /** StandardProfile how a Remote User is provisioned */
+    protected StandardProfile _oRemoteSAMLUserProvisioningProfile;
+    
     /**
      * @see com.alfaariss.oa.authentication.remote.saml2.profile.IAuthNMethodSAML2Profile#init(com.alfaariss.oa.api.configuration.IConfigurationManager, org.w3c.dom.Element, org.opensaml.saml2.metadata.EntityDescriptor, com.alfaariss.oa.api.idmapper.IIDMapper, com.alfaariss.oa.engine.core.idp.storage.IIDPStorage, java.lang.String, com.alfaariss.oa.util.saml2.SAML2ConditionsWindow)
+     * @see 
      */
     public void init(IConfigurationManager configurationManager, Element config,
         EntityDescriptor entityDescriptor, IIDMapper mapper, 
         IIDPStorage orgStorage, String sMethodID, 
-        SAML2ConditionsWindow conditionsWindow,
-        SAML2TimestampWindow oAuthnInstantWindow) throws OAException
+        SAML2ConditionsWindow conditionsWindow, SAML2TimestampWindow oAuthnInstantWindow,
+        StandardProfile oRemoteSAMLUserProvisioningProfile) throws OAException
     {
         _oConfigManager = configurationManager;
         
@@ -208,6 +216,7 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
         _oAuthnInstantWindow = oAuthnInstantWindow;
         _sMyOrganizationID = oaEngine.getServer().getOrganization().getID();
         _requestorPoolFactory = oaEngine.getRequestorPoolFactory();
+        _oRemoteSAMLUserProvisioningProfile = oRemoteSAMLUserProvisioningProfile;
         
         try
         {
@@ -260,18 +269,27 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
     }
     
     /**
-     * Build a user object.
+     * Build a user object from an Assertion
      *
      * TODO -FO: determine what to do with NameQualifier/SPNameQualifier?
      *
-     * @param subj The Subject object.
-     * @param sMethod The Method ID calling this method.
-     * @param idpID Organization ID, to be used when no NameQualifier is specified.
+     * @param oAssertion The Assertion object (must contain a subject child!)
+     * @param sMethodId The Method ID calling this method.
+     * @param sIDPId The EntityId of the organization that is used as organizationId 
+     * 	when no NameQualifier is specified.
      * @return The SAMLUser.
      */
-    protected SAMLRemoteUser createUserFromSubject(Subject subj, String sMethod, String idpID)
+    protected SAMLRemoteUser createUserFromAssertion(Assertion oAssertion, String sMethodId, String sIDPId)
+    		throws OAException
     {
+    	Subject subj = oAssertion.getSubject();
         NameID nid = subj.getNameID();
+        
+        if (nid == null) {
+        	_logger.warn("No NameID in Subject when trying to establish User from Assertion");
+        	return null;
+        }
+        
         if (nid != null)
         {
             String sUserID = getUID(nid);
@@ -300,7 +318,7 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
                     else
                     {
                         //..otherwise UserOrg is not explicitly provided; make it to be the RemoteIDP-ID
-                        sUserOrganization = idpID;
+                        sUserOrganization = sIDPId;
                     }
                 }
                 
@@ -313,8 +331,21 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
                     return null;
                 }
                 
-                return new SAMLRemoteUser(sUserOrganization, sUserID, sMethod, 
-                    sNameIDFormat, sNameQualifier, sSPNameQualifier, idpID);
+                // Do provisioning?
+                if (_oRemoteSAMLUserProvisioningProfile == null) {
+                	// Nope, just instantiate without provisioning properties and do not
+                	// add more available AuthMethods
+	                return new SAMLRemoteUser(sUserOrganization, sUserID, sMethodId, 
+	                    sNameIDFormat, sNameQualifier, sSPNameQualifier, sIDPId);
+                } else {
+                	// Yes, do provisioning, use the assertion as External Storage
+                	AssertionUserStorage oAUS = new AssertionUserStorage(oAssertion);
+                	ProvisioningUser oProvisioningUser = 
+                			_oRemoteSAMLUserProvisioningProfile.getUser(oAUS, sUserOrganization, sUserID);
+                	
+                	return new SAMLRemoteUser(oProvisioningUser, sMethodId,
+                			sNameIDFormat, sNameQualifier, sSPNameQualifier, sIDPId);
+                }
             }
         }
         

@@ -38,5 +38,10 @@
     	<artifactId>asimba-engine-idp-jdbc</artifactId>
     	<version>1.1.2-SNAPSHOT</version>
     </dependency>
+    <dependency>
+    	<groupId>org.asimba</groupId>
+    	<artifactId>asimba-utility</artifactId>
+    	<version>1.1.2-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 </project>
