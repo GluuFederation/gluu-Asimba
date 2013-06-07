@@ -1,0 +1,28 @@
+changelog for asimba-server-baseline
+====================================
+
+
+
+
+1.1.2
+
+- updates to fix updating opensaml to latest version, especially for managing metadata providers
+- added management facility for metadataproviders and their reload threads
+- added modification times to Requestors and IDPs for triggering metadata refreshing
+- added caching to JDBC RequesterPool for optimization
+- added support for user provisioning profiles when using remote authentication methods SAML2, A-Select
+
+
+
+Modules updated:
+- asimba-am-remote
+- asimba-utility
+- asimba-engine-user-provisioning
+- asimba-am-smsotp
+- asimba-engine-requestor-jdbc 
+- asimba-engine-requestor-configuration 
+- asimba-am-remote-saml2 
+- asimba-saml2-utility 
+- asimba-engine-core 
+- asimba-am-remote-aselect 
+- asimba-api
