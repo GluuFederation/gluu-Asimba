@@ -3,7 +3,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
     <!-- relativePath>..</relativePath -->
   </parent>
   <artifactId>asimba-server-distribution</artifactId>
@@ -11,7 +11,7 @@
   <description>Asimba Server Distribution project for packaging application distribution packages</description>
 
   <properties>
-    <asimbaVersion>1.1.1</asimbaVersion>
+    <asimbaVersion>1.1.2</asimbaVersion>
   </properties>
   
   <dependencies>
@@ -23,12 +23,12 @@
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-server</artifactId>
-  		<version>1.1.1-SNAPSHOT</version>
+  		<version>${asimbaVersion}</version>
   	</dependency>
   	<dependency>
   		<artifactId>asimba-wa</artifactId>
   		<groupId>org.asimba</groupId>
-  		<version>1.1.1-SNAPSHOT</version>
+  		<version>${asimbaVersion}</version>
   		<type>war</type>
   	</dependency>
   	<dependency>
