@@ -160,7 +160,9 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
             		RequestorPoolEntry oRPE = _mRequestorPoolMap.get(sPoolId);
             		
             		if (oRPE != null) {
-                		long lCachedDateLastModified = oRPE._dLastModified.getTime();
+                		long lCachedDateLastModified = 0;
+                		if (oRPE._dLastModified != null) lCachedDateLastModified = oRPE._dLastModified.getTime();
+                		
                 		long lRealDateLastModified = getMostRecentDate(
                 				oResultSet.getTimestamp("date_last_modified"), oResultSet.getTimestamp("requestor_date"));
             			
