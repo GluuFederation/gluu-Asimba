@@ -502,8 +502,10 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
                 {
                     _logger.debug("Duplicate name for attribute (skipped): " + att.getName());
                 }
-                else
-                {
+                else if (content == null) {
+                	// Workaround to not crash on null-content (i.e. when AttributeValue is not text-content)
+                	_logger.debug("No content for the value of "+att.getName()+" ("+content+"), ignoring.");
+                } else {
                     _logger.debug("Adding attribute to map: " + att.getName());
                     
                     if (_bCompatible)
