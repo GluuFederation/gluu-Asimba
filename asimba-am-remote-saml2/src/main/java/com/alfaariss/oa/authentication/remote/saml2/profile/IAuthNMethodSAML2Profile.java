@@ -51,6 +51,8 @@ public interface IAuthNMethodSAML2Profile
      * @param mapper The ID mapper, maps internal to external IDs
      * @param orgStorage The organization storage
      * @param sMethodID The authentication method id
+     * @param sLinkedIDPProfile The SAML2IDPProfileId that receives the response messages for this 
+     * 		Remote SAML2 Authentication Method profile (acting as SAML2 SP)
      * @param conditionsWindow Conditions acceptance window 
      * @param oAuthnInstantWindow Acceptance window for AuthnStmt/AuthnInstant value
      * @param oRemoteSAMLUserProvisioningProfile ProvisioningProfile to use when instantiating new
@@ -59,7 +61,7 @@ public interface IAuthNMethodSAML2Profile
      */
     public void init(IConfigurationManager configManager, Element config,
         EntityDescriptor entityDescriptor, IIDMapper mapper, 
-        IIDPStorage orgStorage, String sMethodID, 
+        IIDPStorage orgStorage, String sMethodID, String sLinkedIDPProfile,
         SAML2ConditionsWindow conditionsWindow, SAML2TimestampWindow oAuthnInstantWindow,
         StandardProfile oRemoteSAMLUserProvisioningProfile)
         throws OAException;

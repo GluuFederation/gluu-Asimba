@@ -121,6 +121,8 @@ public class LogoutProfile extends AbstractAuthNMethodSAML2Profile
      * </ul>
      * 
      * @param sBinding The supported binding for this profile.
+     * @param sLinkedIDPProfile The linked SAML2IDP Profile that is handles response to the Single Logout
+     * 		requests (if SLO is enabled)
      */
     public LogoutProfile(String sBinding)
     {
@@ -143,13 +145,13 @@ public class LogoutProfile extends AbstractAuthNMethodSAML2Profile
      * @since 1.4
      */
     public void init(EntityDescriptor entityDescriptor, IIDMapper mapper, 
-        IIDPStorage store, String sMethodID, 
+        IIDPStorage store, String sMethodID, String sLinkedIDPProfile,
         SAML2ConditionsWindow conditionsWindow)
         throws OAException
     {
     	SAML2TimestampWindow oAuthnInstant = null; // this is not used in logout profile
     	
-        super.init(null, null, entityDescriptor, mapper, store, sMethodID, conditionsWindow, oAuthnInstant, null);
+        super.init(null, null, entityDescriptor, mapper, store, sMethodID, sLinkedIDPProfile, conditionsWindow, oAuthnInstant, null);
     }
     
     /**
@@ -423,7 +425,7 @@ public class LogoutProfile extends AbstractAuthNMethodSAML2Profile
                 AbstractEncodingFactory encFactory = 
                     AbstractEncodingFactory.createInstance(
                         request, response, slService.getBinding(),
-                        SAML2Exchange.getSPSSOBindingProperties());
+                        SAML2Exchange.getSPSSOBindingProperties(_sLinkedIDPProfile));
                 
                 if (encFactory == null)
                 {

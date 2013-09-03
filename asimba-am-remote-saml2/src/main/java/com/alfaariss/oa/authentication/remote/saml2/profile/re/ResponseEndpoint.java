@@ -181,8 +181,8 @@ public class ResponseEndpoint extends AbstractSAML2Profile
             Engine.getInstance().getCryptoManager(), entityDescriptor, _sProfileURL,
             _bindingProperties);
         
-        SAML2Exchange.setEntityDescriptor(entityDescriptor);
-        SAML2Exchange.setSPSSOBindingProperties(_bindingProperties);
+        SAML2Exchange.setEntityDescriptor(sProfileID, entityDescriptor);
+        SAML2Exchange.setSPSSOBindingProperties(sProfileID, _bindingProperties);
         
         _idpStorageManager = Engine.getInstance().getIDPStorageManager();
 	}

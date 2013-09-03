@@ -143,8 +143,9 @@ public class SAML2AuthenticationMethod extends BaseSAML2AuthenticationMethod
                                 
                 _profileWebBrowserSSO = new WebBrowserSSOProfile();
                 _profileWebBrowserSSO.init(_configurationManager, eConfig, 
-                    SAML2Exchange.getEntityDescriptor(), _idMapper, 
-                    _organizationStorage, _sMethodId, _conditionsWindow, _oAuthnInstantWindow,
+                    SAML2Exchange.getEntityDescriptor(_sLinkedIDPProfile), _idMapper, 
+                    _organizationStorage, _sMethodId, _sLinkedIDPProfile,
+                    _conditionsWindow, _oAuthnInstantWindow,
                     _oRemoteSAMLUserProvisioningProfile);
             }
         }

@@ -130,13 +130,13 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
      */
     public void init(IConfigurationManager configurationManager, Element config,
         EntityDescriptor entityDescriptor, IIDMapper mapper, 
-        IIDPStorage orgStorage, String sMethodID, 
+        IIDPStorage orgStorage, String sMethodID, String sLinkedIDPProfile,
         SAML2ConditionsWindow conditionsWindow,
         SAML2TimestampWindow oAuthnInstant,
         StandardProfile oRemoteSAMLUserProvisioningProfile) throws OAException
     {
-        super.init(configurationManager,config,entityDescriptor,mapper,orgStorage,sMethodID,conditionsWindow, 
-        		oAuthnInstant, oRemoteSAMLUserProvisioningProfile);
+        super.init(configurationManager, config, entityDescriptor, mapper, orgStorage, sMethodID, sLinkedIDPProfile,
+        		conditionsWindow, oAuthnInstant, oRemoteSAMLUserProvisioningProfile);
         
         //check if OA Server 1.5 is used
         _bCompatible =  isCompatible();
@@ -342,7 +342,7 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
             AbstractEncodingFactory encFactory = 
                 AbstractEncodingFactory.createInstance(
                     servletRequest, servletResponse, sSupportedBinding,
-                    SAML2Exchange.getSPSSOBindingProperties());
+                    SAML2Exchange.getSPSSOBindingProperties(_sLinkedIDPProfile));
             
             if (encFactory == null)
             {

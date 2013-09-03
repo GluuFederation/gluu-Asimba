@@ -141,6 +141,9 @@ public abstract class BaseSAML2AuthenticationMethod implements
     /** SAML2 Conditions Window */
     protected SAML2ConditionsWindow _conditionsWindow;
     
+    /** The SAML2Profile that handles the Response Endpoint for this SAML2 SP */
+    protected String _sLinkedIDPProfile;
+    
     /**
      * Acceptance window for AuthmStmt/AuthnInstant values
      */
@@ -259,6 +262,16 @@ public abstract class BaseSAML2AuthenticationMethod implements
             
             if (_bIsEnabled)
             {
+            	// Read the idpprofile @id element to establish the linked SAML2 IDP Profile
+            	_sLinkedIDPProfile = null;
+            	Element elIDPProfile = _configurationManager.getSection(eConfig, "idpprofile");
+            	if (elIDPProfile != null) _sLinkedIDPProfile = _configurationManager.getParam(elIDPProfile, "id");
+            	if (elIDPProfile == null || _sLinkedIDPProfile == null) {
+            		_logger.fatal("No 'idpprofile' configured; make sure there is a <idpprofile id='..' /> value to reference " +
+            				"the SAML2IDP Profile that configures the ResponseEndpoint for this SAML2 SP");
+            		throw new OAException(SystemErrors.ERROR_INIT);
+            	}
+            	
                 // Read <Conditions> section as SAML2TimestampWindow:
                 Element eConditions = _configurationManager.getSection(eConfig, "Conditions");
                 if (eConditions == null)
@@ -298,16 +311,16 @@ public abstract class BaseSAML2AuthenticationMethod implements
                 
                 try
                 {
-                    SAML2Exchange.getEntityDescriptor();
+                    SAML2Exchange.getEntityDescriptor(_sLinkedIDPProfile);
                 }
                 catch(OAException e)
                 {
-                    _logger.error("Cannot start: SAML2 Profile with Response Endpoint is disabled");
+                    _logger.error("Cannot start: there is no SAML2 IDP Profile that handles the Response Endpoint for this SAML SP");
                     throw new OAException(SystemErrors.ERROR_INIT);   
                 }
                 
                 _logoutManager = new LogoutManager(_configurationManager, 
-                    eConfig, _sMethodId, _organizationStorage, _idMapper);
+                    eConfig, _sMethodId, _organizationStorage, _idMapper, _sLinkedIDPProfile);
                 if (_logoutManager.isEnabled())
                 {
                     _logger.info("Logout: enabled");
@@ -548,8 +561,8 @@ public abstract class BaseSAML2AuthenticationMethod implements
         }
         
         LogoutProfile logoutProfile = new LogoutProfile(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
-        logoutProfile.init(SAML2Exchange.getEntityDescriptor(), _idMapper, 
-            _organizationStorage, _sMethodId, _conditionsWindow);
+        logoutProfile.init(SAML2Exchange.getEntityDescriptor(_sLinkedIDPProfile), _idMapper, 
+            _organizationStorage, _sMethodId, _sLinkedIDPProfile, _conditionsWindow);
         
         return logoutProfile;
     }

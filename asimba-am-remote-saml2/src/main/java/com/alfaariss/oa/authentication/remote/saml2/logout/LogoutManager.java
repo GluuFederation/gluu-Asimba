@@ -74,7 +74,7 @@ public class LogoutManager implements ITGTListener, IAuthority
     private boolean _bEnabled;
     private ITGTAliasStore _aliasStoreIDPRole;
     private NameIDFormatter _nameIDFormatter;
-
+    
     /**
      * Constructor.
      * 
@@ -83,11 +83,12 @@ public class LogoutManager implements ITGTListener, IAuthority
      * @param methodID The authentication method id, using this logout manager
      * @param store The organization storage
      * @param idMapper User ID mapper
+     * @param sLinkedIDPProfile The SAML2 IDP Profile that handles the response messages
      * @throws OAException If configuration is invalid.
      */
     public LogoutManager(IConfigurationManager configurationManager, 
         Element config, String methodID, IIDPStorage store, 
-        IIDMapper idMapper) throws OAException
+        IIDMapper idMapper, String sLinkedIDPProfile) throws OAException
     {
         _logger = LogFactory.getLog(LogoutManager.class);
         _eventLogger = LogFactory.getLog(Engine.EVENT_LOGGER);
@@ -175,8 +176,8 @@ public class LogoutManager implements ITGTListener, IAuthority
             
             _profile = new LogoutProfile(SAMLConstants.SAML2_SOAP11_BINDING_URI);
             _profile.init(configurationManager, null, 
-                SAML2Exchange.getEntityDescriptor(), idMapper, 
-                _store, _sMethodID, null, null, null);
+                SAML2Exchange.getEntityDescriptor(sLinkedIDPProfile), idMapper, 
+                _store, _sMethodID, sLinkedIDPProfile, null, null, null);
         }
     }
 

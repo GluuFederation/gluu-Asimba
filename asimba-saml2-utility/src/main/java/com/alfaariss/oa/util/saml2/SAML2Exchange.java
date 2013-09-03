@@ -22,6 +22,9 @@
  */
 package com.alfaariss.oa.util.saml2;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.opensaml.saml2.metadata.EntityDescriptor;
 
 import com.alfaariss.oa.OAException;
@@ -35,55 +38,65 @@ import com.alfaariss.oa.util.saml2.binding.BindingProperties;
  */
 public class SAML2Exchange
 {
-    private static EntityDescriptor _entityDescriptor;
-    private static BindingProperties _spSSOBindingProperties;
+	/** Managed list of SAML2IDPProfile@ID to EntityDescriptor */
+	protected static Map<String, EntityDescriptor> _mEntityDescriptors = new HashMap<String, EntityDescriptor>();
+	/** Managed list of SAML2IDPProfile@ID to BindingProperties (of the Response Endpoint) */
+	protected static Map<String, BindingProperties> _mSPSSOBindingProperties = new HashMap<String, BindingProperties>();
     
     /**
-     * Returns the EntityDescriptor if it is set.
+     * Returns the EntityDescriptor for the SAML2 IDP Profile ID if it is set.
      *
+     * @param sIDPProfileId The SAML2IDPProfileId to find the EntityDescriptor for
      * @return The EntityDescriptor object.
      * @throws OAException If the entity descriptor is not set.
      */
-    public static EntityDescriptor getEntityDescriptor() throws OAException
+    public static EntityDescriptor getEntityDescriptor(String sIDPProfileId) throws OAException
     {
-        if (_entityDescriptor == null) 
-            throw new OAException(SystemErrors.ERROR_NOT_INITIALIZED);
+        if (_mEntityDescriptors.containsKey(sIDPProfileId) && 
+        		_mEntityDescriptors.get(sIDPProfileId) != null) {
+        	return _mEntityDescriptors.get(sIDPProfileId);
+        }
         
-        return _entityDescriptor;
+        throw new OAException(SystemErrors.ERROR_NOT_INITIALIZED);
     }
     
     /**
-     * Set the entity descriptor object for general purpose by the authentication
-     * method.
+     * Set the entity descriptor object of a SAML2 IDP Profile ID for general purpose 
+     * by the authentication method.
      *
-     * @param ed The entity descriptor object.
+     * @param sIDPProfileId The SAML2IDPProfileId to register the EntityDescriptor instance with
+     * @param oED The entity descriptor object.
      */
-    public static void setEntityDescriptor(EntityDescriptor ed)
+    public static void setEntityDescriptor(String sIDPProfileId, EntityDescriptor oED)
     {
-        _entityDescriptor = ed;
+        _mEntityDescriptors.put(sIDPProfileId, oED);
     }
     
     /**
      * Returns the BindingProperties if they are set.
      *
+     * @param sIDPProfileId The SAML2IDPProfileId to find the BindingProperties for
      * @return The BindingProperties.
      * @throws OAException If the binding properties are not set.
      */
-    public static BindingProperties getSPSSOBindingProperties() throws OAException
+    public static BindingProperties getSPSSOBindingProperties(String sIDPProfileId) throws OAException
     {
-        if (_spSSOBindingProperties == null) 
-            throw new OAException(SystemErrors.ERROR_NOT_INITIALIZED);
-        
-        return _spSSOBindingProperties;
+    	if (_mSPSSOBindingProperties.containsKey(sIDPProfileId) && 
+    			_mSPSSOBindingProperties.get(sIDPProfileId) != null) {
+    		return _mSPSSOBindingProperties.get(sIDPProfileId);
+    	}
+    	 
+        throw new OAException(SystemErrors.ERROR_NOT_INITIALIZED);
     }
     
     /**
-     * Set binding properties to be used by AuthN method.
+     * Set binding properties of the ResponseEndpoint of a SAML2IDPProfileId to be used by AuthN method.
+     * 
      * 
      * @param bProps The <code>BindingProperties</code>
      */
-    public static void setSPSSOBindingProperties(BindingProperties bProps)
+    public static void setSPSSOBindingProperties(String sIDPProfileId, BindingProperties bProps)
     {
-        _spSSOBindingProperties = bProps;
+    	_mSPSSOBindingProperties.put(sIDPProfileId, bProps);
     }
 }

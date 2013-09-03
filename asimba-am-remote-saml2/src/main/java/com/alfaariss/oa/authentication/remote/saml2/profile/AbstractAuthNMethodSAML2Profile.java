@@ -141,6 +141,9 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
      */
     protected String _sMethodID;
     
+    /** Linked SAML2 IDP Profile that receives the profile's Response messages */
+    protected String _sLinkedIDPProfile;
+
     /**
      * The Configuration manager instance
      */
@@ -200,7 +203,7 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
      */
     public void init(IConfigurationManager configurationManager, Element config,
         EntityDescriptor entityDescriptor, IIDMapper mapper, 
-        IIDPStorage orgStorage, String sMethodID, 
+        IIDPStorage orgStorage, String sMethodID, String sLinkedIDPProfile,
         SAML2ConditionsWindow conditionsWindow, SAML2TimestampWindow oAuthnInstantWindow,
         StandardProfile oRemoteSAMLUserProvisioningProfile) throws OAException
     {
@@ -212,6 +215,7 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
         _idMapper = mapper;
         _organizationStorage = orgStorage;
         _sMethodID = sMethodID;
+        _sLinkedIDPProfile = sLinkedIDPProfile;
         _conditionsWindow = conditionsWindow;
         _oAuthnInstantWindow = oAuthnInstantWindow;
         _sMyOrganizationID = oaEngine.getServer().getOrganization().getID();
