@@ -103,6 +103,11 @@ import com.alfaariss.oa.util.saml2.crypto.SAML2CryptoUtils;
  */
 public abstract class AbstractSAML2Profile implements ISAML2Profile, IAuthority
 {
+	/** Configuration element names */
+	public static final String EL_IDPPROXY = "idpproxy";
+	public static final String ATTR_ENABLE_SHADOWED_ENTITYID = "enableShadowedEntityId";
+
+	
     /** Profile id */
     protected String _sID;
     /** OA Profile ID */
@@ -137,6 +142,10 @@ public abstract class AbstractSAML2Profile implements ISAML2Profile, IAuthority
     protected SAMLSignatureProfileValidator _profileValidator;
     /** KeyInfoCredentialResolver */
     protected KeyInfoCredentialResolver _keyInfoCredResolver;
+    
+    /** Configurable option to enable SAML2 IDP proxy, that shadows
+     * the entityId of the proxied IDP; defaults to 'false' */
+    protected boolean _bEnableProxiedEntityId = false;
                    
     private final static String AUTHORITY_NAME = "SAML2 Profile";
     
@@ -205,6 +214,23 @@ public abstract class AbstractSAML2Profile implements ISAML2Profile, IAuthority
                 //Logged in SAML2CryptoUtils
                 _logger.info("Signing disabled");
             }           
+            
+            // initialize IDP Proxy mode
+            Element elIDPProxy = configurationManager.getSection(config, EL_IDPPROXY);
+            if (elIDPProxy == null) {
+            	_bEnableProxiedEntityId = false;
+            	_logger.info("No optional '"+EL_IDPPROXY+"' section found; disabled by default.");
+            } else {
+            	String sEnabled = configurationManager.getParam(elIDPProxy, ATTR_ENABLE_SHADOWED_ENTITYID);
+            	if ("true".equalsIgnoreCase(sEnabled)) {
+            		_bEnableProxiedEntityId = true;
+            	} else if (! "false".equalsIgnoreCase(sEnabled)) {
+            		if (sEnabled != null) _logger.warn("Invalid value for "+EL_IDPPROXY+"@"+ATTR_ENABLE_SHADOWED_ENTITYID+": '"+sEnabled+
+            				"'; allowed: {'true', 'false'}");
+            	}
+            	_logger.info("IDPProxy Shadowed Entity Id mode enabled: "+_bEnableProxiedEntityId);
+            }
+
         }
         catch (OAException e)
         {

@@ -31,6 +31,7 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.core.IDPEntry;
 import org.opensaml.saml2.core.IDPList;
@@ -49,6 +50,7 @@ import com.alfaariss.oa.authentication.remote.saml2.profile.sso.WebBrowserSSOPro
 import com.alfaariss.oa.authentication.remote.saml2.util.RemoteIDPListEntry;
 import com.alfaariss.oa.engine.core.Engine;
 import com.alfaariss.oa.engine.core.idp.IDPStorageManager;
+import com.alfaariss.oa.engine.core.idp.storage.IIDP;
 import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
 import com.alfaariss.oa.util.logging.UserEventLogItem;
 import com.alfaariss.oa.util.saml2.SAML2Exchange;
@@ -190,121 +192,132 @@ public class SAML2AuthenticationMethod extends BaseSAML2AuthenticationMethod
             SAML2IDP organization = null;
             List<Warnings> warnings = null;
             
-            if (oAttributes.contains(SAML2AuthenticationMethod.class, 
-                _sMethodId + "." + SELECTED_ORGANIZATION))
-            {
-                organization = (SAML2IDP)oAttributes.get(SAML2AuthenticationMethod.class, 
-                    _sMethodId + "." + SELECTED_ORGANIZATION);
+            // Figure out whether there exists a pre-selected organization in the URLPath context
+            if (oAttributes.contains(ProxyAttributes.class, ProxyAttributes.PROXY_URLPATH_CONTEXT)) {
+            	organization = processURLPathContext(oAttributes);
             }
-            else
-            {
-                List<SAML2IDP> listSelectableOrganizations = null;
-                
-                if (oAttributes.contains(SAML2AuthenticationMethod.class, 
-                    _sMethodId + "." + LIST_AVAILABLE_ORGANIZATIONS))
-                {
-                    //The selected organization was not available, select again:
-                    listSelectableOrganizations = (List<SAML2IDP>)oAttributes
-                        .get(SAML2AuthenticationMethod.class, 
-                            _sMethodId + "." + LIST_AVAILABLE_ORGANIZATIONS);
-                    
-                    warnings = new Vector<Warnings>();
-                    warnings.add(Warnings.WARNING_ORGANIZATION_UNAVAILABLE);
-                }
-                else
-                {
-                    IUser oUser = session.getUser();
-                    if (oUser != null)
-                    {
-                        //verify if user that was identified in previous authn method may use this SAML2 authn method
-                        if (!oUser.isAuthenticationRegistered(_sMethodId))
-                        {
-                            _eventLogger.info(new UserEventLogItem(session, 
-                                request.getRemoteAddr(), 
-                                UserEvent.AUTHN_METHOD_NOT_REGISTERED, this, null));
-                            
-                            return UserEvent.AUTHN_METHOD_NOT_REGISTERED;
-                        }
-                    }
-                    
-                    listSelectableOrganizations = new Vector<SAML2IDP>();
-                    Vector fallbackList = new Vector<String>();
-                    
-                    Collection<String> cForcedOrganizations = getForcedIDPs(session);
-                    if (cForcedOrganizations != null && !cForcedOrganizations.isEmpty())
-                        oAttributes.put(SAML2AuthNConstants.class,
-                            SAML2AuthNConstants.FORCED_ORGANIZATIONS, cForcedOrganizations);
-                    
-                    List<SAML2IDP> listIDPs = _organizationStorage.getAll();
-                    for (SAML2IDP saml2IDP : listIDPs)
-                    {
-                        fallbackList.add(saml2IDP);
-                        if (cForcedOrganizations == null || cForcedOrganizations.contains(saml2IDP.getID()))
-                        {
-                            //if no forced organizations are defined or organization is in the forced
-                            //organization list: Add to select organization list.
-                            listSelectableOrganizations.add(saml2IDP);
-                        }
-                    }
-                    
-                    if (listSelectableOrganizations.isEmpty())
-                    {
-                        //DD if no forced orgs are known locally, add all and let user decide.
-                        //Make sure proxy orgs are send with AuthN request
-                        listSelectableOrganizations = fallbackList;
-                    }
-                }
-                
-                if (listSelectableOrganizations.size() == 0)
-                {
-                    _logger.debug("No organizations available to choose from");
-                    _eventLogger.info(new UserEventLogItem(session, 
-                        request.getRemoteAddr(), UserEvent.AUTHN_METHOD_NOT_SUPPORTED, 
-                        this, null));
-              
-                    return UserEvent.AUTHN_METHOD_NOT_SUPPORTED;
-                }
-          
-                if (_oSelector == null)
-                {
-                    organization = listSelectableOrganizations.get(0);
-                                          
-                    _logger.debug("No selector configured, using: " + organization.getID());
-                }
-                else
-                {
-                    try
-                    {
-                        //Select requestor
-                        organization = _oSelector.resolve(
-                            request, response, session, listSelectableOrganizations, 
-                            _sFriendlyName, warnings);
-                    }
-                    catch (OAException e)
-                    {
-                        _eventLogger.info(new UserEventLogItem(session, 
-                            request.getRemoteAddr(), UserEvent.INTERNAL_ERROR, 
-                            this, "selecting organization"));
-                        throw e;
-                    }
-                }
-          
-                if (organization == null)
-                {
-                    //Page is shown
-                    _eventLogger.info(new UserEventLogItem(session, 
-                        request.getRemoteAddr(), UserEvent.AUTHN_METHOD_IN_PROGRESS, 
-                        this, null));
-              
-                    return UserEvent.AUTHN_METHOD_IN_PROGRESS;
-                }
-          
-                oAttributes.put(SAML2AuthenticationMethod.class, 
-                    _sMethodId, SELECTED_ORGANIZATION, organization);
-                
-                listSelectableOrganizations.remove(organization);
-                oAttributes.put(SAML2AuthenticationMethod.class, _sMethodId,  
-                    LIST_AVAILABLE_ORGANIZATIONS, listSelectableOrganizations);
+            
+            if (organization != null) {
+            	_logger.info("Established organization from URLPathContext: "+organization.getID());
+            } 
+            else 
+            {            
+	            if (oAttributes.contains(SAML2AuthenticationMethod.class, 
+	                _sMethodId + "." + SELECTED_ORGANIZATION))
+	            {
+	                organization = (SAML2IDP)oAttributes.get(SAML2AuthenticationMethod.class, 
+	                    _sMethodId + "." + SELECTED_ORGANIZATION);
+	            }
+	            else
+	            {
+	                List<SAML2IDP> listSelectableOrganizations = null;
+	                
+	                if (oAttributes.contains(SAML2AuthenticationMethod.class, 
+	                    _sMethodId + "." + LIST_AVAILABLE_ORGANIZATIONS))
+	                {
+	                    //The selected organization was not available, select again:
+	                    listSelectableOrganizations = (List<SAML2IDP>)oAttributes
+	                        .get(SAML2AuthenticationMethod.class, 
+	                            _sMethodId + "." + LIST_AVAILABLE_ORGANIZATIONS);
+	                    
+	                    warnings = new Vector<Warnings>();
+	                    warnings.add(Warnings.WARNING_ORGANIZATION_UNAVAILABLE);
+	                }
+	                else
+	                {
+	                    IUser oUser = session.getUser();
+	                    if (oUser != null)
+	                    {
+	                        //verify if user that was identified in previous authn method may use this SAML2 authn method
+	                        if (!oUser.isAuthenticationRegistered(_sMethodId))
+	                        {
+	                            _eventLogger.info(new UserEventLogItem(session, 
+	                                request.getRemoteAddr(), 
+	                                UserEvent.AUTHN_METHOD_NOT_REGISTERED, this, null));
+	                            
+	                            return UserEvent.AUTHN_METHOD_NOT_REGISTERED;
+	                        }
+	                    }
+	                    
+	                    listSelectableOrganizations = new Vector<SAML2IDP>();
+	                    Vector fallbackList = new Vector<String>();
+	                    
+	                    Collection<String> cForcedOrganizations = getForcedIDPs(session);
+	                    if (cForcedOrganizations != null && !cForcedOrganizations.isEmpty())
+	                        oAttributes.put(SAML2AuthNConstants.class,
+	                            SAML2AuthNConstants.FORCED_ORGANIZATIONS, cForcedOrganizations);
+	                    
+	                    List<SAML2IDP> listIDPs = _organizationStorage.getAll();
+	                    for (SAML2IDP saml2IDP : listIDPs)
+	                    {
+	                        fallbackList.add(saml2IDP);
+	                        if (cForcedOrganizations == null || cForcedOrganizations.contains(saml2IDP.getID()))
+	                        {
+	                            //if no forced organizations are defined or organization is in the forced
+	                            //organization list: Add to select organization list.
+	                            listSelectableOrganizations.add(saml2IDP);
+	                        }
+	                    }
+	                    
+	                    if (listSelectableOrganizations.isEmpty())
+	                    {
+	                        //DD if no forced orgs are known locally, add all and let user decide.
+	                        //Make sure proxy orgs are send with AuthN request
+	                        listSelectableOrganizations = fallbackList;
+	                    }
+	                }
+	                
+	                if (listSelectableOrganizations.size() == 0)
+	                {
+	                    _logger.debug("No organizations available to choose from");
+	                    _eventLogger.info(new UserEventLogItem(session, 
+	                        request.getRemoteAddr(), UserEvent.AUTHN_METHOD_NOT_SUPPORTED, 
+	                        this, null));
+	              
+	                    return UserEvent.AUTHN_METHOD_NOT_SUPPORTED;
+	                }
+	          
+	                if (_oSelector == null)
+	                {
+	                    organization = listSelectableOrganizations.get(0);
+	                                          
+	                    _logger.debug("No selector configured, using: " + organization.getID());
+	                }
+	                else
+	                {
+	                    try
+	                    {
+	                        //Select requestor
+	                        organization = _oSelector.resolve(
+	                            request, response, session, listSelectableOrganizations, 
+	                            _sFriendlyName, warnings);
+	                    }
+	                    catch (OAException e)
+	                    {
+	                        _eventLogger.info(new UserEventLogItem(session, 
+	                            request.getRemoteAddr(), UserEvent.INTERNAL_ERROR, 
+	                            this, "selecting organization"));
+	                        throw e;
+	                    }
+	                }
+	          
+	                if (organization == null)
+	                {
+	                    //Page is shown
+	                    _eventLogger.info(new UserEventLogItem(session, 
+	                        request.getRemoteAddr(), UserEvent.AUTHN_METHOD_IN_PROGRESS, 
+	                        this, null));
+	              
+	                    return UserEvent.AUTHN_METHOD_IN_PROGRESS;
+	                }
+	          
+	                oAttributes.put(SAML2AuthenticationMethod.class, 
+	                    _sMethodId, SELECTED_ORGANIZATION, organization);
+	                
+	                listSelectableOrganizations.remove(organization);
+	                oAttributes.put(SAML2AuthenticationMethod.class, _sMethodId,  
+	                    LIST_AVAILABLE_ORGANIZATIONS, listSelectableOrganizations);
+	            }
             }
 
             UserEvent event = null;
@@ -541,5 +554,75 @@ public class SAML2AuthenticationMethod extends BaseSAML2AuthenticationMethod
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
         return storage;
+    }
+    
+    
+    /**
+     * Establish the SAML2IDP using the PROXY_URLPATH_CONTEXT from the session<br/>
+     * Also puts the SAML2IDP's EntityId in the Session as PROXY_SHADOWED_ENTITYID<br/>
+     * <br/>
+     * When no SAML2IDP match could be made, there will be no PROXY_SHADOWED_ENTITYID attribute
+     * written in the session, and null is returned. 
+     * 
+     * @param oAttributes Session Attributes
+     * @return SAML2IDP organization as established, or null when no match could be made
+     */
+    protected SAML2IDP processURLPathContext(ISessionAttributes oAttributes) 
+    	throws OAException
+    {
+    	// Did we try to find a match before?
+		if (oAttributes.contains(ProxyAttributes.class, ProxyAttributes.PROXY_SHADOWED_ENTITYID)) {
+			String sShadowedEntityId = (String) oAttributes.get(ProxyAttributes.class, ProxyAttributes.PROXY_SHADOWED_ENTITYID);
+			
+			// Re-use this intelligence, and return the SAML2IDP instance
+			IIDP oIDP = _organizationStorage.getIDP(sShadowedEntityId); 
+			if (oIDP instanceof SAML2IDP) {
+				_logger.info("Found IDP '"+sShadowedEntityId+"' from previous URLPath Context match");
+				return (SAML2IDP) oIDP;
+			} else {
+				_logger.warn("Non-SAML2IDP found in IDP Storage - inform developers of this condition! (1)");
+				return null;
+			}
+		}
+    	
+    	String sURLPathContext = (String) oAttributes.get(ProxyAttributes.class, ProxyAttributes.PROXY_URLPATH_CONTEXT);
+    	// URLPathContext can be list of 'k1=v1;k2=v2;...' pairs; split on pairs first
+    	String[] pairs = sURLPathContext.split(";");
+    	
+    	// Find the k=v pair for which k="i":
+    	String v = null;
+    	for(String pair: pairs) {
+    		String[] p = pair.split("=");
+    		if (p.length>1 && "i".equals(p[0])) {
+    			v = p[1];
+    			break;
+    		}
+    	}
+    	
+    	if (v == null) {
+    		_logger.info("No 'i' value found in URLPath Context path ('"+sURLPathContext+"')");
+    		return null;
+    	}
+    	
+    	List<IIDP> lAllIDPs = _organizationStorage.getAll();
+    	for(IIDP oIDP: lAllIDPs) {
+    		String sIDPEntityIdHash = DigestUtils.shaHex(oIDP.getID());
+    		if (sIDPEntityIdHash.equalsIgnoreCase(v)) {
+    			_logger.info("Found IDP '"+oIDP.getID()+"' in matching URLPath Context");
+    			if (oIDP instanceof SAML2IDP) {
+    				// Store the IDP that was found on the map
+    				oAttributes.put(ProxyAttributes.class, ProxyAttributes.PROXY_SHADOWED_ENTITYID, oIDP.getID());
+    				
+    				// Return result
+    				return (SAML2IDP) oIDP;
+    			} else {
+    				_logger.warn("Non-SAML2IDP found in IDP Storage - inform developers of this condition! (2)");
+    				return null;
+    			}
+    		}
+    	}
+    	
+    	_logger.info("No IDP found for provided i");
+    	return null;
     }
 }

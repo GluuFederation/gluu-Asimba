@@ -45,6 +45,7 @@ import com.alfaariss.oa.api.session.ISession;
 import com.alfaariss.oa.util.saml2.SAML2IssueInstantWindow;
 import com.alfaariss.oa.util.saml2.StatusException;
 import com.alfaariss.oa.util.saml2.protocol.AbstractSAML2Protocol;
+import com.alfaariss.oa.util.saml2.proxy.ProxyAttributes;
 
 
 /**
@@ -65,6 +66,11 @@ public abstract class AbstractAuthenticationRequestProtocol
     protected String _sRequestID;
     /** The IDP Entitiy ID */
     protected String _sEntityID;
+    /** Sets whether the shadowed Idp Entity gets to be used */
+    protected boolean _bEnableShadowIdp;
+    /** The EntityId that we pretend to be for the Requester (optional);
+     * if it contains a non-null value, the feature is enabled implicitly  */
+    protected String _sShadowedEntityId = null;
     
     private Log _logger;
     
@@ -78,12 +84,13 @@ public abstract class AbstractAuthenticationRequestProtocol
      */
     public AbstractAuthenticationRequestProtocol(SecureRandom random, 
         String sProfileURL, ISession session, String sEntityId, 
-        SAML2IssueInstantWindow issueInstantWindow)
+        SAML2IssueInstantWindow issueInstantWindow, boolean bEnableShadowedIdp)
     {
         super(random, sProfileURL, issueInstantWindow);
         _logger = LogFactory.getLog(AbstractAuthenticationRequestProtocol.class);
         _session = session;
         _sEntityID = sEntityId;
+        _bEnableShadowIdp = bEnableShadowedIdp;
         
         readSessionAttributes(_session);
     }
@@ -231,7 +238,11 @@ public abstract class AbstractAuthenticationRequestProtocol
             Issuer issuer = issuerBuilder.buildObject();
             
             //if no format is set then NameID.ENTITY is in effect (saml-core-2.0-os r526)
-            issuer.setValue(_sEntityID);
+            if (_sShadowedEntityId != null) {
+            	issuer.setValue(_sShadowedEntityId);
+            } else {
+            	issuer.setValue(_sEntityID);
+            }
             response.setIssuer(issuer);
             
             //set response status
@@ -248,15 +259,25 @@ public abstract class AbstractAuthenticationRequestProtocol
         return response;
     }
     
+    /**
+     * Initialize the instance from the Session context
+     * @param session Asimba Session in which the Request handling takes place
+     */
     private void readSessionAttributes(ISession session)
     {
-        if (session != null)
-        {
+        if (session != null) {
             ISessionAttributes attributes = session.getAttributes();
-            if (attributes.contains(AbstractAuthenticationRequestProtocol.class, SESSION_REQUEST_ID))
-            {
+            if (attributes.contains(AbstractAuthenticationRequestProtocol.class, SESSION_REQUEST_ID)) {
                 _sRequestID = (String)attributes.get(AbstractAuthenticationRequestProtocol.class, 
                     SESSION_REQUEST_ID);
+            }
+            
+            // try to establish a shadowed EntityId, only if feature is enabled
+            if (_bEnableShadowIdp) {
+	            if (attributes.contains(ProxyAttributes.class, ProxyAttributes.PROXY_SHADOWED_ENTITYID)) {
+	            	_sShadowedEntityId = (String) attributes.get(ProxyAttributes.class, ProxyAttributes.PROXY_SHADOWED_ENTITYID);
+	            	_logger.debug("Enabling Authn Request ShadowedEntityId support (shadowed entityId: "+_sShadowedEntityId+")");
+	            }
             }
         }
     }

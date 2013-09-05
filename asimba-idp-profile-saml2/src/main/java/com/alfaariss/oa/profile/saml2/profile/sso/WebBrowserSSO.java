@@ -139,7 +139,7 @@ public class WebBrowserSSO extends AbstractSAML2Profile
     private IAuthenticationProfileFactory _authnProfileFactory;
     private ITGTAliasStore _spAliasStore;
     private boolean _bCompatible;
-        
+    
     /**
      * Constructor. 
      */
@@ -521,11 +521,15 @@ public class WebBrowserSSO extends AbstractSAML2Profile
                     SESSION_REQUEST_RELAYSTATE, relayState);
             }
             
+            String sURLPathContext = getURLPathContext(request);
+            if (sURLPathContext != null)
+            	session.getAttributes().put(ProxyAttributes.class, ProxyAttributes.PROXY_URLPATH_CONTEXT, sURLPathContext);
+            
             //TODO (MHO) (Optional) Extensions support?
             
             protocol = new AuthenticationRequestProtocol(session, 
                 _nameIDFormatter, _sProfileURL, _sEntityID, saml2Requestor, 
-                _cryptoManager, _issueInstantWindow, _bCompatible);
+                _cryptoManager, _issueInstantWindow, _bCompatible, _bEnableProxiedEntityId);
             
             session = protocol.processRequest(authnRequest);
             
@@ -608,7 +612,7 @@ public class WebBrowserSSO extends AbstractSAML2Profile
             AuthenticationRequestProtocol protocol = 
                 new AuthenticationRequestProtocol(session, _nameIDFormatter, 
                     _sProfileURL, _sEntityID, saml2Requestor, _cryptoManager, 
-                    _issueInstantWindow, _bCompatible);
+                    _issueInstantWindow, _bCompatible, _bEnableProxiedEntityId);
             
             StatusResponseType samlResponse = null;
             RequestorEventLogItem oLogItem = null;
@@ -1258,5 +1262,24 @@ public class WebBrowserSSO extends AbstractSAML2Profile
             //false
         }
         return false;
+    }
+    
+    /**
+     * Establish the last part of the URL Path part<br/>
+     * i.e.<br/>
+     * http://server/asimba/something-something/context=abcd;123<br/>
+     * would return: "context=abcd;123"
+     * @param oRequest HttpServletRequest to investigate
+     * @return The context part, or null of there was no context part (i.e. when "https://server" was the URL)
+     */
+    protected String getURLPathContext(HttpServletRequest oRequest) {
+    	String sPath = oRequest.getRequestURI();
+    	
+    	int last = sPath.lastIndexOf("/"); 
+    	if (last == -1) {
+    		return null;
+    	}
+    	
+    	return sPath.substring(last+1);
     }
 }

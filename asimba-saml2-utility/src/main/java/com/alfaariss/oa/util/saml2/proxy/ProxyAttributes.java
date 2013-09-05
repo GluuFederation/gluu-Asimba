@@ -68,4 +68,10 @@ public class ProxyAttributes
     /** Response proxy attribute: AuthenticatingAuthorities (List<String>) (saml-core-2.0-os r1133)*/
     public final static String AUTHNCONTEXT_AUTHENTICATING_AUTHORITIES = "AuthenticatingAuthorities";
     
+    // Asimba specific attributes to share between IDP Profile and SP behavior (RemoteSAML authentication)
+    /** The added context to the request URL (_before_ the querystring starts) */
+    public final static String PROXY_URLPATH_CONTEXT = "urlpath.context";
+    /** The established entityId that we are pretending to be for a requestor */
+    public final static String PROXY_SHADOWED_ENTITYID = "shadowed.entityId";
+    
 }

@@ -159,11 +159,11 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
     public AuthenticationRequestProtocol(ISession session, 
         NameIDFormatter nameIDFormatter, String sProfileURL, String sEntityId, 
         SAML2Requestor saml2Requestor, CryptoManager cryptoManager, 
-        SAML2IssueInstantWindow issueInstantWindow, boolean bCompatible) 
+        SAML2IssueInstantWindow issueInstantWindow, boolean bCompatible, boolean bEnableShadowedIdp) 
         throws OAException
     {
         super(cryptoManager.getSecureRandom(), sProfileURL, session, sEntityId, 
-            issueInstantWindow);
+            issueInstantWindow, bEnableShadowedIdp);
         _logger = LogFactory.getLog(AuthenticationRequestProtocol.class);
         
         try
@@ -941,7 +941,12 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
             assertion.setID(sSessionIndex);
             assertion.setIssueInstant(new DateTime());
     
-            Issuer issuer = buildIssuer(null, _sEntityID);
+            Issuer issuer;
+            if (_sShadowedEntityId != null) {
+            	issuer = buildIssuer(null, _sShadowedEntityId);
+            } else {
+            	issuer = buildIssuer(null, _sEntityID);
+            }
             assertion.setIssuer(issuer);
             
             DateTime dtNotOnOrAfter = new DateTime(System.currentTimeMillis() 
