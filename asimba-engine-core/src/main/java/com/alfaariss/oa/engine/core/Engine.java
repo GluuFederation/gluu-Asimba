@@ -26,6 +26,7 @@ import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.asimba.engine.core.confederation.IConfederationFactory;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -89,6 +90,9 @@ public class Engine implements IComponent
     private IAttributeReleasePolicyFactory _attributeReleasePolicyFactory;
     private IDataStorageFactory _storageFactory; 
     private IDPStorageManager _idpStorageManager;
+    
+    /** Manager for confederations */
+    protected IConfederationFactory _oConfederationFactory;
     
     private List<IComponent> _lComponents;
 
@@ -299,6 +303,15 @@ public class Engine implements IComponent
         return _attributeGatherer;
     }
 
+    
+    /**
+     * Retrieve the (optional) ConfederationManager
+     * @return
+     */
+    public IConfederationFactory getConfederationFactory()
+    {
+    	return _oConfederationFactory;
+    }
 
     /**
      * Add a component dynamically to the engine.
@@ -558,6 +571,28 @@ public class Engine implements IComponent
             catch(ClassCastException e)
             {
                 _logger.error("Configured 'attributerelease' class isn't an IAttributeReleasePolicyFactory", e); 
+                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+            }
+            
+            // Start the optional Confederation Manager
+            try
+            {
+                Element eConfederationFactory = _configurationManager.getSection(eConfig, "confederations");            
+                if (eConfederationFactory == null) {
+                    _logger.info("No 'confederations' configuration section found");
+                    _oConfederationFactory = null;
+                } else {
+                
+	                oComponent = getComponent(eConfederationFactory,(IComponent)_oConfederationFactory);
+	                if (oComponent != null) {
+	                	_oConfederationFactory = (IConfederationFactory)oComponent;
+	                    ((IComponent)_oConfederationFactory).start(_configurationManager, eConfederationFactory);
+	                }
+                }
+            }
+            catch(ClassCastException e)
+            {
+                _logger.error("Configured 'confederations' class isn't an IConfederationFactory", e); 
                 throw new OAException(SystemErrors.ERROR_CONFIG_READ);
             }
             
@@ -893,6 +928,33 @@ public class Engine implements IComponent
                 throw new OAException(SystemErrors.ERROR_CONFIG_READ);
             }           
             
+            //Restart optional confederation factory
+            try
+            {
+                Element eConfederation = _configurationManager.getSection(eConfig, "confederations");            
+                if (eConfederation == null) {
+                    _logger.info("No optional 'confederations' configuration section found");
+                    if (_oConfederationFactory != null) {
+                        ((IComponent)_oConfederationFactory).stop();
+                        _oConfederationFactory = null;
+                    }
+                } else {
+                    IComponent oComponent = getComponent(eConfederation, 
+                        (IComponent)_oConfederationFactory);
+                    if (oComponent != null) {
+                        if (_oConfederationFactory != null)
+                            ((IComponent)_oConfederationFactory).stop();
+                        _oConfederationFactory = (IConfederationFactory)oComponent;
+                        oComponent.start(_configurationManager, eConfederation);
+                    } else {
+                    	((IComponent)_oConfederationFactory).restart(eConfederation);
+                    }
+                }
+            } catch(ClassCastException e) {
+                _logger.error("Configured 'confederations' class isn't an IConfederationFactory", e); 
+                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+            }
+            
             _server = createServer(eConfig);
             
             //Restart optional user factory
@@ -992,6 +1054,8 @@ public class Engine implements IComponent
             ((IComponent)_storageFactory).stop(); 
         if (_idpStorageManager != null)
             _idpStorageManager.stop();
+        if (_oConfederationFactory!=null)
+        	((IComponent)_oConfederationFactory).stop();
         //Stop other components
         for(IComponent listnerComponent : _lComponents)
         {
