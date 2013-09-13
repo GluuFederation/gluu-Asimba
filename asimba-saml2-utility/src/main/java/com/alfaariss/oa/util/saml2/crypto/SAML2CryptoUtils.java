@@ -134,6 +134,7 @@ public class SAML2CryptoUtils
     
     /**
      * Retrieve the signing credentials of the given issuer.
+     * The global Signing Keystore facility of the server is used for the lookup. 
      * 
      * These credentials do not contain the private key and can only 
      * be used for signature validation.
@@ -168,7 +169,7 @@ public class SAML2CryptoUtils
         catch(CryptoException e)
         {
             _logger.debug(
-                "Could not retrieve signing credentials");
+                "Could not retrieve signing credentials from crypto manager's signing facility");
             throw e;
         }
         return signingCredential;
