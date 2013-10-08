@@ -257,10 +257,15 @@ public class DefaultPersistentFormatHandler implements INameIDFormatHandler {
 			_sAttributeName = sName;
 			
 			String sRAU = oConfigManager.getParam(elAttribute, EL_ATTR_REMOVE);
+			if (sRAU == null) {
+				_bRemoveAfterUse = false;
+				_oLogger.info("Optional " + EL_ATTRIBUTE+"@"+EL_ATTR_REMOVE+" is not configured, "+
+						"using default '"+_bRemoveAfterUse+"'");
+			}
 			if ("TRUE".equalsIgnoreCase(sRAU)) {
 				_bRemoveAfterUse = true;
 			} else if (!"FALSE".equalsIgnoreCase(sRAU)) {
-				_oLogger.warn("Invalid value for opaque@removeAfterUse: "+sRAU);
+				_oLogger.warn("Invalid value for "+EL_ATTRIBUTE+"@"+EL_ATTR_REMOVE+": "+sRAU);
 			}
 			
 			_oLogger.info("Attributename set to "+_sAttributeName+"; the value "+(_bRemoveAfterUse?"WILL":"WILL NOT")+
