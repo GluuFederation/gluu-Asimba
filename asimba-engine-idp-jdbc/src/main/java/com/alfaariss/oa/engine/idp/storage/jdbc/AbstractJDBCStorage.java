@@ -52,7 +52,7 @@ import com.alfaariss.oa.util.database.jdbc.DataSourceFactory;
 abstract public class AbstractJDBCStorage<IDP extends IIDP> implements IIDPStorage
 {
     /** System logger */
-    protected static Log _logger;
+    private static Log _logger;
     /** Datasource */
     protected DataSource _dataSource;
 

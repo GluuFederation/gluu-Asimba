@@ -48,7 +48,7 @@ import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
 abstract public class AbstractConfigurationStorage<IDP extends IIDP> implements IIDPStorage
 {
     /** System logger */
-    protected static Log _logger;
+    private static Log _logger;
     /** Hashtable containing all IDP's */
     protected Hashtable<String, IDP> _htIDPs;
     /** List containing all IDP's*/
@@ -119,7 +119,7 @@ abstract public class AbstractConfigurationStorage<IDP extends IIDP> implements 
             
             if (!bEnabled)
             {
-                _logger.info("A-Select IDP disabled: " + idp.getID());
+                _logger.info("IDP disabled: " + idp.getID());
             }
             else
             {
