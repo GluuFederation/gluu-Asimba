@@ -23,39 +23,29 @@
 package com.alfaariss.oa.util.saml2;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.Vector;
 
-import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asimba.util.saml2.metadata.provider.IMetadataProviderManager;
+import org.asimba.util.saml2.metadata.provider.MetadataProviderConfiguration;
 import org.asimba.util.saml2.metadata.provider.MetadataProviderUtil;
 import org.asimba.util.saml2.metadata.provider.management.MdMgrManager;
 import org.asimba.utility.filesystem.PathTranslator;
-import org.asimba.utility.xml.XMLUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
-import org.opensaml.saml2.metadata.provider.ChainingMetadataProvider;
-import org.opensaml.saml2.metadata.provider.DOMMetadataProvider;
+import org.opensaml.saml2.metadata.provider.AbstractReloadingMetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
-import org.opensaml.xml.parse.BasicParserPool;
-import org.opensaml.xml.parse.ParserPool;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
+import com.alfaariss.oa.api.configuration.ConfigurationException;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.requestor.IRequestor;
+import com.alfaariss.oa.engine.core.Engine;
 
 /**
  * Requestor object containing requestor specific configuration items.
@@ -65,53 +55,47 @@ import com.alfaariss.oa.api.requestor.IRequestor;
  */
 public class SAML2Requestor implements Serializable
 {
+    private final static long serialVersionUID = 2093412253512956568L;
+    
+	/** Local logger instance */
+	private static Log _logger = LogFactory.getLog(SAML2Requestor.class);
+
     /** Default request timeout */
     public final static int HTTP_METADATA_REQUEST_TIMEOUT = 5000;
        
-    /**
-     * ID
-     */
+    /** ID of the Requestor (represents the SAML2 EntityId) */
     protected String _sID;
     
-    /**
-     * Metadata URL
-     */
-    protected String _sMetadataURL;
-    
-    /**
-     * Metadata file
-     */
-    protected File _fMetadata;
-    
-    /**
-     * Timeout
-     */
-    protected int _iMetadataURLTimeout;
-    
-    /**
-     * Metadata data 
-     */
-    protected String _sMetadata;
-    
-    /**
-     * Signing mandatory.
-     */
+    /** The configured source(s) for getting SAML2 Metadata from */
+    protected MetadataProviderConfiguration _oMetadataProviderConfig;
+
+    /** Signing mandatory. */
     protected boolean _bSigning;
    
-    /**
-     * Metadata Provider.
-     */
-    protected MetadataProvider _oMetadataProvider;
-
-    private final static long serialVersionUID = 2093412253512956567L;
+    /** Timestamp when the SAML2Requestor was last modified */
+    protected Date _dLastModified;
     
+    /** The name of the MetadataProviderManager that manages this SAML2Requestor */
+    protected String _sMPMId = null;
+
+    /**
+     * Keep reference to MetadataProvider for this SAML2Requestor
+     * 
+     * Does not serialize, so it is lost whenever it has been resuscitated. This should
+     * not present any problem, as the MetadataProviderManager can re-deliver the 
+     * MetadataProvider, or when it can not, this SAML2Requestor can re-create one
+     */
+    transient protected MetadataProvider _oMetadataProvider;
+
     private final static String PROPERTY_SIGNING = ".signing";
     private final static String PROPERTY_METADATA_HTTP_TIMEOUT = ".metadata.http.timeout";
     private final static String PROPERTY_METADATA_HTTP_URL = ".metadata.http.url";
     private final static String METADATA_FILE = ".metadata.file";
     private final static String METADATA = ".metadata";
     
-    private Log _logger;
+    public final static int DEFAULT_HTTP_CONNECT_TIMEOUT = 3000;
+    public final static int DEFAULT_HTTP_READ_TIMEOUT = 3000;
+    
     
     /**
      * Constructor.
@@ -119,12 +103,13 @@ public class SAML2Requestor implements Serializable
      * @param configurationManager The config manager.
      * @param config Configuration section.
      * @param bSigning Default signing boolean.
+     * @param sMPMId The name of the MetadataProviderManager that manages the MetadataProvider
+     *   for this SAML2Requestor
      * @throws OAException If creation fails.
      */
     public SAML2Requestor(IConfigurationManager configurationManager, 
-        Element config, boolean bSigning, String sProfileID) throws OAException
+        Element config, boolean bSigning, String sMPMId) throws OAException
     {
-        _logger = LogFactory.getLog(SAML2Requestor.class);
         try
         {
             _sID = configurationManager.getParam(config, "id");
@@ -154,67 +139,36 @@ public class SAML2Requestor implements Serializable
                 }
             }
             
+            _logger.info("Using signing enabled: " + _bSigning);
+            
             String sDateLastModified = configurationManager.getParam(config, "lastmodified");
-            Date dLastModified = null;
+            _dLastModified = null;
             
             if (sDateLastModified != null) {
             	// Convert to java.util.Date
             	try {
 	            	DateTime dt = ISODateTimeFormat.dateTimeNoMillis().parseDateTime(sDateLastModified);
-            		dLastModified = dt.toDate();
+	            	_dLastModified = dt.toDate();
             	} catch (IllegalArgumentException iae) {
-            		_logger.info("Invalid 'lastmodified' timestamp provided: "+sDateLastModified+"; ignoring.");
-            		dLastModified = null;
+            		_logger.warn("Invalid 'lastmodified' timestamp provided: "+sDateLastModified+"; ignoring.");
+            		_dLastModified = null;
             	}
             }
 
+            // Keep reference to the MetadataProviderManager
+            _sMPMId = sMPMId;
             
-            _oMetadataProvider = null;
-            _sMetadataURL = null;
-            _fMetadata = null;
-            _sMetadata = null;	// metadata contents never initialized from configuration
-            _iMetadataURLTimeout = HTTP_METADATA_REQUEST_TIMEOUT;
+            // Do some integrity checking:
+            IMetadataProviderManager oMPM = MdMgrManager.getInstance().getMetadataProviderManager(_sMPMId);
+            if (oMPM == null) _logger.warn("The MetadataProviderManager '"+_sMPMId+"' does not (yet?) exist!");
             
-            Element eMetadata = configurationManager.getSection(config, "metadata");
-            if (eMetadata != null)
-            {
-            	// Establish MetadataProvider for Requestor:
-            	IMetadataProviderManager oMPM = null;
-            	MetadataProvider oMP = null;
 
-            	oMPM = MdMgrManager.getInstance().getMetadataProviderManager(sProfileID);
-            	
-            	// Try to get MetadataProvider from manager
-            	if (oMPM != null) {
-            		oMP = oMPM.getProviderFor(_sID, dLastModified);
-            	}
-            	
-            	if (oMP == null) {
-        			// Create new MetadataProvider
-        			List<MetadataProvider> listMetadataProviders = 
-                            readMetadataProviders(configurationManager, eMetadata, oMPM);
-        			
-        			if (!listMetadataProviders.isEmpty()) {
-            			// Only one is used:
-        				oMP = listMetadataProviders.get(0);
-        				_logger.info("MetadataProviders was be established for "+_sID);
-        			} else {
-        				_logger.info("No MetadataProviders could be established for "+_sID);
-        			}
-        		}
-            	
-            	_oMetadataProvider = oMP;
-            	
-            	if (_oMetadataProvider == null) {
-            		_logger.info("No MetadataProviders was found for "+_sID);
-            	}
-            }
-            else
-                _logger.warn(
-                    "No optional 'metadata' section found in configuration for requestor with id: " 
-                    + _sID);
+            // Initialize MetadataProviderConfig
+            _oMetadataProviderConfig = getMetadataConfigFromConfig(configurationManager, config);
             
-            _logger.info("Using signing enabled: " + _bSigning);
+            // Initialize upon construction, as last modification date will not change
+            initMetadataProvider();
+                        
         }
         catch (OAException e)
         {
@@ -227,143 +181,42 @@ public class SAML2Requestor implements Serializable
         }
     }
     
+    
     /**
      * Constructor which uses business logic requestor properties.
      *  
-     * @param requestor The OA Requestor object
+     * @param oRequestor The OA Requestor object
      * @param bSigning Default signing boolean.
-     * @param sProfileID The SAML2 OA Profile id for resolving the attributes.
+     * @param sProfileId The SAML2 OA Profile id for resolving the attributes.
+     * @param sMPMId The name of the MetadataProviderManager that manages the MetadataProvider
+     *   for this SAML2Requestor
      * @throws OAException If creation fails.
      * @since 1.1
      */
-    public SAML2Requestor(IRequestor requestor, boolean bSigning, String sProfileID) 
+    public SAML2Requestor(IRequestor oRequestor, boolean bSigning, String sProfileId, String sMPMId) 
         throws OAException
     {
         try
         {
-        	_logger = LogFactory.getLog(SAML2Requestor.class);
-            _sID = requestor.getID();
+            _sID = oRequestor.getID();
 
-            Map<?, ?> mProperties = requestor.getProperties();
-        	initFromProperties(mProperties, bSigning, sProfileID);
+            Map<?, ?> mProperties = oRequestor.getProperties();
+        	initFromProperties(mProperties, bSigning, sProfileId);
 
-        	// Establish MetadataProvider for Requestor:
-        	IMetadataProviderManager oMPM = null;
-        	MetadataProvider oMP = null;
-        	
-        	oMPM = MdMgrManager.getInstance().getMetadataProviderManager(sProfileID);
-        	
-        	// Try to get MetadataProvider from manager
-        	if (oMPM != null) {
-        		oMP = oMPM.getProviderFor(_sID, requestor.getLastModified());
-        	}
-        	
-        	if (oMP == null) {
-    			// Create new MetadataProvider
-                _oMetadataProvider = null;
-                _sMetadataURL = null;
-                _fMetadata = null;
-                _iMetadataURLTimeout = HTTP_METADATA_REQUEST_TIMEOUT;
-                
-                String sMetadataURL = (String)mProperties.get(sProfileID + PROPERTY_METADATA_HTTP_URL);
-                String sMetadataTimeout = (String)mProperties.get(sProfileID + PROPERTY_METADATA_HTTP_TIMEOUT);
-                String sMetadataFile = (String)mProperties.get(sProfileID + METADATA_FILE);
-                _sMetadata = (String)mProperties.get(sProfileID + METADATA);
-                
-                List<MetadataProvider> listMetadataProviders = 
-                    readMetadataProviders(sMetadataURL, sMetadataTimeout, sMetadataFile, _sMetadata, oMPM);
-    			
-    			if (!listMetadataProviders.isEmpty()) {
-        			// Use the first one:
-    				oMP = listMetadataProviders.get(0);
-    				_logger.info("MetadataProviders was be established for "+_sID);
-    			} else {
-    				_logger.info("No MetadataProviders could be established for "+_sID);
-    			}
-    		}
-        	
-        	_oMetadataProvider = oMP;
-        	
-        	if (_oMetadataProvider == null) {
-        		_logger.info("No MetadataProvider was found for "+_sID);
-        	}
-        	
+            // Keep reference to the MetadataProviderManager
+            _sMPMId = sMPMId;
+            
+            // Do some integrity checking:
+            IMetadataProviderManager oMPM = MdMgrManager.getInstance().getMetadataProviderManager(_sMPMId);
+            if (oMPM == null) _logger.warn("The MetadataProviderManager '"+_sMPMId+"' does not (yet?) exist!");
+
+            // Initialize MetadataProviderC
+            _oMetadataProviderConfig = getMetadataConfigFromProperties(mProperties, sProfileId);
+            
+            // Lazy initialization of actual MetadataProvider
+            // initMetadataProvider(oMPC, sProfileId, oRequestor.getLastModified());
         }
         catch (OAException oae) {
-    		_logger.error("Exception when initializing MetadataProvider: "+oae.getMessage());
-    		throw oae;
-        } catch(Exception e) {
-            _logger.fatal("Internal error while reading SAML2 attributes for requestor: " 
-                + requestor.getID(), e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
-        }
-    }
-    
-    
-    /**
-     * Constructor which uses business logic requestor properties; also accept an already initialized
-     * MetadatProvider so it can be reused
-     * @param requestor
-     * @param bSigning
-     * @param sProfileID
-     * @param oMetadataProvider
-     * @throws OAException
-     */
-    public SAML2Requestor(IRequestor oRequestor, boolean bSigning, String sProfileID,
-    		MetadataProvider oMetadataProvider) 
-        throws OAException
-    {
-    	try {
-	        _logger = LogFactory.getLog(SAML2Requestor.class);
-	        _sID = oRequestor.getID();
-	        Map<?, ?> mProperties = oRequestor.getProperties();
-	
-	    	initFromProperties(mProperties, bSigning, sProfileID);
-	    	
-	    	// Skip MetadataProvider initialization if it is already provided
-	        if (oMetadataProvider == null) {
-	        	
-	        	// Establish MetadataProvider for Requestor:
-	        	IMetadataProviderManager oMPM = null;
-	        	MetadataProvider oMP = null;
-	        	
-	        	oMPM = MdMgrManager.getInstance().getMetadataProviderManager(sProfileID);
-	        	
-	        	// Try to get MetadataProvider from manager
-	        	if (oMPM != null) {
-	        		oMP = oMPM.getProviderFor(_sID, oRequestor.getLastModified());
-	        	}
-	        	
-	        	if (oMP == null) {
-	    			// Create new MetadataProvider
-	                _oMetadataProvider = null;
-	                _sMetadataURL = null;
-	                _fMetadata = null;
-	                _iMetadataURLTimeout = HTTP_METADATA_REQUEST_TIMEOUT;
-	                
-	                String sMetadataURL = (String)mProperties.get(sProfileID + PROPERTY_METADATA_HTTP_URL);
-	                String sMetadataTimeout = (String)mProperties.get(sProfileID + PROPERTY_METADATA_HTTP_TIMEOUT);
-	                String sMetadataFile = (String)mProperties.get(sProfileID + METADATA_FILE);
-	                _sMetadata = (String)mProperties.get(sProfileID + METADATA);
-	                
-	                List<MetadataProvider> listMetadataProviders = 
-	                    readMetadataProviders(sMetadataURL, sMetadataTimeout, sMetadataFile, _sMetadata, oMPM);
-	    			
-	    			if (!listMetadataProviders.isEmpty()) {
-	        			// Use the first one:
-	    				oMP = listMetadataProviders.get(0);
-	    				_logger.info("MetadataProviders was be established for "+_sID);
-	    			} else {
-	    				_logger.info("No MetadataProviders could be established for "+_sID);
-	    			}
-	    		}
-	        	
-	        	_oMetadataProvider = oMP;
-	        	
-	        } else {
-	        	_oMetadataProvider = oMetadataProvider;
-	        }
-    	} catch (OAException oae) {
     		_logger.error("Exception when initializing MetadataProvider: "+oae.getMessage());
     		throw oae;
         } catch(Exception e) {
@@ -372,7 +225,7 @@ public class SAML2Requestor implements Serializable
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
     }
-        
+
 
     /**
      * Helper to initialize local instance from provided requestor properties
@@ -405,23 +258,95 @@ public class SAML2Requestor implements Serializable
     
     
     /**
-     * Returns the OA Request ID. 
-     * @return String with the Request ID.
+     * Helper method to initialize the MetadataProvider for the SAML2Requestor
+     * Wrapper around MPManager: re-uses cached version, or creates a new version
+     * when configuration was changed (since _dLastModified) or when cached version 
+     * was expired.<br/>
+     * 
+     * @throws OAException thrown when unrecoverable error occurred
      */
-    public String getID()
+    protected void initMetadataProvider() throws OAException 
     {
+        String sInstanceMPFingerprint = _oMetadataProviderConfig.getFingerprint();
+        
+        if (sInstanceMPFingerprint.equals(MetadataProviderConfiguration.FINGERPRINT_PROVIDER_UNKNOWN)) {
+            _logger.warn("No optional available metadata for requestor with id: "+ _sID);
+            return;
+        }
+        
+    	// Establish MetadataProvider for Requestor:
+    	IMetadataProviderManager oMPM = null;
+    	MetadataProvider oMP = null;
+
+    	oMPM = MdMgrManager.getInstance().getMetadataProviderManager(_sMPMId);
+    	
+    	if (oMPM == null) _logger.warn("MetadataProviderManager '"+_sMPMId+"'is not available for Requestor '"+_sID+"'; possible thread leak?");
+    	
+    	// Try to get MetadataProvider from manager
+    	if (oMPM != null) oMP = oMPM.getProviderFor(_sID, _dLastModified);
+    	
+    	// Is the cached MetadataProvider still valid?
+    	if (oMP != null) {
+    		String sCachedMPFingerprint = MetadataProviderUtil.getMetadataProviderFingerprint(oMP);
+    		
+    		if (! sCachedMPFingerprint.equals(sInstanceMPFingerprint)) {
+    			_logger.info("Metadata configuration changed; re-initializing metadata for "+_sID);
+    			// No longer valid; invalidate the version from cache
+    			oMPM.removeProviderFor(_sID);
+    			oMP = null;
+    		} else {
+    			// For the purpose of logging:
+    			if (_logger.isDebugEnabled()) {
+        			String sNextRefresh = null;
+        			
+        			if (oMP instanceof AbstractReloadingMetadataProvider) {
+        				DateTime oNextRefresh = ((AbstractReloadingMetadataProvider) oMP).getNextRefresh();
+        				sNextRefresh = oNextRefresh.toString();
+        			}
+        			_logger.debug("Using cached MetadataProvider for "+_sID+
+        					(sNextRefresh==null?"":" (next refresh: "+sNextRefresh+")"));
+    			}
+    		}
+    	}
+    	
+    	if (oMP == null) {
+			oMP = MetadataProviderUtil.createMetadataProvider(_sID, _oMetadataProviderConfig, oMPM);
+			
+			if (oMP != null) {
+				_logger.debug("New MetadataProvider was established for "+_sID);
+			} else {
+				_logger.debug("No MetadataProvider could be established for "+_sID);
+			}
+		}
+    	
+    	_oMetadataProvider = oMP;
+    }
+    
+    
+    /**
+     * Returns the Requestor ID. 
+     * @return String with the Requestor ID.
+     */
+    public String getID() {
         return _sID;
     }
     
     /**
-     * Returns the requestor specific ChainingMetadataProvider.
+     * Returns the requestor specific MetadataProvider
      *
-     * @return the ChainingMetadataProvider or <code>null</code> if no provider 
-     * is configured.
+     * @return the MetadataProvider or <code>null</code> if no provider was available 
      */
-    public MetadataProvider getMetadataProvider()
-    {
-        return _oMetadataProvider;
+    public MetadataProvider getMetadataProvider() {
+    	if (_oMetadataProvider != null) return _oMetadataProvider;
+    	
+    	try {
+    		initMetadataProvider();
+    	} catch (OAException oae) {
+    		_logger.warn("Exception occurred when establishing MetadataProvider for requestor '"+_sID+"': "+oae.getMessage());
+    		return null;
+    	}
+    	
+    	return _oMetadataProvider;
     }
     
     /**
@@ -444,375 +369,91 @@ public class SAML2Requestor implements Serializable
         sbInfo.append(_sID);
         sbInfo.append("'");
         sbInfo.append(": ");
-        
-        if (_fMetadata != null)
-        {
-            sbInfo.append("[");
-            sbInfo.append(_fMetadata.getAbsolutePath());
-            sbInfo.append("]");
-        }
-        
-        if (_sMetadataURL != null)
-        {
-            sbInfo.append("[");
-            sbInfo.append(_sMetadataURL);
-            sbInfo.append("]");
-        }
+        sbInfo.append(_oMetadataProviderConfig.getFingerprint());
+
         return sbInfo.toString();
-    }
-    
-    private List<MetadataProvider> readMetadataProviders(
-        IConfigurationManager configurationManager, 
-        Element config, IMetadataProviderManager oMPM) throws OAException
-    {
-        List<MetadataProvider> lMetadataProviders = new Vector<MetadataProvider>();
-        
-        try {
-            BasicParserPool parserPool = new BasicParserPool();
-            parserPool.setNamespaceAware(true);
-            
-            MetadataProvider fileProvider = readFileMetadataProvider(
-                    configurationManager, config, parserPool, oMPM);
-            if (fileProvider != null) {
-                lMetadataProviders.add(fileProvider);
-                _logger.info("Using File Provider Metadata: " + _fMetadata.getName());
-            }
-            
-            MetadataProvider oURLProvider = 
-                readHTTPMetadataProvider(
-                    configurationManager, config, parserPool, oMPM);
-            if (oURLProvider != null) {
-                lMetadataProviders.add(oURLProvider);
-                _logger.info("Using HTTP Provider Metadata: " + _sMetadataURL);
-            }
-            
-            MetadataProvider domProvider = readDOMMetadataProvider(configurationManager, config, parserPool);
-            if (domProvider != null) {
-            	lMetadataProviders.add(domProvider);
-            	_logger.debug("Using static DOM Metadata Provider");
-            }
-
-        } catch (OAException e) {
-            throw e;
-        } catch(Exception e) {
-            _logger.fatal("Internal error while creating metadata providers", e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
-        }   
-        
-        return lMetadataProviders;
-    }
-
-    
-    private MetadataProvider readHTTPMetadataProvider(
-        IConfigurationManager configurationManager, Element config,
-        ParserPool parserPool, IMetadataProviderManager oMPM) 
-        throws OAException
-    {
-        MetadataProvider oProvider = null;
-        
-        Element eHttp = configurationManager.getSection(config, "http");
-        if (eHttp == null) {
-            _logger.warn("No optional 'http' section in 'metadata' section found in configuration for requestor with id: " 
-                + _sID);
-            return null;
-        }
-        
-        _sMetadataURL = configurationManager.getParam(eHttp, "url");
-        if (_sMetadataURL == null) {
-            _logger.error("No 'url' item in 'http' section found in configuration for requestor with id: " 
-                + _sID);
-            throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-        }
-                    
-        // Check URL format
-        URL oURLTarget = null;
-        try {
-            oURLTarget = new URL(_sMetadataURL);
-        } catch (MalformedURLException e) {
-            _logger.error("Invalid 'url' item in 'http' section found in configuration: " 
-                + _sMetadataURL, e);
-            throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-        }
-        
-        // Establish optional configurable connection timeout setting
-        _iMetadataURLTimeout = 0;	// default
-        String sTimeout = configurationManager.getParam(eHttp, "timeout");
-        if (sTimeout != null) {
-            try {
-                _iMetadataURLTimeout = Integer.parseInt(sTimeout);
-            } catch (NumberFormatException e) {
-                _logger.error("Invalid 'timeout' item in 'http' section found in configuration (must be a number): " 
-                    + sTimeout, e);
-                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-            }
-        }
-        
-        // Check valid and existing destination (with configured timeout settings)
-        try {
-            URLConnection oURLConnection = oURLTarget.openConnection();
-            if (_iMetadataURLTimeout == 0) {
-	            oURLConnection.setConnectTimeout(3000);
-	            oURLConnection.setReadTimeout(3000);
-            } else {
-            	oURLConnection.setConnectTimeout(_iMetadataURLTimeout);
-	            oURLConnection.setReadTimeout(_iMetadataURLTimeout);
-            }
-            
-            oURLConnection.connect();
-        } catch (IOException e) {
-            _logger.warn("Could not connect to metadata url: " + _sMetadataURL +
-            		"(using timout "+(_iMetadataURLTimeout==0?"3000":_iMetadataURLTimeout) +"ms)", e);
-        }
-
-        // Establish dedicated refresh timer:
-        Timer oRefreshTimer = new Timer("Metadata_SP-"+_sID+"-Timer", true);
-        
-        // Establish HttpClient
-    	HttpClient oHttpClient = new HttpClient();
-        
-        if (_iMetadataURLTimeout > 0) {
-            // Set configured Timeout settings
-        	oHttpClient.getParams().setSoTimeout(_iMetadataURLTimeout);
-        }
-        
-    	oProvider = MetadataProviderUtil.createProviderForURL(_sMetadataURL, parserPool, 
-    			oRefreshTimer, oHttpClient);
-        
-    	// Start managing it:
-    	if (oMPM != null) {
-    		oMPM.setProviderFor(_sID, oProvider, oRefreshTimer);
-    	}
-    	
-        return oProvider;
-    }
-    
-    
-    private MetadataProvider readFileMetadataProvider(
-        IConfigurationManager configurationManager, Element config,
-        ParserPool parserPool, IMetadataProviderManager oMPM) 
-        throws OAException
-    {
-        MetadataProvider oProvider = null;
-        String sFile = configurationManager.getParam(config, "file");
-        if (sFile == null) {
-            _logger.warn("No optional 'file' item in 'metadata' section found in configuration for requestor with id: " 
-                + _sID);
-            return null;
-        }
-        
-    	// Establish real filename (filter virtual mounts)
-    	sFile = PathTranslator.getInstance().map(sFile);
-    	
-    	// Check whether file exists
-        _fMetadata = new File(sFile);
-        if (!_fMetadata.exists()) {
-            _logger.error("Configured metadata 'file' doesn't exist: " + sFile);
-            throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-        }
-        
-        // Establish dedicated refresh timer:
-        Timer oRefreshTimer = new Timer("Metadata_SP-"+_sID+"-Timer", true);
-        
-    	oProvider = MetadataProviderUtil.createProviderForFile(sFile, parserPool, 
-    			oRefreshTimer);
-        
-    	// Start managing it:
-    	if (oMPM != null) {
-    		oMPM.setProviderFor(_sID, oProvider, oRefreshTimer);
-    	}
-
-        return oProvider;
-    }
-    
-    
-    private MetadataProvider readDOMMetadataProvider(IConfigurationManager configurationManager, Element config,
-    		ParserPool parserPool) 
-        throws OAException
-    {
-    	String sRawMetadata = configurationManager.getParam(config, "raw");
-        if (sRawMetadata == null) {
-            _logger.warn("No optional 'raw' item in 'metadata' section found in configuration "+
-            				" for requestor with id: "+ _sID);
-            return null;
-        } else {
-        	_sMetadata = sRawMetadata;
-        	return readDOMMetadataProvider(_sMetadata, parserPool);
-        }
-    }
-    
-    
-    private List<MetadataProvider> readMetadataProviders(String sMetadataURL,
-        String sMetadataTimeout, String sMetadataFile, String sMetadata,
-        IMetadataProviderManager oMPM) throws OAException
-    {
-        List<MetadataProvider> lMetadataProviders = new Vector<MetadataProvider>();
-        try {
-            BasicParserPool parserPool = new BasicParserPool();
-            parserPool.setNamespaceAware(true);
-                        
-            MetadataProvider fileProvider = 
-                readFileMetadataProvider(sMetadataFile, parserPool, oMPM);
-            if (fileProvider != null) {
-                lMetadataProviders.add(fileProvider);
-                _logger.debug("Using File Provider Metadata: " + _fMetadata.getName());
-            }
-            
-            MetadataProvider urlProvider = 
-                readHTTPMetadataProvider(sMetadataURL, sMetadataTimeout, parserPool, oMPM);
-            if (urlProvider != null) {
-                lMetadataProviders.add(urlProvider);
-                _logger.debug("Using HTTP Provider Metadata: " + _sMetadataURL);
-            }
-            
-            MetadataProvider domProvider = readDOMMetadataProvider(_sMetadata, parserPool);
-            if (domProvider != null) {
-            	lMetadataProviders.add(domProvider);
-            	_logger.debug("Using static DOM Metadata Provider");
-            }
-        } catch (OAException e) {
-            throw e;
-        } catch(Exception e) {
-            _logger.fatal("Internal error while creating metadata providers", e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
-        }   
-        
-        return lMetadataProviders;
-    }
-
-    private MetadataProvider readHTTPMetadataProvider(String sMetadataURL,
-        String sMetadataTimeout, ParserPool parserPool, IMetadataProviderManager oMPM) 
-        throws OAException
-    {
-        MetadataProvider oProvider = null;
-        
-        if (sMetadataURL == null) {
-            _logger.debug("No optional metadata url configured for requestor with id: " + _sID);
-            return null;
-        }
-        
-        _sMetadataURL = sMetadataURL;
-        
-        // Check URL format
-        URL oURLTarget = null;
-        try {
-            oURLTarget = new URL(_sMetadataURL);
-        } catch (MalformedURLException e) {
-            _logger.error("Invalid 'url' item in 'http' section found in configuration: " 
-                + _sMetadataURL, e);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
-        }
-        
-        // Establish optional configurable connection timeout setting
-        _iMetadataURLTimeout = 0;	// default
-        if (sMetadataTimeout != null) {
-            try {
-                _iMetadataURLTimeout = Integer.parseInt(sMetadataTimeout);
-            } catch (NumberFormatException e) {
-                _logger.debug("Invalid metadata timeout configured (must be a number): " 
-                    + sMetadataTimeout, e);
-                throw new OAException(SystemErrors.ERROR_INTERNAL);
-            }
-        }
-        
-        // Check valid and existing destination (with configured timeout settings)
-        try {
-            URLConnection oURLConnection = oURLTarget.openConnection();
-            if (_iMetadataURLTimeout == 0) {
-	            oURLConnection.setConnectTimeout(3000);
-	            oURLConnection.setReadTimeout(3000);
-            } else {
-            	oURLConnection.setConnectTimeout(_iMetadataURLTimeout);
-	            oURLConnection.setReadTimeout(_iMetadataURLTimeout);
-            }
-            
-            oURLConnection.connect();
-        } catch (IOException e) {
-            _logger.warn("Could not connect to metadata url: " + _sMetadataURL +
-            		"(using timout "+(_iMetadataURLTimeout==0?"3000":_iMetadataURLTimeout) +"ms)", e);
-        }
-
-        // Establish dedicated refresh timer:
-        Timer oRefreshTimer = new Timer("Metadata_SP-"+_sID+"-Timer", true);
-        
-        // Establish HttpClient
-    	HttpClient oHttpClient = new HttpClient();
-        
-        if (_iMetadataURLTimeout > 0) {
-            // Set configured Timeout settings
-        	oHttpClient.getParams().setSoTimeout(_iMetadataURLTimeout);
-        }
-        
-    	oProvider = MetadataProviderUtil.createProviderForURL(_sMetadataURL, parserPool, 
-    			oRefreshTimer, oHttpClient);
-        
-    	// Start managing it:
-    	if (oMPM != null) {
-    		oMPM.setProviderFor(_sID, oProvider, oRefreshTimer);
-    	}
-
-        return oProvider;
-    }
-    
-    
-    private MetadataProvider readFileMetadataProvider(
-        String sMetadataFile, ParserPool oParserPool, IMetadataProviderManager oMPM) 
-        throws OAException
-    {
-        MetadataProvider oProvider = null;
-        if (sMetadataFile == null) {
-            _logger.debug("No optional metadata file configured for requestor with id: " + _sID);
-            return null;
-        }
-
-        // Establish real filename (filter virtual mounts)
-    	sMetadataFile = PathTranslator.getInstance().map(sMetadataFile);
-
-    	// Check whether file exists
-        _fMetadata = new File(sMetadataFile);
-        if (!_fMetadata.exists()) {
-            _logger.error("Configured metadata 'file' doesn't exist: " + sMetadataFile);
-            throw new OAException(SystemErrors.ERROR_INTERNAL);
-        }
-        
-        // Establish dedicated refresh timer:
-        Timer oRefreshTimer = new Timer("Metadata_SP-"+_sID+"-Timer", true);
-        
-    	oProvider = MetadataProviderUtil.createProviderForFile(sMetadataFile, oParserPool, 
-    			oRefreshTimer);
-        
-    	// Start managing it:
-    	if (oMPM != null) {
-    		oMPM.setProviderFor(_sID, oProvider, oRefreshTimer);
-    	}
-
-        return oProvider;
     }
     
     
     /**
-     * Create a MetadataProvider based on the static XML document of the entity
-     * @param sMetadata Metadata of the entity to create provider for
-     * @param oParserPool
-     * @return Initialized MetadataProvider for the provided metadata
+     * Establish Metadata Provider configuration from a configuration element
+     * Does not do any validation of the configured settings
+     * @param oConfigManager
+     * @param elConfig Configuration element of the Requestor (must contain child <metadata> element)
+     * @return
+     * @throws ConfigurationException 
      */
-    private MetadataProvider readDOMMetadataProvider(String sMetadata, 
-    		ParserPool oParserPool) 
+    protected MetadataProviderConfiguration getMetadataConfigFromConfig(
+    		IConfigurationManager oConfigManager, Element elConfig) 
+    				throws OAException
     {
-    	if (sMetadata == null) return null;
-    	
-		try {
-			Document d = XMLUtils.getDocumentFromString(sMetadata);
-			Element elMetadata = d.getDocumentElement();
-			
-	    	DOMMetadataProvider oProvider = new DOMMetadataProvider(elMetadata);
-	    	oProvider.setParserPool(oParserPool);
-	    	
-	    	return oProvider;
-		} catch (OAException e) {
-			_logger.warn("Could not parse provided metadata document.");
-		}
-		
-		return null;
-    }
+    	MetadataProviderConfiguration oMPC = new MetadataProviderConfiguration();
 
+    	Element elMetadata = oConfigManager.getSection(elConfig, "metadata");
+    	
+    	// Establish full qualified filename
+        String sFilename = oConfigManager.getParam(elMetadata, "file");
+        if (sFilename != null) sFilename = PathTranslator.getInstance().map(sFilename);
+        oMPC._sFilename = sFilename;
+        
+        // Establish HTTP/URL settings
+        Element elHTTP = oConfigManager.getSection(elMetadata, "http");
+        if (elHTTP != null) {
+        	oMPC._sURL = oConfigManager.getParam(elHTTP, "url");
+        	
+            String sTimeout = oConfigManager.getParam(elHTTP, "timeout");
+            if (sTimeout != null) {
+                try {
+                    oMPC._iTimeout = Integer.parseInt(sTimeout);
+                } catch (NumberFormatException e) {
+                    _logger.error("Invalid value for http@timeout-attribute in configuration: " + sTimeout, e);
+                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+                }
+            }
+        }
+        
+        // establish raw XML (untested) from <metadata><raw>...</raw></metadata>
+        oMPC._sMetadata = oConfigManager.getParam(elMetadata, "raw");
+        
+        return oMPC;
+    }
+    
+    
+    /**
+     * Establish Metadata Provider configuration from requestor properties
+     * @param oProperties The set of Requestor Properties
+     * @param sProfileId The SAML2 IDP ProfileId to use to look up properties
+     * @return
+     * @throws OAException 
+     */
+    protected MetadataProviderConfiguration getMetadataConfigFromProperties(
+    		Map<?, ?> mProperties, String sProfileId) throws OAException
+    {
+    	MetadataProviderConfiguration oMPC = new MetadataProviderConfiguration();
+
+    	// Establish full qualified filename
+        String sFilename = (String)mProperties.get(sProfileId + METADATA_FILE);
+        if (sFilename != null) sFilename = PathTranslator.getInstance().map(sFilename);
+        oMPC._sFilename = sFilename;
+        
+        // Establish metadata from properties
+        oMPC._sMetadata = (String)mProperties.get(sProfileId + METADATA);
+        
+        // Establish HTTP/URL settings
+        oMPC._sURL = (String)mProperties.get(sProfileId + PROPERTY_METADATA_HTTP_URL);
+        
+        String sTimeout = (String)mProperties.get(sProfileId + PROPERTY_METADATA_HTTP_TIMEOUT);
+        if (sTimeout != null) {
+        	try {
+                oMPC._iTimeout = Integer.parseInt(sTimeout);
+            } catch (NumberFormatException e) {
+                _logger.error("Invalid value for "+sProfileId + PROPERTY_METADATA_HTTP_TIMEOUT+" property: " + sTimeout, e);
+                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+            }
+        }
+
+        return oMPC;
+    }
+    
+    
 }

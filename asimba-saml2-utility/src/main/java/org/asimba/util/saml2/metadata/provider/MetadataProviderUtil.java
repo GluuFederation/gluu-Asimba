@@ -22,19 +22,23 @@
 package org.asimba.util.saml2.metadata.provider;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Timer;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider;
+import org.asimba.utility.xml.XMLUtils;
+import org.opensaml.saml2.metadata.provider.DOMMetadataProvider;
 import org.opensaml.saml2.metadata.provider.HTTPMetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.xml.parse.BasicParserPool;
 import org.opensaml.xml.parse.ParserPool;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -247,10 +251,10 @@ public class MetadataProviderUtil {
 		oParserPool = getParserPool(oParserPool);
 		oTimer = getTimer(oTimer);
 		
-		FilesystemMetadataProvider oFileMetadataProvider = null;
+		NamedFilesystemMetadataProvider oFileMetadataProvider = null;
 		
 		try {
-			oFileMetadataProvider = new FilesystemMetadataProvider(oTimer, fMetadata);
+			oFileMetadataProvider = new NamedFilesystemMetadataProvider(oTimer, fMetadata);
 			
 			oFileMetadataProvider.setParserPool(oParserPool);
 			oFileMetadataProvider.initialize();
@@ -314,5 +318,234 @@ public class MetadataProviderUtil {
 	}
 
 
+    /**
+     * Establish the fingerprint of the actual MetadataProvider
+     * results in a string containing
+     * 		provider-type,identifying-attributes
+     * @param oMP
+     * @return
+     */
+    public static String getMetadataProviderFingerprint(MetadataProvider oMP) {
+    	StringBuilder oResult = new StringBuilder();
+    	
+    	if (oMP instanceof HTTPMetadataProvider) {
+    		HTTPMetadataProvider oHMP = (HTTPMetadataProvider) oMP;
+    		
+    		oResult.append(MetadataProviderConfiguration.FINGERPRINT_PROVIDER_HTTP);
+    		oResult.append(","+oHMP.getMetadataURI());
+    		oResult.append(","+oHMP.getRequestTimeout());
+    		
+    		return oResult.toString();
+    	}
+    	
+    	if (oMP instanceof NamedFilesystemMetadataProvider) {
+    		NamedFilesystemMetadataProvider oNFMP = (NamedFilesystemMetadataProvider) oMP;
+    		
+    		oResult.append(MetadataProviderConfiguration.FINGERPRINT_PROVIDER_FILE);
+    		oResult.append(","+oNFMP.getFilename());
+    		
+    		return oResult.toString();
+    	}
+    	
+    	return MetadataProviderConfiguration.FINGERPRINT_PROVIDER_UNKNOWN;
+    	
+    }
     
+    
+    /**
+     * Create a new MetadataProvider instance from the provided configuration.<br/>
+     * The order of creation is:<br/>
+     * <ul><li>When a URL is configured, a HTTP Metadata Provider is created</li>
+     * <li>Otherwise, when a file is configured, a Filesystem Metadata Provider is created</li> 
+     * <li>Otherwise, when metadata itself is configured, a DOMMetadata Provider is created</li>
+     * </ul> <br/>
+     * When none of the above was found, no metadata provider is created and null is returned
+     * 
+     * @param sId The EntityId (RequestorId or IDP-Id that the provider is to be created for)  
+     * @param oMPC MetadataProvider configuration
+     * @param oMPM MetadataProviderManager that will be managing the new provider
+     * @return
+     * @throws OAException when initialization failed without possible recovery
+     */
+    public static MetadataProvider createMetadataProvider(String sId, 
+    		MetadataProviderConfiguration oMPC, IMetadataProviderManager oMPM)
+    				throws OAException
+    {
+    	// Initialize a ParserPool to use
+    	BasicParserPool oParserPool = new BasicParserPool();
+    	oParserPool.setNamespaceAware(true);
+    	
+    	// When a URL is configured, return a HTTPMetadataProvider
+    	try {
+	    	if (oMPC._sURL != null) {
+	    		_oLogger.trace("Using HTTPMetadataProvider for "+sId);
+	    		return newHTTPMetadataProvider(sId, oMPC._sURL, oMPC._iTimeout, oParserPool, oMPM);
+	    	}
+    	} catch (OAException oae) {
+    		_oLogger.warn("Exception: '"+oae.getMessage()+"'; Could not create HTTPMetadataProvider for '"+sId+"'; skipping.");
+    	}
+
+    	// When a File is configured, return a NamedFilesystemMetadataProvider
+    	try {
+	    	if (oMPC._sFilename != null) {
+	    		_oLogger.trace("Using FileMetadataProvider for "+sId);
+	    		return newFileMetadataProvider(sId, oMPC._sFilename, oParserPool, oMPM);
+	    	}
+    	} catch (OAException oae) {
+    		_oLogger.warn("Exception: '"+oae.getMessage()+"'; Could not create FileMetadataProvider for '"+sId+"'; skipping.");
+    	}
+    	
+    	// When metadata itself is configured, return DOMMetadataProvider
+    	if (oMPC._sMetadata != null) {
+    		_oLogger.trace("Using DOMMetadataProvider for "+sId);
+    		return newDOMMetadataProvider(sId, oMPC._sMetadata, oParserPool, oMPM);
+    	}
+    	
+    	return null;
+
+    }
+    
+    
+    /**
+     * Create a new Filesystem Metadata Provider from the provided filename<br/>
+     * An exception is thrown when the file does not exist.
+     * 
+     * @param sId Entity Id that the metadata is being created for 
+     * @param sMetadataFile
+     * @param oParserPool
+     * @param oMPM
+     * @return
+     * @throws OAException
+     */
+    public static MetadataProvider newFileMetadataProvider(String sId, String sMetadataFile, ParserPool oParserPool, 
+    		IMetadataProviderManager oMPM)
+                throws OAException
+    {
+        MetadataProvider oProvider = null;
+
+    	// Check whether file exists
+        File fMetadata = new File(sMetadataFile);
+        if (!fMetadata.exists()) {
+        	_oLogger.error("The metadata file doesn't exist: " + sMetadataFile);
+            throw new OAException(SystemErrors.ERROR_INTERNAL);
+        }
+        
+        // Establish dedicated refresh timer:
+        String sTimername = "Metadata_File-"+(oMPM==null?"":oMPM.getId()+"-")+sId+"-Timer";
+        Timer oRefreshTimer = new Timer(sTimername, true);
+        
+    	oProvider = MetadataProviderUtil.createProviderForFile(sMetadataFile, oParserPool, 
+    			oRefreshTimer);
+        
+    	// Start managing it:
+    	if (oMPM != null) {
+    		oMPM.setProviderFor(sId, oProvider, oRefreshTimer);
+    	}
+
+        return oProvider;
+    }
+    
+    
+    /**
+     * Create a new HTTP Metadata Provider from the provided URL and HTTP settings<br/>
+     * An exception is thrown when the provider could not be initiated.
+     * 
+     * @param sMetadataURL
+     * @param sMetadataTimeout
+     * @param oParserPool
+     * @param oMPM
+     * @return
+     * @throws OAException
+     */
+    public static MetadataProvider newHTTPMetadataProvider(String sId, String sMetadataURL,
+    		int iTimeout, ParserPool oParserPool, IMetadataProviderManager oMPM) 
+    				throws OAException
+    {
+        MetadataProvider oProvider = null;
+        
+        // Check URL format
+        URL oURLTarget = null;
+        try {
+            oURLTarget = new URL(sMetadataURL);
+        } catch (MalformedURLException e) {
+        	_oLogger.error("Invalid url for metadata: " + sMetadataURL, e);
+            throw new OAException(SystemErrors.ERROR_INTERNAL);
+        }
+        
+        // Check valid and existing destination (with configured timeout settings)
+        try {
+            URLConnection oURLConnection = oURLTarget.openConnection();
+            if (iTimeout == 0) {
+	            oURLConnection.setConnectTimeout(3000);
+	            oURLConnection.setReadTimeout(3000);
+            } else {
+            	oURLConnection.setConnectTimeout(iTimeout);
+	            oURLConnection.setReadTimeout(iTimeout);
+            }
+            
+            oURLConnection.connect();
+        } catch (IOException e) {
+        	_oLogger.warn("Could not connect to metadata url: " + sMetadataURL +
+            		"(using timout "+(iTimeout==0?"3000":iTimeout) +"ms)", e);
+        }
+
+        // Establish dedicated refresh timer:
+        String sTimername = "Metadata_HTTP-"+(oMPM==null?"":oMPM.getId()+"-")+sId+"-Timer";
+        Timer oRefreshTimer = new Timer(sTimername, true);
+        
+        // Establish HttpClient
+    	HttpClient oHttpClient = new HttpClient();
+        
+        if (iTimeout > 0) {
+            // Set configured Timeout settings
+        	oHttpClient.getParams().setSoTimeout(iTimeout);
+        }
+        
+    	oProvider = MetadataProviderUtil.createProviderForURL(sMetadataURL, oParserPool, 
+    			oRefreshTimer, oHttpClient);
+        
+    	// Start managing it:
+    	if (oMPM != null) {
+    		oMPM.setProviderFor(sId, oProvider, oRefreshTimer);
+    	}
+
+        return oProvider;
+    }
+
+    
+    /**
+     * Create a new DOM Metadata Provider from the provided metadata<br/>
+     * An exception is thrown when the provider could not be initiated.
+     * 
+     * <br/><br/>
+     * Note that a DOM Metadata Provider is not refreshed, and as such,
+     * does not own a Timer thread 
+     * @param sMetadata
+     * @param oParserPool
+     * @return
+     */
+    public static MetadataProvider newDOMMetadataProvider(String sId, String sMetadata, 
+    		ParserPool oParserPool, IMetadataProviderManager oMPM) 
+    {
+    	if (sMetadata == null) return null;
+    	
+		try {
+			Document d = XMLUtils.getDocumentFromString(sMetadata);
+			Element elMetadata = d.getDocumentElement();
+			
+	    	DOMMetadataProvider oProvider = new DOMMetadataProvider(elMetadata);
+	    	oProvider.setParserPool(oParserPool);
+	    	
+	    	if (oMPM != null) {
+	    		oMPM.setProviderFor(sId, oProvider, null);
+	    	}
+	    	
+	    	return oProvider;
+		} catch (OAException e) {
+			_oLogger.warn("Could not parse provided metadata document.");
+		}
+		
+		return null;
+    }
+	
 }

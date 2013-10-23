@@ -29,8 +29,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Vector;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.asimba.util.saml2.metadata.provider.IMetadataProviderManager;
 import org.asimba.util.saml2.metadata.provider.management.MdMgrManager;
+import org.asimba.util.saml2.metadata.provider.management.MetadataProviderManagerUtil;
 import org.asimba.util.saml2.metadata.provider.management.StandardMetadataProviderManager;
 import org.w3c.dom.Element;
 
@@ -51,6 +54,12 @@ import com.alfaariss.oa.util.saml2.idp.SAML2IDP;
  */
 public class IDPJDBCStorage extends AbstractJDBCStorage 
 {   
+	/** Configuration elements */
+	public static final String EL_MPMANAGER = "mp_manager";
+
+	/** Local logger instance */
+	private static Log _oLogger = LogFactory.getLog(IDPJDBCStorage.class);
+			
     private final static String DEFAULT_TABLE_NAME = "saml2_orgs";
     private final static String COLUMN_ID = "id";
     private final static String COLUMN_ENABLED = "enabled";
@@ -70,7 +79,13 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
 
     
     private final static String DEFAULT_ID = "saml2";
-    private String _sID;
+    private String _sId;
+    
+    /** Id of the MetadataProviderManager that manages metadata for the SAML2IDPs that are
+     * created by this Storage; configurable; defaults to the Id of the Storage (_sId) */
+    protected String _sMPMId;
+    protected boolean _bOwnMPM;
+    
     
     private String _sTable;
     
@@ -78,18 +93,55 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
     private String _sQuerySelectOnSourceID;
     private String _sQuerySelectAll;
 
+    
     /**
      * @see com.alfaariss.oa.engine.core.idp.storage.IIDPStorage#start(com.alfaariss.oa.api.configuration.IConfigurationManager, org.w3c.dom.Element)
      */
     public void start(IConfigurationManager configManager, Element config)
         throws OAException
     {
-        _sID = configManager.getParam(config, "id");
-        if (_sID == null)
+        _sId = configManager.getParam(config, "id");
+        if (_sId == null)
         {
-            _logger.info("No optional 'id' item for storage configured, using default");
-            _sID = DEFAULT_ID;
+            _oLogger.info("No optional 'id' item for storage configured, using default");
+            _sId = DEFAULT_ID;
         }
+        
+        // Establish MetadataProviderManager Id that refers to existing IMetadataProviderManager
+        Element elMPManager = configManager.getSection(config, EL_MPMANAGER);
+        if (elMPManager == null) {
+        	_oLogger.info("Using MetadataProviderManager Id from IDPStorage@id: '"+_sId+"'");
+        	_sMPMId = _sId;
+        } else {
+        	_sMPMId = configManager.getParam(elMPManager, "id");
+        	if (_sMPMId == null) {
+        		_oLogger.error("Missing @id attribute for '"+EL_MPMANAGER+"' configuration");
+        		throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+        	}
+        	_oLogger.info("Using MetadataProviderManager Id from configuration: '"+_sMPMId+"'");
+        }
+        
+        // Make sure the MetadataProviderManager exists
+        boolean bCreated = MetadataProviderManagerUtil.establishMPM(_sMPMId, configManager, elMPManager);
+        
+        if (elMPManager == null) {
+        	_bOwnMPM = bCreated;
+        } else {
+        	String sPrimary = configManager.getParam(elMPManager, "primary");
+        	if (sPrimary == null ) {
+        		_bOwnMPM = false;
+        	} else {
+        		if ("false".equalsIgnoreCase(sPrimary)) {
+        			_bOwnMPM = false;
+        		} else if ("true".equalsIgnoreCase(sPrimary)) {
+        			_bOwnMPM = true;
+        		} else {
+        			_oLogger.error("Invalid value for '@primary': '"+sPrimary+"'");
+        			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+        		}
+        	}
+        }
+        
         
         super.start(configManager, config);
 
@@ -105,26 +157,29 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                 _sTable = DEFAULT_TABLE_NAME;
         }
         
-        _logger.info("Using table: " + _sTable);
+        _oLogger.info("Using table: " + _sTable);
         
         createQueries();
         
         // Instantiate MetadataProviderManager
         // Set with ID of this IDPStorage instance
-        StandardMetadataProviderManager oMPM = new StandardMetadataProviderManager();
-        MdMgrManager.getInstance().setMetadataProviderManager(_sID, oMPM);
+        StandardMetadataProviderManager oMPM = new StandardMetadataProviderManager(_sId);
+        MdMgrManager.getInstance().setMetadataProviderManager(_sId, oMPM);
         
-        _logger.info("Started storage with id: " + _sID);
+        _oLogger.info("Started storage with id: " + _sId);
     }
     
     @Override
     public void stop() {
-        // Clean up the MetadataProviderManager:
-        MdMgrManager.getInstance().deleteMetadataProviderManager(_sID);
+        // Clean up the MetadataProviderManager?
+        if (_bOwnMPM) {
+        	_oLogger.info("Cleaning up MetadataProviderManager '"+_sMPMId+"'");
+        	MdMgrManager.getInstance().deleteMetadataProviderManager(_sMPMId);
+        }
     	
     	super.stop();
         
-    	_logger.info("Stopped storage with id: " + _sID);
+    	_oLogger.info("Stopped storage with id: " + _sId);
     }
     
     /**
@@ -132,7 +187,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
      */
     public String getID()
     {
-        return _sID;
+        return _sId;
     }
 
     /**
@@ -153,7 +208,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
         ResultSet resultSet = null;
         List<IIDP> listIDPs = new Vector<IIDP>();
         
-        IMetadataProviderManager oMPM = MdMgrManager.getInstance().getMetadataProviderManager(_sID);
+        IMetadataProviderManager oMPM = MdMgrManager.getInstance().getMetadataProviderManager(_sId);
         
         try
         {
@@ -189,7 +244,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
 	            	try {
 	            		dLastModified = resultSet.getTimestamp(COLUMN_DATELASTMODIFIED);
 	            	} catch (Exception e) {
-	            		_logger.info("No "+COLUMN_DATELASTMODIFIED+" column found; ignoring.");
+	            		_oLogger.info("No "+COLUMN_DATELASTMODIFIED+" column found; ignoring.");
 	            		dateLastModifiedExists = false;
 	            	}
             	}
@@ -205,13 +260,13 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     boolScoping, boolNameIDPolicy,
                     resultSet.getString(COLUMN_NAMEIDFORMAT),
                     dLastModified,
-                    oMPM);
+                    oMPM.getId());
                 listIDPs.add(idp);
             }
         }
         catch(Exception e)
         {
-            _logger.fatal("Internal error during retrieval of all IDPs", e);
+            _oLogger.fatal("Internal error during retrieval of all IDPs", e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
         finally
@@ -223,7 +278,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             }
             catch (Exception e)
             {
-                _logger.error("Could not close select statement", e);
+                _oLogger.error("Could not close select statement", e);
             }
                         
             try
@@ -233,7 +288,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             }
             catch (Exception e)
             {
-                _logger.error("Could not close connection", e);
+                _oLogger.error("Could not close connection", e);
             }
         }
         return listIDPs;
@@ -314,7 +369,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                 sbError.append(_sTable);
                 sbError.append("' verified with query: ");
                 sbError.append(sbVerify.toString());
-                _logger.error(sbError.toString(), e);
+                _oLogger.error(sbError.toString(), e);
                 throw new DatabaseException(SystemErrors.ERROR_INIT);
             }    
             
@@ -322,21 +377,21 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             sbSelectIDPs.append(COLUMN_ENABLED);
             sbSelectIDPs.append("=?");
             _sQuerySelectAll = sbSelectIDPs.toString();
-            _logger.info("Using select all IDPs query: " + _sQuerySelectAll);
+            _oLogger.info("Using select all IDPs query: " + _sQuerySelectAll);
             
             StringBuffer sbSelectOnID = new StringBuffer(sbSelectIDPs);
             sbSelectOnID.append(" AND ");
             sbSelectOnID.append(COLUMN_ID);
             sbSelectOnID.append("=?");
             _sQuerySelectOnID = sbSelectOnID.toString();
-            _logger.info("Using organization select on ID query: " + _sQuerySelectOnID);
+            _oLogger.info("Using organization select on ID query: " + _sQuerySelectOnID);
                         
             StringBuffer sbSelectOnSourceID = new StringBuffer(sbSelectIDPs);
             sbSelectOnSourceID.append(" AND ");
             sbSelectOnSourceID.append(COLUMN_SOURCEID);
             sbSelectOnSourceID.append("=?");
             _sQuerySelectOnSourceID = sbSelectOnSourceID.toString();
-            _logger.info("Using organization select on SourceID query: " + _sQuerySelectOnSourceID);
+            _oLogger.info("Using organization select on SourceID query: " + _sQuerySelectOnSourceID);
 
         }
         catch (OAException e)
@@ -345,7 +400,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
         }
         catch(Exception e)
         {
-            _logger.fatal("Internal error during start", e);
+            _oLogger.fatal("Internal error during start", e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
         finally
@@ -357,7 +412,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             }
             catch (Exception e)
             {
-                _logger.error("Could not close verification statement", e);
+                _oLogger.error("Could not close verification statement", e);
             }
                         
             try
@@ -367,7 +422,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             }
             catch (Exception e)
             {
-                _logger.error("Could not close connection", e);
+                _oLogger.error("Could not close connection", e);
             }
         }
     }
@@ -379,7 +434,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
         ResultSet resultSet = null;
         SAML2IDP saml2IDP = null;
         
-        IMetadataProviderManager oMPM = MdMgrManager.getInstance().getMetadataProviderManager(_sID);
+        IMetadataProviderManager oMPM = MdMgrManager.getInstance().getMetadataProviderManager(_sId);
         
         try
         {
@@ -412,7 +467,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             	try {
             		dLastModified = resultSet.getTimestamp(COLUMN_DATELASTMODIFIED);
             	} catch (Exception e) {
-            		_logger.info("No "+COLUMN_DATELASTMODIFIED+" column found for SAML2IDP '"+id+"'; ignoring.");
+            		_oLogger.info("No "+COLUMN_DATELASTMODIFIED+" column found for SAML2IDP '"+id+"'; ignoring.");
             	}
 
                 
@@ -426,7 +481,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     boolScoping, boolNameIDPolicy,
                     resultSet.getString(COLUMN_NAMEIDFORMAT),
                     dLastModified,
-                    oMPM);
+                    oMPM.getId());
             }
         }
         catch(OAException e)
@@ -435,7 +490,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
         }
         catch(Exception e)
         {
-            _logger.fatal("Internal error during retrieval of organization with ID: " + id, e);
+            _oLogger.fatal("Internal error during retrieval of organization with ID: " + id, e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
         finally
@@ -447,7 +502,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             }
             catch (Exception e)
             {
-                _logger.error("Could not close select statement", e);
+                _oLogger.error("Could not close select statement", e);
             }
                         
             try
@@ -457,7 +512,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             }
             catch (Exception e)
             {
-                _logger.error("Could not close connection", e);
+                _oLogger.error("Could not close connection", e);
             }
         }
         return saml2IDP;
@@ -470,7 +525,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
         ResultSet resultSet = null;
         SAML2IDP saml2IDP = null;
         
-        IMetadataProviderManager oMPM = MdMgrManager.getInstance().getMetadataProviderManager(_sID);
+        IMetadataProviderManager oMPM = MdMgrManager.getInstance().getMetadataProviderManager(_sId);
         
         try
         {
@@ -503,7 +558,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             	try {
             		dLastModified = resultSet.getTimestamp(COLUMN_DATELASTMODIFIED);
             	} catch (Exception e) {
-            		_logger.info("No "+COLUMN_DATELASTMODIFIED+" column found for SAML2IDP with sourceid '"+baSourceID+"'; ignoring.");
+            		_oLogger.info("No "+COLUMN_DATELASTMODIFIED+" column found for SAML2IDP with sourceid '"+baSourceID+"'; ignoring.");
             	}
                 
                 saml2IDP = new SAML2IDP(resultSet.getString(COLUMN_ID),
@@ -516,7 +571,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     boolScoping, boolNameIDPolicy,
                     resultSet.getString(COLUMN_NAMEIDFORMAT),
                     dLastModified,
-                    oMPM);
+                    oMPM.getId());
             }
         }
         catch(OAException e)
@@ -525,7 +580,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
         }
         catch(Exception e)
         {
-            _logger.fatal("Internal error during retrieval of organization with SourceID: " 
+            _oLogger.fatal("Internal error during retrieval of organization with SourceID: " 
                 + baSourceID, e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
@@ -538,7 +593,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             }
             catch (Exception e)
             {
-                _logger.error("Could not close select statement", e);
+                _oLogger.error("Could not close select statement", e);
             }
                         
             try
@@ -548,7 +603,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             }
             catch (Exception e)
             {
-                _logger.error("Could not close connection", e);
+                _oLogger.error("Could not close connection", e);
             }
         }
         return saml2IDP;

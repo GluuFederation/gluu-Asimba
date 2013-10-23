@@ -39,13 +39,13 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.asimba.util.saml2.metadata.provider.management.StandardMetadataProviderManager;
-import org.asimba.util.saml2.metadata.provider.management.MdMgrManager;
+import org.asimba.utility.xml.XMLUtils;
 import org.opensaml.Configuration;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.xml.ConfigurationException;
 import org.opensaml.xml.io.Marshaller;
+import org.opensaml.xml.io.MarshallerFactory;
 import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.signature.Signature;
 import org.opensaml.xml.signature.Signer;
@@ -89,6 +89,7 @@ public class SAML2Profile implements IRequestorProfile, IService
     private Map<String, ISAML2Profile> _processors;
     private SAML2Requestors _requestors;
     private String _sID;
+    
     /** The metadata EntityDescriptor */
     private EntityDescriptor _entityDescriptor;
     private SAML2TGTListener _oSAML2TGTListener;
@@ -194,18 +195,15 @@ public class SAML2Profile implements IRequestorProfile, IService
             else
                 issueInstantWindow = new SAML2IssueInstantWindow(
                     configurationManager, eIssueInstant);
+
             
             //read requestors config
             Element eRequestors = configurationManager.getSection(config, "requestors");
-            if (eRequestors == null)
-            {
-                _logger.info("No optional 'requestors' section found in 'profile' section in configuration with profile id: " 
-                    + _sID);
-                
-                _requestors = new SAML2Requestors(_sID);
+            if (eRequestors == null) {
+                _logger.info("No optional 'requestors' section found in 'profile' section in configuration with profile id: "+ _sID);
             }
-            else
-                _requestors = new SAML2Requestors(configurationManager, eRequestors, _sID);
+            // SAML2Requestors constructor can handle null for empty requestors section:
+            _requestors = new SAML2Requestors(configurationManager, eRequestors, _sID);
             
             //read profiles config
             Element eProfiles = configurationManager.getSection(config, "profiles");
@@ -252,10 +250,6 @@ public class SAML2Profile implements IRequestorProfile, IService
                 _oSAML2TGTListener = null;
             }
             
-            // Instantiate MetadataProviderManager
-            // Set with ID of this SAML2-profile instance
-            StandardMetadataProviderManager oMPM = new StandardMetadataProviderManager();
-            MdMgrManager.getInstance().setMetadataProviderManager(_sID, oMPM);
             
             signMetaData(); 
         }
@@ -364,8 +358,6 @@ public class SAML2Profile implements IRequestorProfile, IService
         if (_requestors != null)
             _requestors.destroy();
         
-        // Clean up the MetadataProviderManager:
-        MdMgrManager.getInstance().deleteMetadataProviderManager(_sID);
     }
     
     private ISAML2Profile createProfile(IConfigurationManager 
@@ -545,18 +537,23 @@ public class SAML2Profile implements IRequestorProfile, IService
     private void handleMetaData(
         HttpServletResponse servletResponse) throws OAException
     {
-        PrintWriter pwOut = null;
+        PrintWriter oPWOut = null;
         try 
         { 
-            TransformerFactory tfactory = TransformerFactory.newInstance();
-            Transformer serializer = tfactory.newTransformer();
+        	// Marshall the metadata:
+			MarshallerFactory marshallerFactory = Configuration.getMarshallerFactory();
+			Marshaller marshaller = marshallerFactory.getMarshaller(_entityDescriptor);
+			Element e = marshaller.marshall(_entityDescriptor);
+			
             servletResponse.setContentType(SAML2Constants.METADATA_CONTENT_TYPE);
             servletResponse.setHeader("Content-Disposition", 
                 "attachment; filename=metadata.xml");
-            
+
             //TODO EVB, MHO: cache processing conform RFC2616 [saml-metadata r1404]
-            pwOut = servletResponse.getWriter();
-            serializer.transform(new DOMSource(_entityDescriptor.getDOM()), new StreamResult(pwOut));
+            oPWOut = servletResponse.getWriter();
+			String s = XMLUtils.getStringFromDocument(e.getOwnerDocument()); 
+
+			oPWOut.write(s);
         }  
         catch (IOException e)
         {
@@ -572,8 +569,8 @@ public class SAML2Profile implements IRequestorProfile, IService
         } 
         finally
         {
-            if(pwOut != null)
-                pwOut.close();
+            if(oPWOut != null)
+                oPWOut.close();
         }       
     }
 }

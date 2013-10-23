@@ -45,7 +45,11 @@ import com.alfaariss.oa.engine.core.idp.storage.IIDP;
  *
  */
 public interface IMetadataProviderManager {
-	
+	/**
+	 * Retrieve the Id of the MetadataProviderManager
+	 * @return
+	 */
+	public String getId();
 	
 	/**
 	 * Set the number of milliseconds after which an unused MetadataProvider

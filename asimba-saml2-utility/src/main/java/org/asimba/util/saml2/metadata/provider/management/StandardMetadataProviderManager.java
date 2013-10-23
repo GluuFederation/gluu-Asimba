@@ -1,3 +1,24 @@
+/*
+ * Asimba Server
+ * 
+ * Copyright (C) 2013 Asimba
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see www.gnu.org/licenses
+ * 
+ * Asimba - Serious Open Source SSO - More information on www.asimba.org
+ * 
+ */
 package org.asimba.util.saml2.metadata.provider.management;
 
 import java.util.ArrayList;
@@ -26,6 +47,7 @@ import org.opensaml.xml.XMLObject;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
+import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.IComponent;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.engine.core.idp.storage.IIDP;
@@ -44,15 +66,14 @@ public class StandardMetadataProviderManager implements
 	IMetadataProviderManager, IComponent,
 	Observer 
 {
-	/**
-	 * Local logger instance
-	 */
+	/** Local logger instance */
 	private static final Log _oLogger = LogFactory.getLog(StandardMetadataProviderManager.class);
 
-	/**
-	 * Reference to ConfiManager for reloading state
-	 */
+	/** Reference to ConfigManager for reloading state  */
 	protected IConfigurationManager _oConfigManager;
+	
+	/** Local Id */
+	protected String _sId;
 
 
 	/**
@@ -106,12 +127,24 @@ public class StandardMetadataProviderManager implements
 	protected Timer _oMetadataProviderTimer = null;
 
 
-	
 	/**
-	 * Temporary constructor :: DEVELOP VERSION
+	 * Parameterless constructor to support generic .newInstance() instantiation
+	 * Must call start(..) to initialize Id!
 	 */
 	public StandardMetadataProviderManager() {
 		_hmSpecificProviders = new HashMap<String, StoredMetadataProvider>();
+	}
+
+	/**
+	 * Default constructor with ID of the MetadataProviderManager
+	 */
+	public StandardMetadataProviderManager(String sId) {
+		_sId = sId;
+		_hmSpecificProviders = new HashMap<String, StoredMetadataProvider>();
+	}
+	
+	public String getId() {
+		return _sId;
 	}
 	
 	/**
@@ -227,8 +260,7 @@ public class StandardMetadataProviderManager implements
 			throws OAException
 	{
 		if (existsFor(sSourceRef)) {
-			MetadataProvider oMP = removeProviderFor(sSourceRef);
-			oMP = null;	// remove it, so it can be replaced for a new one
+			removeProviderFor(sSourceRef);
 		}
 
 		StoredMetadataProvider oSMP = new StoredMetadataProvider(sSourceRef, oProvider, oTimer);
@@ -268,9 +300,11 @@ public class StandardMetadataProviderManager implements
 			((AbstractObservableMetadataProvider) oMP).getObservers().remove(this);
 		}
 		
-		// Clear all tasks from the timer of the MetadataProvider
-		oSMP._oBackgroundTimer.cancel();
-		oSMP._oBackgroundTimer = null;	// remove reference
+		if (oSMP._oBackgroundTimer != null) {
+			// Clear all tasks from the timer of the MetadataProvider
+			oSMP._oBackgroundTimer.cancel();
+			oSMP._oBackgroundTimer = null;	// remove reference
+		}
 
 		oSMP.destroy();
 		oSMP = null;
@@ -306,7 +340,7 @@ public class StandardMetadataProviderManager implements
 			XMLObject x = (XMLObject) oProvider.getMetadata();
 
 			if (! (x instanceof EntitiesDescriptor)) {
-				_oLogger.info("No EntitiesDescriptor was returned.");
+				_oLogger.trace("No EntitiesDescriptor was returned, so no IDPList to create.");
 				return oIDPs;
 			}
 
@@ -450,7 +484,13 @@ public class StandardMetadataProviderManager implements
 	 * {@inheritDoc}
 	 */
 	public void destroy() {
-		for(String s: _hmSpecificProviders.keySet()) {
+		_oLogger.debug("Destroying id "+_sId);
+		
+		// We'll be removing from the hashmap, so iterate through a deep copy:
+		Object[] oaProviders = _hmSpecificProviders.keySet().toArray();	// array of strings
+		
+		for(Object o: oaProviders) {
+			String s = (String) o;
 			try {
 				removeProviderFor(s);
 			} catch (OAException oae) {
@@ -463,13 +503,20 @@ public class StandardMetadataProviderManager implements
 	 * {@inheritDoc}
 	 */
 	public void start(IConfigurationManager oConfigManager,
-			Element eConfig) throws OAException 
-			{
+			Element elConfig) throws OAException 
+	{
 		_oConfigManager = oConfigManager;
 		_hmSpecificProviders = new HashMap<String, StoredMetadataProvider>();
 
-		_oMetadataProviderTimer = new Timer(this.getClass().getName());
-			}
+		_oMetadataProviderTimer = null; // new Timer(this.getClass().getName());
+		
+        _sId = oConfigManager.getParam(elConfig, "id");
+        if (_sId == null)
+        {
+            _oLogger.error("No 'id' item for StandardMetadataProvider configured; stopping.");
+            throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+        }
+	}
 
 	/**
 	 * {@inheritDoc}

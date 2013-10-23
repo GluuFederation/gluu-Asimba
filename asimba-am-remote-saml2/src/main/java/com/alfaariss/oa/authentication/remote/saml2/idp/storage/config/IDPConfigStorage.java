@@ -35,9 +35,11 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Map;
 
-import org.asimba.util.saml2.metadata.provider.IMetadataProviderManager;
-import org.asimba.util.saml2.metadata.provider.management.StandardMetadataProviderManager;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.asimba.util.saml2.metadata.provider.management.MdMgrManager;
+import org.asimba.util.saml2.metadata.provider.management.MetadataProviderManagerUtil;
+import org.asimba.utility.filesystem.PathTranslator;
 import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
 import org.w3c.dom.Element;
@@ -50,7 +52,27 @@ import com.alfaariss.oa.engine.idp.storage.configuration.AbstractConfigurationSt
 import com.alfaariss.oa.util.saml2.idp.SAML2IDP;
 
 /**
- * Uses the XML configuration file as organization storage.
+ * Uses the XML configuration file as organization storage for SAML2IDPs
+ * 
+ * Configuration like:
+ * <storage id="[id-value]" class="[...IDPConfigStorage]" registerWithEngine="[true/false]">
+ *   <mp_manager id="[id-value]" primary="[true/false]" />
+ *   <idp ...>
+ *   	[idp-configuration]
+ *   </idp>
+ * </storage>
+ * 
+ * #signing : optional attribute to indicate whether default-signing should be enabled 
+ * 		for a SAML2Requestor
+ * 
+ * mp_manager : optional configuration for metadataprovider manager; if the configuration is
+ * 		not provided, a MetadataProviderManager is used by the name of the Profile; if it is
+ * 		created, it will also be removed upon destroy() of the SAMLRequestors
+ * #id : attribute that indicates the id of the MetadataProviderManager
+ * 		that is responsible for managing the MetadataProvider for a SAML2Requestor; when
+ * 		mpmanaged_id is not set, the profileId is used to identify the MetadataProviderManager
+ * #primary : if true, and if the manager was instantiated, the manager will also be destroyed
+ * 		when destroy() of the SAML2Requestors is called. Defaults to false. 
  *
  * @author MHO
  * @author Alfa & Ariss
@@ -58,8 +80,22 @@ import com.alfaariss.oa.util.saml2.idp.SAML2IDP;
  */
 public class IDPConfigStorage extends AbstractConfigurationStorage 
 {
+	/** Configuration elements */
+	public static final String EL_MPMANAGER = "mp_manager";
+
+	/** Local logger instance */
+	private static Log _oLogger = LogFactory.getLog(IDPConfigStorage.class);
+	
     private final static String DEFAULT_ID = "saml2";
-    private String _sID;
+    
+    /** Id of the Storage */
+    protected String _sId;
+    
+    /** Id of the MetadataProviderManager that manages metadata for the SAML2IDPs that are
+     * created by this Storage; configurable; defaults to the Id of the Storage (_sId) */
+    protected String _sMPMId;
+    protected boolean _bOwnMPM;
+    
     
     private Map<SourceID, SAML2IDP> _mapIDPsOnSourceID;
         
@@ -78,17 +114,47 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
     public void start(IConfigurationManager configManager, Element config)
         throws OAException
     {
-        _sID = configManager.getParam(config, "id");
-        if (_sID == null)
+        _sId = configManager.getParam(config, "id");
+        if (_sId == null)
         {
-            _logger.info("No optional 'id' item for storage configured, using default");
-            _sID = DEFAULT_ID;
+            _oLogger.info("No optional 'id' item for storage configured, using default");
+            _sId = DEFAULT_ID;
+        }
+
+        // Establish MetadataProviderManager Id that refers to existing IMetadataProviderManager
+        Element elMPManager = configManager.getSection(config, EL_MPMANAGER);
+        if (elMPManager == null) {
+        	_oLogger.info("Using MetadataProviderManager Id from IDPStorage@id: '"+_sId+"'");
+        	_sMPMId = _sId;
+        } else {
+        	_sMPMId = configManager.getParam(elMPManager, "id");
+        	if (_sMPMId == null) {
+        		_oLogger.error("Missing @id attribute for '"+EL_MPMANAGER+"' configuration");
+        		throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+        	}
+        	_oLogger.info("Using MetadataProviderManager Id from configuration: '"+_sMPMId+"'");
         }
         
-        // Instantiate MetadataProviderManager
-        // Set with ID of this IDPStorage instance
-        StandardMetadataProviderManager oMPM = new StandardMetadataProviderManager();
-        MdMgrManager.getInstance().setMetadataProviderManager(_sID, oMPM);
+        // Make sure the MetadataProviderManager exists
+        boolean bCreated = MetadataProviderManagerUtil.establishMPM(_sMPMId, configManager, elMPManager);
+        
+        if (elMPManager == null) {
+        	_bOwnMPM = bCreated;
+        } else {
+        	String sPrimary = configManager.getParam(elMPManager, "primary");
+        	if (sPrimary == null ) {
+        		_bOwnMPM = bCreated;	// default: own it when it was created by us
+        	} else {
+        		if ("false".equalsIgnoreCase(sPrimary)) {
+        			_bOwnMPM = false;
+        		} else if ("true".equalsIgnoreCase(sPrimary)) {
+        			_bOwnMPM = true;
+        		} else {
+        			_oLogger.error("Invalid value for '@primary': '"+sPrimary+"'");
+        			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+        		}
+        	}
+        }
         
         super.start(configManager, config);
         
@@ -99,7 +165,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
             _mapIDPsOnSourceID.put(new SourceID(saml2IDP.getSourceID()), saml2IDP);
         }
         
-        _logger.info("Started storage with id: " + _sID);
+        _oLogger.info("Started storage with id: " + _sId);
     }
     
     /**
@@ -107,7 +173,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
      */
     public String getID()
     {
-        return _sID;
+        return _sId;
     }
 
     /**
@@ -132,8 +198,11 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
         if (_mapIDPsOnSourceID != null)
             _mapIDPsOnSourceID.clear();
         
-        // Clean up the MetadataProviderManager:
-        MdMgrManager.getInstance().deleteMetadataProviderManager(_sID);
+        // Clean up the MetadataProviderManager?
+        if (_bOwnMPM) {
+        	_oLogger.info("Cleaning up MetadataProviderManager '"+_sMPMId+"'");
+        	MdMgrManager.getInstance().deleteMetadataProviderManager(_sMPMId);
+        }
         
         super.stop();
     }
@@ -147,14 +216,12 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
     {
         SAML2IDP saml2IDP = null;
         
-        IMetadataProviderManager oMPM = MdMgrManager.getInstance().getMetadataProviderManager(_sID);
-        
         try
         {
             String sID = configManager.getParam(config, "id");
             if (sID == null)
             {
-                _logger.error(
+                _oLogger.error(
                     "No 'id' item found in 'organization' section in configuration");
                 throw new OAException(SystemErrors.ERROR_CONFIG_READ);
             }
@@ -163,7 +230,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
             String sFriendlyName = configManager.getParam(config, "friendlyname");
             if (sFriendlyName == null)
             {
-                _logger.error("No 'friendlyname' item found in 'organization' section in configuration");
+                _oLogger.error("No 'friendlyname' item found in 'organization' section in configuration");
                 throw new OAException(SystemErrors.ERROR_CONFIG_READ);
             }
             
@@ -176,7 +243,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
 	            	DateTime dt = ISODateTimeFormat.dateTimeNoMillis().parseDateTime(sDateLastModified);
             		dLastModified = dt.toDate();
             	} catch (IllegalArgumentException iae) {
-            		_logger.info("Invalid 'lastmodified' timestamp provided: "+sDateLastModified+"; ignoring.");
+            		_oLogger.info("Invalid 'lastmodified' timestamp provided: "+sDateLastModified+"; ignoring.");
             		dLastModified = null;
             	}
             }
@@ -188,7 +255,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
             Element eMetadata = configManager.getSection(config, "metadata");
             if (eMetadata == null)
             {
-                _logger.warn(
+                _oLogger.warn(
                     "No optional 'metadata' section found in configuration for organization with id: " 
                     + sID);
             }
@@ -197,7 +264,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
                 Element eHttp = configManager.getSection(eMetadata, "http");
                 if (eHttp == null)
                 {
-                    _logger.warn(
+                    _oLogger.warn(
                         "No optional 'http' section in 'metadata' section found in configuration for organization with id: " 
                         + sID);
                 }
@@ -206,7 +273,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
                     sMetadataURL = configManager.getParam(eHttp, "url");
                     if (sMetadataURL == null)
                     {
-                        _logger.error(
+                        _oLogger.error(
                             "No 'url' item in 'http' section found in configuration for organization with id: " 
                             + sID);
                         throw new OAException(SystemErrors.ERROR_CONFIG_READ);
@@ -219,7 +286,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
                     }
                     catch (MalformedURLException e)
                     {
-                        _logger.error(
+                        _oLogger.error(
                             "Invalid 'url' item in 'http' section found in configuration: " 
                             + sMetadataURL, e);
                         throw new OAException(SystemErrors.ERROR_INIT);
@@ -229,7 +296,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
                     sbInfo.append(sID);
                     sbInfo.append("' uses metadata from url: ");
                     sbInfo.append(sMetadataURL);
-                    _logger.info(sbInfo.toString());
+                    _oLogger.info(sbInfo.toString());
                     
                     try
                     {
@@ -240,7 +307,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
                     }
                     catch (IOException e)
                     {
-                        _logger.warn(
+                        _oLogger.warn(
                             "Could not connect to 'url' item in 'http' section found in configuration: " 
                             + sMetadataURL, e);
                     }
@@ -254,7 +321,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
                         }
                         catch (NumberFormatException e)
                         {
-                            _logger.error(
+                            _oLogger.error(
                                 "Invalid 'timeout' item in 'http' section found in configuration (must be a number): " 
                                 + sTimeout, e);
                             throw new OAException(SystemErrors.ERROR_INIT);
@@ -262,7 +329,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
                         
                         if (iMetadataURLTimeout < 0)
                         {
-                            _logger.error(
+                            _oLogger.error(
                                 "Invalid 'timeout' item in 'http' section found in configuration: " 
                                 + sTimeout);
                             throw new OAException(SystemErrors.ERROR_INIT);
@@ -273,16 +340,19 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
                 sMetadataFile = configManager.getParam(eMetadata, "file");
                 if (sMetadataFile == null)
                 {
-                    _logger.warn(
+                    _oLogger.warn(
                         "No optional 'file' item in 'metadata' section found in configuration for organization with id: " 
                         + sID);
                 }
                 else
                 {
+                	// Translate the path
+                	sMetadataFile = PathTranslator.getInstance().map(sMetadataFile);
+                	
                     File fMetadata = new File(sMetadataFile);
                     if (!fMetadata.exists())
                     {
-                        _logger.error("Configured metadata 'file' doesn't exist: " 
+                        _oLogger.error("Configured metadata 'file' doesn't exist: " 
                             + sMetadataFile);
                         throw new OAException(SystemErrors.ERROR_INIT);
                     }
@@ -291,7 +361,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
                     sbInfo.append(sID);
                     sbInfo.append("' uses metadata in file: ");
                     sbInfo.append(sMetadataFile);
-                    _logger.info(sbInfo.toString());
+                    _oLogger.info(sbInfo.toString());
                 }
             }
             
@@ -303,7 +373,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
                     boolACSIndex = new Boolean(false);
                 else if (!sACSIndex.equalsIgnoreCase("TRUE"))
                 {
-                    _logger.error("Invalid 'acs_index' item value found in configuration: " 
+                    _oLogger.error("Invalid 'acs_index' item value found in configuration: " 
                         + sACSIndex);
                     throw new OAException(SystemErrors.ERROR_INIT);
                 }
@@ -317,7 +387,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
                     boolScoping = new Boolean(false);
                 else if (!sScoping.equalsIgnoreCase("TRUE"))
                 {
-                    _logger.error("Invalid 'scoping' item value found in configuration: " 
+                    _oLogger.error("Invalid 'scoping' item value found in configuration: " 
                         + sScoping);
                     throw new OAException(SystemErrors.ERROR_INIT);
                 }
@@ -337,7 +407,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
                         boolNameIDPolicy = new Boolean(false);
                     else if (!sNameIDPolicyEnabled.equalsIgnoreCase("TRUE"))
                     {
-                        _logger.error("Invalid 'enabled' item value in 'nameidpolicy' section found in configuration: " 
+                        _oLogger.error("Invalid 'enabled' item value in 'nameidpolicy' section found in configuration: " 
                             + sNameIDPolicyEnabled);
                         throw new OAException(SystemErrors.ERROR_INIT);
                     }
@@ -354,7 +424,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
                             boolAllowCreate = new Boolean(false);
                         else
                         {
-                            _logger.error("Invalid 'allow_create' item value found in configuration: " 
+                            _oLogger.error("Invalid 'allow_create' item value found in configuration: " 
                                 + sAllowCreate);
                             throw new OAException(SystemErrors.ERROR_INIT);
                         }
@@ -366,7 +436,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
             
             saml2IDP = new SAML2IDP(sID, baSourceID, sFriendlyName, 
                 sMetadataFile, sMetadataURL, iMetadataURLTimeout, boolACSIndex, 
-                boolAllowCreate, boolScoping, boolNameIDPolicy, sNameIDFormat, dLastModified, oMPM);
+                boolAllowCreate, boolScoping, boolNameIDPolicy, sNameIDFormat, dLastModified, _sMPMId);
         }
         catch (OAException e)
         {
@@ -374,7 +444,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
         }
         catch(Exception e)
         {
-            _logger.fatal("Internal error while reading organization configuration", e);
+            _oLogger.fatal("Internal error while reading organization configuration", e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
         
@@ -401,12 +471,12 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
         }
         catch (NoSuchAlgorithmException e)
         {
-            _logger.error("SHA-1 not supported", e);
+            _oLogger.error("SHA-1 not supported", e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
         catch (UnsupportedEncodingException e)
         {
-            _logger.error("UTF-8 not supported", e);
+            _oLogger.error("UTF-8 not supported", e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
     }
