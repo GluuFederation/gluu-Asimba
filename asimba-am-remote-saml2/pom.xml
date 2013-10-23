@@ -4,7 +4,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>1.1.3</version>
+    <version>1.1.4-SNAPSHOT</version>
   </parent>
   <artifactId>asimba-am-remote-saml2</artifactId>
   <name>asimba-am-remote-saml2</name>
@@ -21,27 +21,27 @@
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-api</artifactId>
-    	<version>1.1.3</version>
+    	<version>1.1.4-SNAPSHOT</version>
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-saml2-utility</artifactId>
-    	<version>1.1.3</version>
+    	<version>1.1.4-SNAPSHOT</version>
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-sso-web</artifactId>
-    	<version>1.1.3</version>
+    	<version>1.1.4-SNAPSHOT</version>
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-engine-idp-configuration</artifactId>
-    	<version>1.1.3</version>
+    	<version>1.1.4-SNAPSHOT</version>
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-engine-idp-jdbc</artifactId>
-    	<version>1.1.3</version>
+    	<version>1.1.4-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -51,12 +51,12 @@
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-engine-user-provisioning</artifactId>
-    	<version>1.1.3</version>
+    	<version>1.1.4-SNAPSHOT</version>
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-am-remote</artifactId>
-    	<version>1.1.3</version>
+    	<version>1.1.4-SNAPSHOT</version>
     </dependency>
   </dependencies>
 </project>
