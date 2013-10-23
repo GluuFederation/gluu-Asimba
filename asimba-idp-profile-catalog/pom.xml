@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<artifactId>asimba-server-baseline</artifactId>
+		<groupId>org.asimba</groupId>
+		<version>1.1.3-SNAPSHOT</version>
+	</parent>
+	<artifactId>asimba-idp-profile-catalog</artifactId>
+	<name>asimba-idp-profile-catalog</name>
+	<url>http://www.asimba.org</url>
+	<description>The Catalog IDP Profile offers support for publishing configured IDPs and Requestors through standard means, but in particular through a SAML2 EntitiesDescriptor format.</description>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.asimba</groupId>
+			<artifactId>asimba-api</artifactId>
+			<version>1.1.3-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.asimba</groupId>
+			<artifactId>asimba-engine-core</artifactId>
+			<version>1.1.3-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.asimba</groupId>
+			<artifactId>asimba-saml2-utility</artifactId>
+			<version>1.1.3-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>
