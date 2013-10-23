@@ -65,7 +65,11 @@ public class ProxyAttributes
     
     /** Response proxy attribute: AuthnContextClassRef (String) (saml-core-2.0-os r1126)*/
     public final static String AUTHNCONTEXT_CLASS_REF = "AuthnContextClassRef";
-    /** Response proxy attribute: AuthenticatingAuthorities (List<String>) (saml-core-2.0-os r1133)*/
+    /** 
+     * Response proxy attribute: AuthenticatingAuthorities (List<String>) (saml-core-2.0-os r1133)
+     * Contains the list of AuthenticatingAuthorities that are responsible for the assertion
+     * In proxy mode, this is both the Remote IDP, to which we add ourselves 
+     */
     public final static String AUTHNCONTEXT_AUTHENTICATING_AUTHORITIES = "AuthenticatingAuthorities";
     
     // Asimba specific attributes to share between IDP Profile and SP behavior (RemoteSAML authentication)
