@@ -4,7 +4,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>1.1.3-SNAPSHOT</version>
+    <version>1.1.3</version>
   </parent>
   <artifactId>asimba-am-password-jdbc</artifactId>
   <name>asimba-am-password-jdbc</name>
@@ -21,12 +21,12 @@
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-api</artifactId>
-    	<version>1.1.3-SNAPSHOT</version>
+    	<version>1.1.3</version>
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-am-password</artifactId>
-    	<version>1.1.3-SNAPSHOT</version>
+    	<version>1.1.3</version>
     </dependency>
   </dependencies>
 </project>
