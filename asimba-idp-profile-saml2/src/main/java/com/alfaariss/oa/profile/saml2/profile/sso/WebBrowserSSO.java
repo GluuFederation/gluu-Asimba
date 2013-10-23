@@ -525,6 +525,7 @@ public class WebBrowserSSO extends AbstractSAML2Profile
             if (sURLPathContext != null)
             	session.getAttributes().put(ProxyAttributes.class, ProxyAttributes.PROXY_URLPATH_CONTEXT, sURLPathContext);
             
+            _logger.debug("Put on map? "+ProxyAttributes.PROXY_URLPATH_CONTEXT+"="+sURLPathContext);
             //TODO (MHO) (Optional) Extensions support?
             
             protocol = new AuthenticationRequestProtocol(session, 
