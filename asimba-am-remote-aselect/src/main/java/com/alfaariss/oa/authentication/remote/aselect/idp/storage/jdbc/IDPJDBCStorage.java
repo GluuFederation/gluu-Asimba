@@ -28,6 +28,7 @@ import java.sql.ResultSet;
 import java.util.List;
 import java.util.Vector;
 
+import org.apache.commons.logging.Log;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -63,6 +64,9 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
     private final static String COLUMN_ASYNCHRONOUS_LOGOUT = "asynchronouslogout";
     private final static String COLUMN_SYNCHRONOUS_LOGOUT = "synchronouslogout";
     private final static String COLUMN_SEND_ARP_TARGET = "send_arp_target";
+    
+    /** System logger */
+    private static Log _logger;
     
     private String _sID;
     private String _sTable;

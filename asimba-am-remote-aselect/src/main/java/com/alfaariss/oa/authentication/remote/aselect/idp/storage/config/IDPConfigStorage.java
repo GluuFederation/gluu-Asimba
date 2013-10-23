@@ -27,6 +27,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
+import org.apache.commons.logging.Log;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -45,6 +46,9 @@ import com.alfaariss.oa.engine.idp.storage.configuration.AbstractConfigurationSt
  */
 public class IDPConfigStorage extends AbstractConfigurationStorage
 {
+    /** System logger */
+    private static Log _logger;
+
     private final static String DEFAULT_ID = "aselect";
     
     private String _sID;
