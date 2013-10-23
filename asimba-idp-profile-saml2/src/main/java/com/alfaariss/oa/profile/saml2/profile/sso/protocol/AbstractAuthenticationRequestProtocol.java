@@ -138,29 +138,36 @@ public abstract class AbstractAuthenticationRequestProtocol
             SAMLVersion samlVersion = request.getVersion();
             if (!samlVersion.equals(SAMLVersion.VERSION_20))
             {
-                _logger.debug("Unsupported SAML version in request: " + samlVersion);
+                _logger.warn("Unsupported SAML version in request: " + samlVersion);
                 throw new StatusException(RequestorEvent.REQUEST_INVALID, StatusCode.VERSION_MISMATCH_URI);
             }
             
             DateTime dateTime = request.getIssueInstant();
             if (dateTime == null)
             {
-                _logger.debug("No IssueInstant in request");
+                _logger.warn("No IssueInstant in request");
                 throw new StatusException(RequestorEvent.REQUEST_INVALID, StatusCode.REQUESTER_URI);
             }
             
             if(!_issueInstantWindow.canAccept(dateTime))
             {
-                _logger.debug("Invalid IssueInstant in request: " + dateTime);
+                _logger.warn("Invalid IssueInstant in request: " + dateTime);
                 throw new StatusException(RequestorEvent.REQUEST_INVALID, StatusCode.REQUESTER_URI);
             }
             
+            // Validate destination
             String sDestination = request.getDestination();
-            if (sDestination != null)
-            {   if (!sDestination.equalsIgnoreCase(_sProfileURL))
-                {
-                    _logger.debug("Invalid Destination in request: " + sDestination);
-                    throw new StatusException(RequestorEvent.REQUEST_INVALID, StatusCode.REQUESTER_URI);
+            if (sDestination != null) {   
+            	if (!sDestination.equalsIgnoreCase(_sProfileURL)) {
+            		// If we allow shadow operation, relax the validation rule:
+            		if (_bEnableShadowIdp) {
+            			if (! sDestination.startsWith(_sProfileURL)) {
+    	                    _logger.warn("Invalid Destination in request for shadowed endpoint: " + sDestination);
+            			}
+            		} else {
+	                    _logger.warn("Invalid Destination in request: " + sDestination);
+	                    throw new StatusException(RequestorEvent.REQUEST_INVALID, StatusCode.REQUESTER_URI);
+            		}
                 }
             }
             
