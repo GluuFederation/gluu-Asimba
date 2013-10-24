@@ -101,7 +101,7 @@ public class OAContextListener implements ServletContextListener
      * Starts the engine before all servlets are initialized.
      * 
      * Searches for the properties needed for the configuration in:
-     * <code>[Servlet context dir]/WEB-INF/oa.prop</code>
+     * <code>[Servlet context dir]/WEB-INF/[PROPERTIES_FILENAME]</code>
      * @see javax.servlet.ServletContextListener#contextInitialized(javax.servlet.ServletContextEvent)
      */
     public void contextInitialized(ServletContextEvent oServletContextEvent)
@@ -157,7 +157,7 @@ public class OAContextListener implements ServletContextListener
             }
             
             //Search for PROPERTIES_FILENAME file in servlet context classloader classpath 
-            //it looks first at this location: ./<context>/web-inf/classes/oa.prop
+            //it looks first at this location: ./<context>/web-inf/classes/[PROPERTIES_FILENAME]
             //if previous location didn't contain PROPERTIES_FILENAME then checking: 
             //./tomcat/common/classes/PROPERTIES_FILENAME
             URL urlProperties = oServletContext.getClass().getClassLoader().getResource(PROPERTIES_FILENAME);

@@ -42,6 +42,13 @@ import com.alfaariss.oa.engine.core.configuration.ConfigurationManager;
  */
 public class EngineLauncher 
 {
+	/**
+	 * Name of the file that contains property-list for configuring server
+	 * In practice, this is used when OAContextListener could not find a
+	 * properties file, and EngineLauncher is attempting its own search
+	 */
+	public static final String PROPERTIES_FILENAME = "asimba.properties";
+
     private static Log _logger;
     private static Engine _engine;
     private static Properties _pConfig;
@@ -70,7 +77,7 @@ public class EngineLauncher
 	 * Starts the OA engine.
 	 *
 	 * Starts the configuration manager with the supplied properties.
-     * If the file <code>[system property user.dir]/oa.prop</code> is found,
+     * If the file <code>[system property user.dir]/[PROPERTIES_FILENAME]</code> is found,
      * the supplied properties will be overwritten with the properties in the 
      * file.
 	 * @param pConfig properties with the location of the configuration
@@ -197,12 +204,12 @@ public class EngineLauncher
     
     private Properties getConfigProperties() throws OAException
     {   
-        _logger.debug("Search for 'oa.prop' as resource of the current thread context classloader");
-        URL urlProperties = Thread.currentThread().getContextClassLoader().getResource("oa.prop");
+        _logger.debug("Search for '"+PROPERTIES_FILENAME+"' as resource of the current thread context classloader");
+        URL urlProperties = Thread.currentThread().getContextClassLoader().getResource(PROPERTIES_FILENAME);
         if (urlProperties != null)
         {
             String sProperties = urlProperties.getFile();
-            _logger.debug("Found 'oa.prop' file in: " + sProperties);
+            _logger.debug("Found '"+PROPERTIES_FILENAME+"' file in: " + sProperties);
             File fProperties = new File(sProperties);
             if (fProperties != null && fProperties.exists())
             {
@@ -213,15 +220,15 @@ public class EngineLauncher
             _logger.info("Could not resolve: " + fProperties.getAbsolutePath());
         }
         else
-            _logger.info("No 'oa.prop' found as resource of the current thread context classloader");
+            _logger.info("No '"+PROPERTIES_FILENAME+"' found as resource of the current thread context classloader");
         
         
-        _logger.debug("Search for 'oa.prop' as resource of the classloader of the current class");
-        urlProperties = EngineLauncher.class.getResource("oa.prop");
+        _logger.debug("Search for '"+PROPERTIES_FILENAME+"' as resource of the classloader of the current class");
+        urlProperties = EngineLauncher.class.getResource(PROPERTIES_FILENAME);
         if (urlProperties != null)
         {
             String sProperties = urlProperties.getFile();
-            _logger.debug("Found 'oa.prop' file in: " + sProperties);
+            _logger.debug("Found '"+PROPERTIES_FILENAME+"' file in: " + sProperties);
             File fProperties = new File(sProperties);
             if (fProperties != null && fProperties.exists())
             {
@@ -232,15 +239,15 @@ public class EngineLauncher
             _logger.info("Could not resolve: " + fProperties.getAbsolutePath());
         }
         else
-            _logger.info("No 'oa.prop' found as resource of the classloader of the current class");
+            _logger.info("No '"+PROPERTIES_FILENAME+"' found as resource of the classloader of the current class");
         
         
-        _logger.debug("Search for 'oa.prop' as system resource of the static classloader");
-        urlProperties = ClassLoader.getSystemResource("oa.prop");
+        _logger.debug("Search for '"+PROPERTIES_FILENAME+"' as system resource of the static classloader");
+        urlProperties = ClassLoader.getSystemResource(PROPERTIES_FILENAME);
         if (urlProperties != null)
         {
             String sProperties = urlProperties.getFile();
-            _logger.debug("Found 'oa.prop' file in: " + sProperties);
+            _logger.debug("Found '"+PROPERTIES_FILENAME+"' file in: " + sProperties);
             File fProperties = new File(sProperties);
             if (fProperties != null && fProperties.exists())
             {
@@ -251,7 +258,7 @@ public class EngineLauncher
             _logger.info("Could not resolve: " + fProperties.getAbsolutePath());
         }
         else
-            _logger.info("No 'oa.prop' found as system resource of the static classloader");
+            _logger.info("No '"+PROPERTIES_FILENAME+"' found as system resource of the static classloader");
         
         return null;
     }
