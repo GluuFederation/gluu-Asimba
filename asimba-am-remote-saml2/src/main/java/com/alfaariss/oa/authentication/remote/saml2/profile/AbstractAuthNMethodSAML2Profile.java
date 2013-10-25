@@ -827,9 +827,12 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
      * @param sNameID The UID.
      * @param sNameIDFormat The nameid format or NULL if none.
      * @param sNameQualifier The NameQualifier of the NameID or NULL if none.
+     * @param bAvoidSubjectConfirmation When true, do not include any SubjectConfirmation elements
+     * 		in the Subject
      * @return The <code>Subject</code> object.
      */
-    protected Subject buildSubject(String sNameID, String sNameIDFormat, String sNameQualifier)
+    protected Subject buildSubject(String sNameID, String sNameIDFormat, String sNameQualifier,
+    		boolean bAvoidSubjectConfirmation)
     {
         SubjectBuilder subjBuilder = (SubjectBuilder)
             Configuration.getBuilderFactory().getBuilder(Subject.DEFAULT_ELEMENT_NAME);
@@ -840,21 +843,26 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
         
         subj.setNameID(nid);
         
-        SubjectConfirmationBuilder subjConfBuilder = (SubjectConfirmationBuilder)
-        Configuration.getBuilderFactory().getBuilder(SubjectConfirmation.DEFAULT_ELEMENT_NAME);
-        
-        SubjectConfirmation subjConf = subjConfBuilder.buildObject();
-        
-        SubjectConfirmationDataBuilder subjConfDataBuilder = (SubjectConfirmationDataBuilder)
-        Configuration.getBuilderFactory().getBuilder(SubjectConfirmationData.DEFAULT_ELEMENT_NAME);
-        
-        SubjectConfirmationData scData = subjConfDataBuilder.buildObject();
-        
-        subjConf.setSubjectConfirmationData(scData);
-        
-        subjConf.setMethod(AuthnContext.UNSPECIFIED_AUTHN_CTX);
-        
-        subj.getSubjectConfirmations().add(subjConf); 
+        if (!bAvoidSubjectConfirmation) {
+	        SubjectConfirmationBuilder subjConfBuilder = (SubjectConfirmationBuilder)
+	        Configuration.getBuilderFactory().getBuilder(SubjectConfirmation.DEFAULT_ELEMENT_NAME);
+	        
+	        SubjectConfirmation subjConf = subjConfBuilder.buildObject();
+	        
+	        SubjectConfirmationDataBuilder subjConfDataBuilder = (SubjectConfirmationDataBuilder)
+	        Configuration.getBuilderFactory().getBuilder(SubjectConfirmationData.DEFAULT_ELEMENT_NAME);
+	        
+	        SubjectConfirmationData scData = subjConfDataBuilder.buildObject();
+	        
+	        subjConf.setSubjectConfirmationData(scData);
+	        
+	        subjConf.setMethod(AuthnContext.UNSPECIFIED_AUTHN_CTX);
+	        
+	        subj.getSubjectConfirmations().add(subjConf);
+        } else {
+        	_logger.debug("Skipping '"+SubjectConfirmation.DEFAULT_ELEMENT_NAME.getLocalPart()+"' in "+
+        			subj.DEFAULT_ELEMENT_NAME.getLocalPart());
+        }
         
         return subj;
     }

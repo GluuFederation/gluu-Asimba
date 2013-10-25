@@ -434,9 +434,25 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
                 }
             }
             
+            Boolean boolAvoidSubjectConfirmation = new Boolean(false);	// default: don't avoid
+            String sAvoidSC= configManager.getParam(config, "avoid_subjectconfirmation");
+            if (sAvoidSC != null)
+            {
+                if (sAvoidSC.equalsIgnoreCase("TRUE"))
+                	boolAvoidSubjectConfirmation = new Boolean(true);
+                else if (!sAvoidSC.equalsIgnoreCase("FALSE"))
+                {
+                    _oLogger.error("Invalid 'avoid_subjectconfirmation' item value found in configuration: " 
+                        + sAvoidSC);
+                    throw new OAException(SystemErrors.ERROR_INIT);
+                }
+            }
+            
+            
             saml2IDP = new SAML2IDP(sID, baSourceID, sFriendlyName, 
                 sMetadataFile, sMetadataURL, iMetadataURLTimeout, boolACSIndex, 
-                boolAllowCreate, boolScoping, boolNameIDPolicy, sNameIDFormat, dLastModified, _sMPMId);
+                boolAllowCreate, boolScoping, boolNameIDPolicy, sNameIDFormat, 
+                boolAvoidSubjectConfirmation, dLastModified, _sMPMId);
         }
         catch (OAException e)
         {

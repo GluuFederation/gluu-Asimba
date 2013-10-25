@@ -83,7 +83,14 @@ public class SAML2IDP extends AbstractIDP
     private Boolean _boolACSIndex;
     private Boolean _boolScoping;
     private Boolean _boolNameIDPolicy;
-    private Boolean _boolAllowCreate;    
+    private Boolean _boolAllowCreate;
+    /** 
+     * _boolAvoidSubjectConfirmations indicates whether avoid including SubjectConfirmation
+     * in an AuthnRequest to this IDP; used for compatibility with Microsoft ADFS
+     * Default should be false
+     */
+    protected Boolean _boolAvoidSubjectConfirmations;
+    
     private String _sNameIDFormat;
     
     /** The name of the MetadataProviderManager that manages this SAML2IDP */
@@ -130,6 +137,8 @@ public class SAML2IDP extends AbstractIDP
      * @param useNameIDPolicy TRUE if NameIDPolicy element must be send
      * @param forceNameIDFormat The NameIDFormat to be set in the NameIDPolicy 
      * or NULL if resolved from metadata
+     * @param avoidConfirmationData TRUE if ConfirmationData must not be included in
+     * an AuthnRequest to this IDP
      * @param dLastModified Timestamp when SAML2IDP was last modified, or null when unknown
      * @param sMPMId Id of the MetadataProviderManager that manages MetadataProvider for this IDP
      *   i.e. the name of the IDPStorage
@@ -139,6 +148,7 @@ public class SAML2IDP extends AbstractIDP
         String sMetadataFile, String sMetadataURL, 
         int iMetadataTimeout, Boolean useACSIndex, Boolean useAllowCreate, 
         Boolean useScoping, Boolean useNameIDPolicy, String forceNameIDFormat,
+        Boolean avoidSubjectConfirmations,
         Date dLastModified, String sMPMId) 
         		throws OAException
     {
@@ -196,6 +206,7 @@ public class SAML2IDP extends AbstractIDP
         _boolScoping = useScoping;
         _boolNameIDPolicy = useNameIDPolicy;
         _boolAllowCreate = useAllowCreate;
+        _boolAvoidSubjectConfirmations = avoidSubjectConfirmations;
         _sNameIDFormat = forceNameIDFormat;
         
         // Initialize the name of the MetadataProviderManager
@@ -383,8 +394,8 @@ public class SAML2IDP extends AbstractIDP
      * 
      * Values are:
      * <ul>
-     * <li>TRUE - NameIDPolicy element will be send <b>(default)</b></li>
-     * <li>FALSE - NameIDPolicy element will not be send </li>
+     * <li>TRUE - NameIDPolicy element will be sent <b>(default)</b></li>
+     * <li>FALSE - NameIDPolicy element will not be sent </li>
      * </ul>
      * @return TRUE if the NameIDPolicy element must be send.
      * @since 1.2
@@ -393,6 +404,18 @@ public class SAML2IDP extends AbstractIDP
     {
         return _boolNameIDPolicy;
     }
+    
+    
+    /**
+	 * Return indication whether to avoid including SubjectConfirmation
+     * in an AuthnRequest to this IDP; used for compatibility with Microsoft ADFS
+     * 
+     * @return TRUE to avoid this element
+     */
+    public Boolean avoidSubjectConfirmations() {
+    	return _boolAvoidSubjectConfirmations;
+    }
+    
     
     /**
      * Indicates what the value of Format in the NameIDPolicy of the AuthnRequest must be.

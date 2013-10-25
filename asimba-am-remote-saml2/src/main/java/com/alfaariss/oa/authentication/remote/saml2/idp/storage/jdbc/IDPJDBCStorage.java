@@ -74,6 +74,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
     private final static String COLUMN_NAMEIDPOLICY = "nameidpolicy";
     private final static String COLUMN_ALLOW_CREATE = "allow_create";
     private final static String COLUMN_NAMEIDFORMAT = "nameidformat";
+    private final static String COLUMN_AVOID_SUBJCONF = "avoid_subjconf";
     /** date last modified */
     public static final String COLUMN_DATELASTMODIFIED = "date_last_modified";
 
@@ -222,7 +223,6 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             while (resultSet.next())
             {
                 boolean bACSIndex = resultSet.getBoolean(COLUMN_ACS_INDEX);
-                Boolean boolACSIndex = new Boolean(bACSIndex);
                 
                 Boolean boolAllowCreate = null;
                 String sAllowCreate = resultSet.getString(COLUMN_ALLOW_CREATE);
@@ -233,10 +233,8 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                 }
                 
                 boolean bScoping = resultSet.getBoolean(COLUMN_SCOPING);
-                Boolean boolScoping = new Boolean(bScoping);
-                
                 boolean bNameIDPolicy = resultSet.getBoolean(COLUMN_NAMEIDPOLICY);
-                Boolean boolNameIDPolicy = new Boolean(bNameIDPolicy);
+                boolean bAvoidSubjectConfirmation = resultSet.getBoolean(COLUMN_AVOID_SUBJCONF);
                 
                 // Implement date_last_modified column as optional
             	Date dLastModified = null;
@@ -256,9 +254,10 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     resultSet.getString(COLUMN_METADATA_FILE),
                     resultSet.getString(COLUMN_METADATA_URL),
                     resultSet.getInt(COLUMN_METADATA_TIMEOUT),
-                    boolACSIndex, boolAllowCreate, 
-                    boolScoping, boolNameIDPolicy,
+                    bACSIndex, boolAllowCreate, 
+                    bScoping, bNameIDPolicy,
                     resultSet.getString(COLUMN_NAMEIDFORMAT),
+                    bAvoidSubjectConfirmation,
                     dLastModified,
                     oMPM.getId());
                 listIDPs.add(idp);
@@ -349,6 +348,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             sbSelectIDPs.append(COLUMN_SCOPING).append(",");
             sbSelectIDPs.append(COLUMN_NAMEIDPOLICY).append(",");
             sbSelectIDPs.append(COLUMN_NAMEIDFORMAT).append(",");
+            sbSelectIDPs.append(COLUMN_AVOID_SUBJCONF).append(",");
             sbSelectIDPs.append(COLUMN_DATELASTMODIFIED);
             sbSelectIDPs.append(" FROM ");
             sbSelectIDPs.append(_sTable);
@@ -447,7 +447,6 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             if (resultSet.next())
             {
                 boolean bACSIndex = resultSet.getBoolean(COLUMN_ACS_INDEX);
-                Boolean boolACSIndex = new Boolean(bACSIndex);
                 
                 Boolean boolAllowCreate = null;
                 String sAllowCreate = resultSet.getString(COLUMN_ALLOW_CREATE);
@@ -458,10 +457,8 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                 }
                 
                 boolean bScoping = resultSet.getBoolean(COLUMN_SCOPING);
-                Boolean boolScoping = new Boolean(bScoping);
-                
                 boolean bNameIDPolicy = resultSet.getBoolean(COLUMN_NAMEIDPOLICY);
-                Boolean boolNameIDPolicy = new Boolean(bNameIDPolicy);
+                boolean bAvoidSubjectConfirmation = resultSet.getBoolean(COLUMN_AVOID_SUBJCONF);
                 
                 Date dLastModified = null;
             	try {
@@ -477,9 +474,10 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     resultSet.getString(COLUMN_METADATA_FILE),
                     resultSet.getString(COLUMN_METADATA_URL),
                     resultSet.getInt(COLUMN_METADATA_TIMEOUT),
-                    boolACSIndex, boolAllowCreate, 
-                    boolScoping, boolNameIDPolicy,
+                    bACSIndex, boolAllowCreate, 
+                    bScoping, bNameIDPolicy,
                     resultSet.getString(COLUMN_NAMEIDFORMAT),
+                    bAvoidSubjectConfirmation,
                     dLastModified,
                     oMPM.getId());
             }
@@ -538,7 +536,6 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             if (resultSet.next())
             {
                 boolean bACSIndex = resultSet.getBoolean(COLUMN_ACS_INDEX);
-                Boolean boolACSIndex = new Boolean(bACSIndex);
                 
                 Boolean boolAllowCreate = null;
                 String sAllowCreate = resultSet.getString(COLUMN_ALLOW_CREATE);
@@ -549,10 +546,8 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                 }
                 
                 boolean bScoping = resultSet.getBoolean(COLUMN_SCOPING);
-                Boolean boolScoping = new Boolean(bScoping);
-                    
                 boolean bNameIDPolicy = resultSet.getBoolean(COLUMN_NAMEIDPOLICY);
-                Boolean boolNameIDPolicy = new Boolean(bNameIDPolicy);
+                boolean bAvoidSubjectConfirmation = resultSet.getBoolean(COLUMN_AVOID_SUBJCONF);
                 
                 Date dLastModified = null;
             	try {
@@ -567,9 +562,10 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     resultSet.getString(COLUMN_METADATA_FILE),
                     resultSet.getString(COLUMN_METADATA_URL),
                     resultSet.getInt(COLUMN_METADATA_TIMEOUT),
-                    boolACSIndex, boolAllowCreate, 
-                    boolScoping, boolNameIDPolicy,
+                    bACSIndex, boolAllowCreate, 
+                    bScoping, bNameIDPolicy,
                     resultSet.getString(COLUMN_NAMEIDFORMAT),
+                    bAvoidSubjectConfirmation,
                     dLastModified,
                     oMPM.getId());
             }

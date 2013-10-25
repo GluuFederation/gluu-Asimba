@@ -300,7 +300,7 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
                 }
                 
                 Subject subject = buildSubject(sRequestUID, sNameIDFormat, 
-                    sNameQualifier);
+                    sNameQualifier, organization.avoidSubjectConfirmations());
                 if (subject != null)
                     request.setSubject(subject);
             }
