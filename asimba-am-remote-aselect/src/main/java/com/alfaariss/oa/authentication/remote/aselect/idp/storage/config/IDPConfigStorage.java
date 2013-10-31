@@ -28,6 +28,7 @@ import java.net.URL;
 import java.net.URLConnection;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -46,8 +47,8 @@ import com.alfaariss.oa.engine.idp.storage.configuration.AbstractConfigurationSt
  */
 public class IDPConfigStorage extends AbstractConfigurationStorage
 {
-    /** System logger */
-    private static Log _logger;
+    /** Local logger instance */
+    private static Log _logger = LogFactory.getLog(IDPConfigStorage.class);
 
     private final static String DEFAULT_ID = "aselect";
     
