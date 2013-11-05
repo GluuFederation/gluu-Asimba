@@ -277,7 +277,7 @@ public class CryptoManager implements IComponent
         else
             _logger.debug("Signing disabled");
         
-        _logger.info("Established Signature instance of provider " + signature.getProvider().getName());
+        _logger.debug("Established Signature instance of provider " + signature.getProvider().getName());
         return signature;
         
     }

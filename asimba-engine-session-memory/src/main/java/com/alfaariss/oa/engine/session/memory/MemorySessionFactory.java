@@ -147,10 +147,12 @@ public class MemorySessionFactory extends AbstractStorageFactory
             //Update expiration time
             session.setExpTime(System.currentTimeMillis() + _lExpiration);
             _htSession.put(id, session);
+            
+            _logger.info("New session(s) added: " + id + " for requestor '"+session.getRequestorId() + "'");
         }
         else if(session.isExpired()) //Expired
         {
-            _logger.debug("Session Expired: " + id);  
+            _logger.info("Session Expired: " + id);  
             
             _eventLogger.info(new UserEventLogItem(session, null, 
                 UserEvent.SESSION_EXPIRED, this, null));
@@ -162,6 +164,7 @@ public class MemorySessionFactory extends AbstractStorageFactory
             //Update expiration time
             session.setExpTime(System.currentTimeMillis() + _lExpiration);
             //Storing can be omitted when using a Hashtable
+            _logger.info("Existing session(s) updated: " + id + " for requestor '"+session.getRequestorId() + "'");
         }
     }
 
@@ -192,7 +195,7 @@ public class MemorySessionFactory extends AbstractStorageFactory
             if(session.getExpTime() <= lNow)
             {
                 String id = session.getId();             
-                _logger.debug("Session Expired: " + id);
+                _logger.info("Session Expired: " + id);
                 
                 _eventLogger.info(new UserEventLogItem(session, null, 
                     UserEvent.SESSION_EXPIRED, this, "clean"));

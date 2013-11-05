@@ -717,7 +717,7 @@ public class SynchronousSingleLogout
         if (eDOM != null)
         {
             String sXML = XMLHelper.prettyPrintXML(eDOM);
-            _logger.debug(sXML);
+            _logger.info(sXML);
         }
     }
 }

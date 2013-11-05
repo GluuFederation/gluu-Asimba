@@ -439,7 +439,7 @@ public class JDBCSessionFactory extends AbstractStorageFactory
                     psInsert.setBytes(14, Serialize.encode(session.getAuthNProfiles()));
                     
                     int i = psInsert.executeUpdate();
-                    _logger.debug(i + " new session(s) added: " + id);
+                    _logger.info(i + " new session(s) added: " + id + " for requestor '"+session.getRequestorId() + "'");
                 }
                 catch (SQLException e)
                 {                    
@@ -452,7 +452,7 @@ public class JDBCSessionFactory extends AbstractStorageFactory
             {
                 try
                 {
-                    _logger.debug("Session Expired: " + id);
+                    _logger.info("Session Expired: " + id);
                     
                     _eventLogger.info(new UserEventLogItem(session, null, 
                         UserEvent.SESSION_EXPIRED, this, null));
@@ -492,7 +492,7 @@ public class JDBCSessionFactory extends AbstractStorageFactory
                     psUpdate.setString(14, id);
                    
                     int i = psUpdate.executeUpdate();
-                    _logger.debug(i + " session(s) updated: " + id);
+                    _logger.info(i + " session(s) updated: " + id + " for requestor '"+session.getRequestorId() + "'");
                 }
                 catch (SQLException e)
                 {                    
@@ -621,7 +621,7 @@ public class JDBCSessionFactory extends AbstractStorageFactory
                 }
                 else if(session.isExpired()) //Expired
                 {                   
-                    _logger.debug("Session Expired: " + id);   
+                    _logger.info("Session Expired: " + id);   
                     
                     _eventLogger.info(new UserEventLogItem(session, null, 
                         UserEvent.SESSION_EXPIRED, this, null));
@@ -660,7 +660,7 @@ public class JDBCSessionFactory extends AbstractStorageFactory
                     for(int i : iResult)
                         iTotalAdded += i;
                     
-                    _logger.debug(iTotalAdded + " new session(s) added by batch");
+                    _logger.info(iTotalAdded + " new session(s) added by batch");
                 }
             }
             catch (SQLException e)
@@ -677,7 +677,7 @@ public class JDBCSessionFactory extends AbstractStorageFactory
                     for(int i : iResult)
                         iTotalDeleted += i;
                     
-                    _logger.debug(iTotalDeleted + " session(s) deleted by batch");
+                    _logger.info(iTotalDeleted + " session(s) deleted by batch");
                 }
                 
             }
@@ -695,7 +695,7 @@ public class JDBCSessionFactory extends AbstractStorageFactory
                     for(int i : iResult)
                         iTotalUpdated += i;
 
-                    _logger.debug(iTotalUpdated + " session(s) updated by batch");
+                    _logger.info(iTotalUpdated + " session(s) updated by batch");
                 }
             }
             catch (SQLException e)
@@ -798,7 +798,7 @@ public class JDBCSessionFactory extends AbstractStorageFactory
             ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));           
             int i = ps.executeUpdate();
             if(i > 0)
-                _logger.debug(i + " session(s) expired");
+                _logger.info(i + " session(s) expired");
         }
         catch (SQLException e)
         {

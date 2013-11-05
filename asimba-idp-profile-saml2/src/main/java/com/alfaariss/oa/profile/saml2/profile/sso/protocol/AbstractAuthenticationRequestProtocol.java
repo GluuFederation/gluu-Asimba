@@ -138,20 +138,20 @@ public abstract class AbstractAuthenticationRequestProtocol
             SAMLVersion samlVersion = request.getVersion();
             if (!samlVersion.equals(SAMLVersion.VERSION_20))
             {
-                _logger.warn("Unsupported SAML version in request: " + samlVersion);
+                _logger.error("Unsupported SAML version in request: " + samlVersion);
                 throw new StatusException(RequestorEvent.REQUEST_INVALID, StatusCode.VERSION_MISMATCH_URI);
             }
             
             DateTime dateTime = request.getIssueInstant();
             if (dateTime == null)
             {
-                _logger.warn("No IssueInstant in request");
+                _logger.error("No IssueInstant in request");
                 throw new StatusException(RequestorEvent.REQUEST_INVALID, StatusCode.REQUESTER_URI);
             }
             
             if(!_issueInstantWindow.canAccept(dateTime))
             {
-                _logger.warn("Invalid IssueInstant in request: " + dateTime);
+                _logger.error("Invalid IssueInstant in request: " + dateTime);
                 throw new StatusException(RequestorEvent.REQUEST_INVALID, StatusCode.REQUESTER_URI);
             }
             
@@ -165,7 +165,7 @@ public abstract class AbstractAuthenticationRequestProtocol
     	                    _logger.warn("Invalid Destination in request for shadowed endpoint: " + sDestination);
             			}
             		} else {
-	                    _logger.warn("Invalid Destination in request: " + sDestination);
+	                    _logger.error("Invalid Destination in request: " + sDestination);
 	                    throw new StatusException(RequestorEvent.REQUEST_INVALID, StatusCode.REQUESTER_URI);
             		}
                 }
@@ -175,13 +175,13 @@ public abstract class AbstractAuthenticationRequestProtocol
             if (consent != null)
             {
                 //DD Consent will be ignored
-                _logger.debug("Consent in request: " + consent);
+                _logger.debug("Ignoring consent in request: " + consent);
             }
             
             Issuer issuer = request.getIssuer();
             if (issuer == null)
             {
-                _logger.debug("No Issuer in request");
+                _logger.error("No Issuer in request");
                 throw new StatusException(RequestorEvent.REQUEST_INVALID, 
                     StatusCode.REQUESTER_URI);
             }
@@ -189,7 +189,7 @@ public abstract class AbstractAuthenticationRequestProtocol
             String issuerFormat = issuer.getFormat();
             if (issuerFormat != null && !issuerFormat.equals(Issuer.ENTITY))
             {
-                _logger.debug("Invalid Issuer format in request: " + issuerFormat);
+                _logger.error("Invalid Issuer format in request: " + issuerFormat);
                 throw new StatusException(RequestorEvent.REQUEST_INVALID, 
                     StatusCode.REQUESTER_URI);
             }

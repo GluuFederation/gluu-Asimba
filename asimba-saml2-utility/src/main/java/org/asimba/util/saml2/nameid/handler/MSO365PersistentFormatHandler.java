@@ -31,10 +31,8 @@ import org.w3c.dom.Element;
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
-import com.alfaariss.oa.api.requestor.IRequestor;
 import com.alfaariss.oa.api.session.ISession;
 import com.alfaariss.oa.api.user.IUser;
-import com.alfaariss.oa.engine.core.Engine;
 import com.alfaariss.oa.util.saml2.NameIDFormatter;
 
 /**

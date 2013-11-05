@@ -26,9 +26,6 @@ import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.metadata.EntitiesDescriptor;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.impl.EntitiesDescriptorBuilder;
-import org.opensaml.saml2.metadata.impl.SPSSODescriptorBuilder;
-import org.opensaml.xml.XMLObject;
-import org.w3c.dom.Element;
 
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.engine.core.server.Server;

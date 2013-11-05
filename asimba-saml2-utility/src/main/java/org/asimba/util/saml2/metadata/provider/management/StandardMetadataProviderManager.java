@@ -340,7 +340,7 @@ public class StandardMetadataProviderManager implements
 			XMLObject x = (XMLObject) oProvider.getMetadata();
 
 			if (! (x instanceof EntitiesDescriptor)) {
-				_oLogger.trace("No EntitiesDescriptor was returned, so no IDPList to create.");
+				_oLogger.debug("No EntitiesDescriptor was returned, so no IDPList to create.");
 				return oIDPs;
 			}
 

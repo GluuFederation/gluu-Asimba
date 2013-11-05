@@ -148,7 +148,7 @@ public class GoogleAppsUnspecifiedFormatHandler extends DefaultUnspecifiedFormat
 				(_sRequestorPropertyValue != null) && sPropertyValue.equalsIgnoreCase(_sRequestorPropertyValue))
 		{
 			sResult = getUserAttributeValue(oUser, sUserAttributeName, _bGAppsRemoveAfterUse);
-			_oLogger.info("GoogleApps Requestor '"+sEntityID+"'; NameID established as "+sResult);
+			_oLogger.debug("GoogleApps Requestor '"+sEntityID+"'; NameID established as "+sResult);
 		}
 		else {
 			// Attribute did not get used, but see if we still need to remove it:
@@ -157,7 +157,7 @@ public class GoogleAppsUnspecifiedFormatHandler extends DefaultUnspecifiedFormat
 			}
 			
 			sResult = super.format(oUser, sEntityID, sTGTID, oSession);
-			_oLogger.info("Non GoogleApps Requestor '"+sEntityID+"'; NameID established as "+sResult);
+			_oLogger.debug("Non GoogleApps Requestor '"+sEntityID+"'; NameID established as "+sResult);
 		}
 		
 		return sResult;
