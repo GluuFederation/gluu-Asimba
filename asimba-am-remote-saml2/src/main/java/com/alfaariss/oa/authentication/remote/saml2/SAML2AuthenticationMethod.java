@@ -199,6 +199,13 @@ public class SAML2AuthenticationMethod extends BaseSAML2AuthenticationMethod
             
             if (organization != null) {
             	_logger.info("Established organization from URLPathContext: "+organization.getID());
+            	
+            	// Add to Session context if it is not there yet
+            	if (! oAttributes.contains(SAML2AuthenticationMethod.class, 
+    	                _sMethodId + "." + SELECTED_ORGANIZATION)) {
+            		oAttributes.put(SAML2AuthenticationMethod.class, 
+    	                    _sMethodId, SELECTED_ORGANIZATION, organization);
+            	}
             } 
             else 
             {            
