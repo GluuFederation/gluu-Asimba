@@ -117,6 +117,10 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <java.servlet.jstl.version>1.2</java.servlet.jstl.version>
+    <taglibs.standard.version>1.1.2</taglibs.standard.version>
+    <taglibs.c.version>1.1.2</taglibs.c.version>
+    <taglibs.fn.version>1.1.1</taglibs.fn.version>
   </properties>
 
   <build>

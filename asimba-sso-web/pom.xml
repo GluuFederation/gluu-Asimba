@@ -39,5 +39,33 @@
     	<artifactId>servlet-api</artifactId>
     	<scope>provided</scope>
     </dependency>
+    
+    <!-- and for using JSP/JSTL features -->
+    <dependency>
+    	<groupId>javax.servlet</groupId>
+    	<artifactId>jstl</artifactId>
+    	<version>${java.servlet.jstl.version}</version>
+    </dependency>
+    <dependency>
+    	<groupId>taglibs</groupId>
+    	<artifactId>standard</artifactId>
+    	<version>${taglibs.standard.version}</version>
+    </dependency>
+    <dependency>
+    	<groupId>taglibs</groupId>
+    	<artifactId>c</artifactId>
+    	<version>${taglibs.c.version}</version>
+     	<type>tld</type>
+     	<scope>runtime</scope>    	
+    </dependency>
+    <dependency>
+    	<groupId>taglibs</groupId>
+    	<artifactId>fn</artifactId>
+    	<version>${taglibs.fn.version}</version>
+     	<type>tld</type>
+     	<scope>runtime</scope>
+    </dependency>
+    
   </dependencies>
+  <description>Implements SSO-session behavior in a Web/servlet context. This includes managing the control of authentication methods, as well as pre- and post authorization methods for establishing the security context that can be persisted in an SSO-session.</description>
 </project>
