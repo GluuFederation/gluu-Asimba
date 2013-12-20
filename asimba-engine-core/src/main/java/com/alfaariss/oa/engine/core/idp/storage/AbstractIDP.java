@@ -102,6 +102,16 @@ abstract public class AbstractIDP implements IIDP
 
     
     /**
+     * Establish whether SSO should be disabled when authentication was performed using
+     * this IDP. By default, it is always enabled.
+     * @return true when SSO should not be applied.
+     */
+    public boolean disableSSO() {
+    	return false;
+    }
+    
+    
+    /**
      * @see java.lang.Object#toString()
      */
     public String toString()

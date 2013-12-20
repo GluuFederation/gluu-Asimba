@@ -91,6 +91,14 @@ public class SAML2IDP extends AbstractIDP
      */
     protected Boolean _boolAvoidSubjectConfirmations;
     
+    /**
+     * _boolDisableSSOForIDP indicates whether SSO should be disabled when authentication
+     * is performed by this IDP.
+     * Default should be false 
+     */
+    protected Boolean _boolDisableSSOForIDP = false;
+    
+    
     private String _sNameIDFormat;
     
     /** The name of the MetadataProviderManager that manages this SAML2IDP */
@@ -139,6 +147,7 @@ public class SAML2IDP extends AbstractIDP
      * or NULL if resolved from metadata
      * @param avoidConfirmationData TRUE if ConfirmationData must not be included in
      * an AuthnRequest to this IDP
+     * @param disableSSOForIDP Configure whether the SSO should be disabled for this IDP
      * @param dLastModified Timestamp when SAML2IDP was last modified, or null when unknown
      * @param sMPMId Id of the MetadataProviderManager that manages MetadataProvider for this IDP
      *   i.e. the name of the IDPStorage
@@ -148,7 +157,7 @@ public class SAML2IDP extends AbstractIDP
         String sMetadataFile, String sMetadataURL, 
         int iMetadataTimeout, Boolean useACSIndex, Boolean useAllowCreate, 
         Boolean useScoping, Boolean useNameIDPolicy, String forceNameIDFormat,
-        Boolean avoidSubjectConfirmations,
+        Boolean avoidSubjectConfirmations, Boolean disableSSOForIDP,
         Date dLastModified, String sMPMId) 
         		throws OAException
     {
@@ -207,6 +216,7 @@ public class SAML2IDP extends AbstractIDP
         _boolNameIDPolicy = useNameIDPolicy;
         _boolAllowCreate = useAllowCreate;
         _boolAvoidSubjectConfirmations = avoidSubjectConfirmations;
+        _boolDisableSSOForIDP = disableSSOForIDP;
         _sNameIDFormat = forceNameIDFormat;
         
         // Initialize the name of the MetadataProviderManager
@@ -414,6 +424,20 @@ public class SAML2IDP extends AbstractIDP
      */
     public Boolean avoidSubjectConfirmations() {
     	return _boolAvoidSubjectConfirmations;
+    }
+    
+    
+    /**
+     * Set DisableSSOForIDP for this instance
+     * @param bDisableSSOForIDP
+     */
+    public void setDisableSSOForIDP(boolean bDisableSSOForIDP) {
+    	_boolDisableSSOForIDP = bDisableSSOForIDP;
+    }
+    
+    @Override
+    public boolean disableSSO() {
+    	return _boolDisableSSOForIDP;
     }
     
     

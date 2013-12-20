@@ -50,8 +50,13 @@ import com.alfaariss.oa.util.saml2.idp.SAML2IDP;
  * 
  * Global configuration like:
  * <confederation id="[the-id]" class="...SAMLConfederation" enabled="[true/false]">
- *   <
+ *   <disable_sso>false</disable_sso>
  * </confederation>
+ *  
+ * disable_sso: (optional) configure whether SSO should be disabled when a user
+ *    authenticates with a IDP from the remote federation. Could be used
+ *    whenever the authentication context of an AuthnRequest has to be
+ *    enforced at the remote federation instead of in our SSO server 
  *  
  * @author mdobrinic
  *
@@ -60,6 +65,7 @@ public class SAML2Confederation implements IConfederation, IComponent {
 	/** Configuration elements */
 	public static final String EL_IDP_CATALOG = "idp_catalog";
 	public static final String EL_SP_CATALOG = "sp_catalog";
+	public static final String EL_DISABLE_SSO = "disable_sso";
 	
 	/** Local logger instance */
 	private static Log _oLogger = LogFactory.getLog(SAML2Confederation.class);
@@ -69,6 +75,14 @@ public class SAML2Confederation implements IConfederation, IComponent {
     
     /** Configurable ID of the confederation */
     protected String _sID;
+    
+    /** 
+     * Configurable option to disable SSO when authentication from an IDP from
+     * this federation is performed
+     * Default: false
+     */
+    protected boolean _bDisableSSOForIDPs;
+    
     
     /**
      * MetadataProviderManager for this SAML2Catalog instance
@@ -183,6 +197,18 @@ public class SAML2Confederation implements IConfederation, IComponent {
 		
 		// Return a list of SAML2IDP's, as we're a SAML2Confederation
 		List<IIDP> oIDPList = _oMetadataProviderManager.getIDPs(sParamSourceRef);
+		
+		// Override the SAML2 IDP configuration with confederation defaults
+		for(IIDP oIDP: oIDPList) {
+			if (!(oIDP instanceof SAML2IDP)) {
+				_oLogger.warn("Non-SAML2IDP in SAML2Confederation: "+oIDP.getID());
+				continue;
+			}
+			SAML2IDP oSAML2IDP = (SAML2IDP) oIDP;
+			
+			// Disable SSO for this IDP from confederation configuration
+			oSAML2IDP.setDisableSSOForIDP(_bDisableSSOForIDPs);
+		}
 		
 		return oIDPList; 
 	}
@@ -312,6 +338,23 @@ public class SAML2Confederation implements IConfederation, IComponent {
 			_oLogger.error("Confederation '"+_sID+"' has no configured SP- or IDP-catalog");
 			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
 		}
+		
+		String sDisableSSO = oConfigManager.getParam(eConfig, EL_DISABLE_SSO);
+		if (sDisableSSO != null) {
+			if ("true".equalsIgnoreCase(sDisableSSO)) {
+				_bDisableSSOForIDPs = true;
+			} else if (! "false".equalsIgnoreCase(sDisableSSO)) {
+				_oLogger.error("Invalid value configured for "+EL_DISABLE_SSO+": '"+sDisableSSO+"'");
+				throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+			}
+			
+		} else {
+			_bDisableSSOForIDPs = false;
+		}
+		
+		_oLogger.info("SSO for IDPs from remote federation is "+
+				(_bDisableSSOForIDPs?"disabled":"enabled")+" by default ");
+		
 		
 		_oLogger.info("Started SAMLconfederation from asimba.xml");
 	}

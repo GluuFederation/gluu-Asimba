@@ -464,12 +464,13 @@ public class StandardMetadataProviderManager implements
 			boolean bUseNameIDPolicy = false;	// default: do not force NameID policy in requests
 			String sForceNameIDFormat = null;	// default: no specific NameIDFormat is requested
 			boolean bAvoidSubjectConfirmation = false;	// default: don't change default SubjectConfirmation behavior
+			boolean bDisableSSOForIDP = false;	// default: do not disable SSO for this IDP
 
 			// No MetadataProviderManager needed, as the SAML2IDP MetadataProvider is already managed
 			oSAML2IDP = new SAML2IDP(oED.getEntityID(), null,
 					sFriendlyname, sMetadataFile, sMetadataURL, iMetadataTimeout,
 					useACSIndex, bAllowCreate, bUseScoping, bUseNameIDPolicy, sForceNameIDFormat, 
-					bAvoidSubjectConfirmation, new Date(), null);
+					bAvoidSubjectConfirmation, bDisableSSOForIDP, new Date(), null);
 
 			// Instead, set the SAML2IDP's metadata to live XML-document's format
 			oSAML2IDP.setMetadataXMLObject(oED);
