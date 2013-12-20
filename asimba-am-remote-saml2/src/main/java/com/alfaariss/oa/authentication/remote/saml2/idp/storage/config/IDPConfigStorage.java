@@ -440,19 +440,30 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
             {
                 if (sAvoidSC.equalsIgnoreCase("TRUE"))
                 	boolAvoidSubjectConfirmation = new Boolean(true);
-                else if (!sAvoidSC.equalsIgnoreCase("FALSE"))
-                {
+                else if (!sAvoidSC.equalsIgnoreCase("FALSE")) {
                     _oLogger.error("Invalid 'avoid_subjectconfirmation' item value found in configuration: " 
                         + sAvoidSC);
                     throw new OAException(SystemErrors.ERROR_INIT);
                 }
             }
             
+            Boolean boolDisableSSOForIDP = new Boolean(false);	// default: don't disable
+            String sDisableSSO = configManager.getParam(config, "disable_sso");
+            if (sDisableSSO != null)
+            {
+                if (sDisableSSO.equalsIgnoreCase("TRUE"))
+                	boolDisableSSOForIDP = new Boolean(true);
+                else if (!sDisableSSO.equalsIgnoreCase("FALSE")) {
+                    _oLogger.error("Invalid 'disable_sso' item value found in configuration: " 
+                        + sDisableSSO);
+                    throw new OAException(SystemErrors.ERROR_INIT);
+                }
+            }
             
             saml2IDP = new SAML2IDP(sID, baSourceID, sFriendlyName, 
                 sMetadataFile, sMetadataURL, iMetadataURLTimeout, boolACSIndex, 
                 boolAllowCreate, boolScoping, boolNameIDPolicy, sNameIDFormat, 
-                boolAvoidSubjectConfirmation, dLastModified, _sMPMId);
+                boolAvoidSubjectConfirmation, boolDisableSSOForIDP, dLastModified, _sMPMId);
         }
         catch (OAException e)
         {
