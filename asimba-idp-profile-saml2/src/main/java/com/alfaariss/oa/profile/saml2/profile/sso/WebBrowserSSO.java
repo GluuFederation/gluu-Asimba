@@ -37,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.asimba.utility.web.URLPathContext;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SignableSAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
@@ -521,11 +522,13 @@ public class WebBrowserSSO extends AbstractSAML2Profile
                     SESSION_REQUEST_RELAYSTATE, relayState);
             }
             
-            String sURLPathContext = getURLPathContext(request);
-            if (sURLPathContext != null)
-            	session.getAttributes().put(ProxyAttributes.class, ProxyAttributes.PROXY_URLPATH_CONTEXT, sURLPathContext);
+            URLPathContext oURLPathContext = getURLPathContext(request);
+            if (oURLPathContext != null)
+            	session.getAttributes().put(
+            			com.alfaariss.oa.util.session.ProxyAttributes.class, 
+            			com.alfaariss.oa.util.session.ProxyAttributes.PROXY_URLPATH_CONTEXT, oURLPathContext);
             
-            _logger.debug("Put on map? "+ProxyAttributes.PROXY_URLPATH_CONTEXT+"="+sURLPathContext);
+            _logger.debug("Put on map? "+com.alfaariss.oa.util.session.ProxyAttributes.PROXY_URLPATH_CONTEXT+"="+oURLPathContext);
             //TODO (MHO) (Optional) Extensions support?
             
             protocol = new AuthenticationRequestProtocol(session, 
@@ -1266,14 +1269,14 @@ public class WebBrowserSSO extends AbstractSAML2Profile
     }
     
     /**
-     * Establish the last part of the URL Path part<br/>
+     * Establish an URLPathContext from the last part of the URL<br/>
      * i.e.<br/>
      * http://server/asimba/something-something/context=abcd;123<br/>
-     * would return: "context=abcd;123"
+     * would return an URLPathContext with key:context=abcd and key:123 with null-value
      * @param oRequest HttpServletRequest to investigate
-     * @return The context part, or null of there was no context part (i.e. when "https://server" was the URL)
+     * @return An initialized URLPathContext instance, or null when no path was present in the request 
      */
-    protected String getURLPathContext(HttpServletRequest oRequest) {
+    protected URLPathContext getURLPathContext(HttpServletRequest oRequest) {
     	String sPath = oRequest.getRequestURI();
     	
     	int last = sPath.lastIndexOf("/"); 
@@ -1281,6 +1284,6 @@ public class WebBrowserSSO extends AbstractSAML2Profile
     		return null;
     	}
     	
-    	return sPath.substring(last+1);
+    	return URLPathContext.fromValue(sPath.substring(last+1));
     }
 }

@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.logging.LogFactory;
+import org.asimba.utility.web.URLPathContext;
 import org.opensaml.saml2.core.IDPEntry;
 import org.opensaml.saml2.core.IDPList;
 import org.opensaml.util.resource.ResourceException;
@@ -193,8 +194,12 @@ public class SAML2AuthenticationMethod extends BaseSAML2AuthenticationMethod
             List<Warnings> warnings = null;
             
             // Figure out whether there exists a pre-selected organization in the URLPath context
-            if (oAttributes.contains(ProxyAttributes.class, ProxyAttributes.PROXY_URLPATH_CONTEXT)) {
-            	organization = processURLPathContext(oAttributes);
+            URLPathContext oURLPathContext = (URLPathContext )oAttributes.get(
+            		com.alfaariss.oa.util.session.ProxyAttributes.class, 
+            		com.alfaariss.oa.util.session.ProxyAttributes.PROXY_URLPATH_CONTEXT);
+            		
+            if (oURLPathContext != null) {
+            	organization = processURLPathContext(oAttributes, oURLPathContext);
             }
             
             if (organization != null) {
@@ -572,14 +577,18 @@ public class SAML2AuthenticationMethod extends BaseSAML2AuthenticationMethod
      * written in the session, and null is returned. 
      * 
      * @param oAttributes Session Attributes
+     * @param oURLPathContext non-null initialized URLPathContext instance to process
      * @return SAML2IDP organization as established, or null when no match could be made
      */
-    protected SAML2IDP processURLPathContext(ISessionAttributes oAttributes) 
+    protected SAML2IDP processURLPathContext(ISessionAttributes oAttributes, URLPathContext oURLPathContext) 
     	throws OAException
     {
     	// Did we try to find a match before?
-		if (oAttributes.contains(ProxyAttributes.class, ProxyAttributes.PROXY_SHADOWED_ENTITYID)) {
-			String sShadowedEntityId = (String) oAttributes.get(ProxyAttributes.class, ProxyAttributes.PROXY_SHADOWED_ENTITYID);
+		if (oAttributes.contains(com.alfaariss.oa.util.session.ProxyAttributes.class, 
+				com.alfaariss.oa.util.session.ProxyAttributes.PROXY_SHADOWED_IDPID)) {
+			String sShadowedEntityId = (String) oAttributes.get(
+					com.alfaariss.oa.util.session.ProxyAttributes.class, 
+					com.alfaariss.oa.util.session.ProxyAttributes.PROXY_SHADOWED_IDPID);
 			
 			// Re-use this intelligence, and return the SAML2IDP instance
 			IIDP oIDP = _organizationStorage.getIDP(sShadowedEntityId); 
@@ -592,33 +601,22 @@ public class SAML2AuthenticationMethod extends BaseSAML2AuthenticationMethod
 			}
 		}
     	
-    	String sURLPathContext = (String) oAttributes.get(ProxyAttributes.class, ProxyAttributes.PROXY_URLPATH_CONTEXT);
-    	// URLPathContext can be list of 'k1=v1;k2=v2;...' pairs; split on pairs first
-    	String[] pairs = sURLPathContext.split(";");
-    	
-    	// Find the k=v pair for which k="i":
-    	String v = null;
-    	for(String pair: pairs) {
-    		String[] p = pair.split("=");
-    		if (p.length>1 && "i".equals(p[0])) {
-    			v = p[1];
-    			break;
-    		}
-    	}
-    	
-    	if (v == null) {
-    		_logger.info("No 'i' value found in URLPath Context path ('"+sURLPathContext+"')");
+		String sIValue = oURLPathContext.getParams().get("i");
+    	if (sIValue == null) {
+    		_logger.info("No 'i' value found in URLPath Context path ('"+oURLPathContext+"')");
     		return null;
     	}
     	
     	List<IIDP> lAllIDPs = _organizationStorage.getAll();
     	for(IIDP oIDP: lAllIDPs) {
     		String sIDPEntityIdHash = DigestUtils.shaHex(oIDP.getID());
-    		if (sIDPEntityIdHash.equalsIgnoreCase(v)) {
+    		if (sIDPEntityIdHash.equalsIgnoreCase(sIValue)) {
     			_logger.info("Found IDP '"+oIDP.getID()+"' in matching URLPath Context");
     			if (oIDP instanceof SAML2IDP) {
     				// Store the IDP that was found on the map
-    				oAttributes.put(ProxyAttributes.class, ProxyAttributes.PROXY_SHADOWED_ENTITYID, oIDP.getID());
+    				oAttributes.put(
+    						com.alfaariss.oa.util.session.ProxyAttributes.class, 
+    						com.alfaariss.oa.util.session.ProxyAttributes.PROXY_SHADOWED_IDPID, oIDP.getID());
     				
     				// Return result
     				return (SAML2IDP) oIDP;
