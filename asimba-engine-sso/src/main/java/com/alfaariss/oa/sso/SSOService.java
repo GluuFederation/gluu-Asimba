@@ -22,12 +22,15 @@
  */
 package com.alfaariss.oa.sso;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.asimba.utility.web.URLPathContext;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -36,6 +39,8 @@ import com.alfaariss.oa.UserEvent;
 import com.alfaariss.oa.UserException;
 import com.alfaariss.oa.api.IComponent;
 import com.alfaariss.oa.api.attribute.IAttributes;
+import com.alfaariss.oa.api.attribute.ISessionAttributes;
+import com.alfaariss.oa.api.attribute.ITGTAttributes;
 import com.alfaariss.oa.api.authentication.IAuthenticationMethod;
 import com.alfaariss.oa.api.authentication.IAuthenticationProfile;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
@@ -57,6 +62,7 @@ import com.alfaariss.oa.engine.core.requestor.RequestorPool;
 import com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory;
 import com.alfaariss.oa.engine.core.session.factory.ISessionFactory;
 import com.alfaariss.oa.engine.core.tgt.factory.ITGTFactory;
+import com.alfaariss.oa.util.session.ProxyAttributes;
 
 /**
  * Authentication and SSO Service.
@@ -70,7 +76,12 @@ import com.alfaariss.oa.engine.core.tgt.factory.ITGTFactory;
  */
 public class SSOService implements IComponent
 {    
-
+	/** 
+	 * TGT Attribute name containing the Map<String, String> with the alias->idp.id mapping 
+	 * of remote IDPs that were used to authenticate the user in this SSO session 
+	 */
+	public static final String TGT_ATTR_SHADOWED_IDPS = "shadowed_idps";
+	
     private boolean _bSingleSignOn;          
     private Log _systemLogger;
     private IConfigurationManager _configurationManager;
@@ -419,8 +430,17 @@ public class SSOService implements IComponent
                 for(IAuthenticationMethod method : newMethods)
                 {
                    //DD Do not add duplicate authN methods in TGT profile
-                   if(!tgtProfile.containsMethod(method)) 
-                       tgtProfile.addAuthenticationMethod(method); 
+                   if(!tgtProfile.containsMethod(method))
+                   {
+                	   // See whether there exists a method-specific disable sso override
+                	   if (! disableSSOForMethod(oSession, method.getID())) {
+                		   _systemLogger.debug("Adding "+method.getID()+" to TGT SSO methods");
+                		   tgtProfile.addAuthenticationMethod(method);
+                	   } else {
+                		   _systemLogger.debug("Disabling SSO for method "+method.getID());
+                	   }
+                   }
+                        
                 }
                 oTgt.setAuthenticationProfile(tgtProfile);  
                 
@@ -434,6 +454,9 @@ public class SSOService implements IComponent
                 
                 //update TGT with requestor id
                 addRequestorID(oTgt, oSession.getRequestorId());
+                
+                //Keep track of a Shadowed IDP.id => real IDP.id mapping from the Session context
+                processShadowIDP(oTgt, oSession);
                 
                 //Persist TGT
                 oTgt.persist();
@@ -509,7 +532,7 @@ public class SSOService implements IComponent
                         {
                             //Remove TGT itself
                             removeTGT(oTgt);
-                            _systemLogger.debug("User in TGT and forced user do not correspond");
+                            _systemLogger.warn("User in TGT and forced user do not correspond");
                             
                             throw new UserException(UserEvent.TGT_USER_INVALID);
                         } 
@@ -544,8 +567,26 @@ public class SSOService implements IComponent
                         }  
                         
                         if (bTGTSufficient)
+                        {
+                        	// Is the request for a shadowed IDP, then see if this IDP was
+                        	// used before to authenticate the user. If not, do not resume session, but
+                        	// if so, set the shadowed IDP.id in the session
+                        	if (! matchShadowIDP(oTgt, oSession)) {
+
+                        		//Remove TGT itself
+                                _systemLogger.warn("IDP in TGT and IDP-alias do not correspond; do not resume SSO session.");
+                                
+                                bTGTSufficient = false;
+                        	}
+                        	
+                        }
+                        
+                        if (bTGTSufficient)
                         {//update TGT with requestor id
                             addRequestorID(oTgt, oSession.getRequestorId());
+                            
+                            // handle ShadowIDP feature
+                            
                             oTgt.persist();
                         }
                     }
@@ -719,6 +760,119 @@ public class SSOService implements IComponent
         
         //add to end of list
         tgt.addRequestorID(requestorID);
+    }
+    
+    
+    /**
+     * Find out whether SSO should be disabled for this performed method. Decision
+     * is based on a Session attribute 
+     * @param oSession
+     * @param sMethodId
+     * @return
+     */
+    protected boolean disableSSOForMethod(ISession oSession, String sMethodId) {
+    	ISessionAttributes oAttributes = oSession.getAttributes();
+    	String sSessionKey = sMethodId + "." + "disable_sso";
+    	if (oAttributes.contains(SSOService.class, sSessionKey)) {
+    		String sSessionValue = (String) oAttributes.get(SSOService.class, sSessionKey);
+    		if ("true".equalsIgnoreCase(sSessionValue)) {
+    			return true;
+    		}
+    	}
+    	
+    	return false;
+    }
+    
+    
+    /**
+     * Ensure that when a Shadowed IDP was used in Remote Authentication, that the alias->IDP.id
+     * is kept in a TGT attribute, so to be able to make the same mapping later again when an SSO-session
+     * is resumed.
+     *   
+     * @param oTGT TGT to add the alias->IDP.id mapping to
+     * @param oSession Session where the IDP.id can be taken from
+     */
+    protected void processShadowIDP(ITGT oTGT, ISession oSession)
+    {
+    	ISessionAttributes oAttributes = oSession.getAttributes();
+    	String sShadowedIDPId = (String) 
+    			oAttributes.get(ProxyAttributes.class, ProxyAttributes.PROXY_SHADOWED_IDPID);
+    	
+    	if (sShadowedIDPId != null) {
+    		URLPathContext oURLPathContext = (URLPathContext) 
+    				oAttributes.get(ProxyAttributes.class, ProxyAttributes.PROXY_URLPATH_CONTEXT);
+    		
+    		String sIDPAlias = null;
+    		if (oURLPathContext != null) sIDPAlias = oURLPathContext.getParams().get("i"); 
+    		
+    		// Integrity check:
+    		if (sIDPAlias == null) {
+    			_systemLogger.warn("Found '"+ProxyAttributes.PROXY_SHADOWED_IDPID+"' in session but there was no '"+
+    					ProxyAttributes.PROXY_URLPATH_CONTEXT+"' in session or no 'i'-value in URLPathContext; ignoring.");
+    			return;
+    		}
+
+    		// Add the alias->idp.id to the map:
+    		ITGTAttributes oTGTAttributes = oTGT.getAttributes();
+    		
+    		@SuppressWarnings("unchecked")
+			Map<String, String> mShadowedIDPs = (Map<String, String>) 
+    				oTGTAttributes.get(SSOService.class, TGT_ATTR_SHADOWED_IDPS);
+    		
+    		if (mShadowedIDPs == null) mShadowedIDPs = new HashMap<String, String>();
+    		
+    		mShadowedIDPs.put(sIDPAlias, sShadowedIDPId);
+
+    		_systemLogger.info("Adding "+sIDPAlias+"->"+sShadowedIDPId+" to TGT attribute '"+TGT_ATTR_SHADOWED_IDPS+"'");
+    		oTGTAttributes.put(SSOService.class, TGT_ATTR_SHADOWED_IDPS, mShadowedIDPs);
+    		
+    		return;
+    	}
+    	
+    	_systemLogger.debug("No '"+ProxyAttributes.PROXY_SHADOWED_IDPID+"' found in session attributes.");
+    }
+
+    
+    /**
+     * Returns false when there is no match, or true when match was made or no match had to be made because 
+     * not answering on behalf of a shadowed IDP  
+     * @param oTGT
+     * @param oSession
+     */
+    protected boolean matchShadowIDP(ITGT oTGT, ISession oSession)
+    {
+    	ISessionAttributes oAttributes = oSession.getAttributes();
+    	URLPathContext oURLContext = (URLPathContext) oAttributes.get(ProxyAttributes.class, ProxyAttributes.PROXY_URLPATH_CONTEXT);
+    	
+    	if (oURLContext != null && oURLContext.getParams().containsKey("i")) {
+    		String sIValue = oURLContext.getParams().get("i");	// contains the IDP alias
+    		ITGTAttributes oTGTAttributes = oTGT.getAttributes();
+    		
+    		@SuppressWarnings("unchecked")
+			Map<String, String> mShadowedIDPs = (Map<String, String>) 
+    				oTGTAttributes.get(SSOService.class, TGT_ATTR_SHADOWED_IDPS);
+    		
+    		if (mShadowedIDPs == null) {
+    			_systemLogger.warn("Found '"+ProxyAttributes.PROXY_URLPATH_CONTEXT+"' in session, but there is no" +
+    					"record of a '"+TGT_ATTR_SHADOWED_IDPS+"' in the TGT attributes");
+    			return false;
+    		}
+    		
+    		String sShadowedIDPId = (String) mShadowedIDPs.get(sIValue);
+    		if (sShadowedIDPId == null) {
+    			_systemLogger.warn("Did not find alias '"+sIValue+"' in map in TGT attributes");
+    			return false;
+    		}
+    		
+    		// Put the shadowed IDP.id in the session
+    		oAttributes.put(ProxyAttributes.class, ProxyAttributes.PROXY_SHADOWED_IDPID, sShadowedIDPId);
+    		
+    		return true;
+    		
+    	} else {
+    		_systemLogger.debug("No '"+ProxyAttributes.PROXY_URLPATH_CONTEXT+"' or no \"i\"-value found in session attributes.");
+    		return true;
+    	}
     }
 
 }
