@@ -65,6 +65,12 @@ public interface IWebAuthenticationMethod extends IManagebleItem, IComponent, IA
     public final static String RETRIES_ATTRIBUTE_NAME = "retries";
     
     /**
+     * Session attribute name that indicates whether SSO for this
+     * method should be disabled
+     */
+    public final static String DISABLE_SSO = "disable_sso";
+    
+    /**
      * Authenticates and identifies a user. 
      * 
      * @param oRequest The request send by the user.
