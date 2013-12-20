@@ -28,6 +28,8 @@ import java.io.Serializable;
  * Shared attribute names.
  * 
  * Contains shared attribute names for OAS in proxy mode.
+ * 
+ * @author mdobrinic
  * @author MHO
  * @author Alfa & Ariss
  *
@@ -42,4 +44,13 @@ public class ProxyAttributes implements Serializable
      * <b>value:</b> <code>Set&lt;String&gt;</code> 
      */
     public final static String FORCED_ORGANIZATIONS = "forced_organizations";
+    
+    // Asimba specific attributes to share between IDP Profile and SP behavior (Remote authentication)
+    /** An initialized URLPathContext-instance, based on the added context to the request URL 
+     * (the part _before_ the querystring starts) 
+     */
+    public final static String PROXY_URLPATH_CONTEXT = "urlpath.context";
+    /** The established IDP ID (EntityId, ASOrgCode etc) that we are pretending to be for a requestor */
+    public final static String PROXY_SHADOWED_IDPID = "shadowed.idpId";
+
 }

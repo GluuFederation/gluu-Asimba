@@ -281,8 +281,11 @@ public abstract class AbstractAuthenticationRequestProtocol
             
             // try to establish a shadowed EntityId, only if feature is enabled
             if (_bEnableShadowIdp) {
-	            if (attributes.contains(ProxyAttributes.class, ProxyAttributes.PROXY_SHADOWED_ENTITYID)) {
-	            	_sShadowedEntityId = (String) attributes.get(ProxyAttributes.class, ProxyAttributes.PROXY_SHADOWED_ENTITYID);
+	            if (attributes.contains(
+	            		com.alfaariss.oa.util.session.ProxyAttributes.class, 
+	            		com.alfaariss.oa.util.session.ProxyAttributes.PROXY_SHADOWED_IDPID)) {
+	            	_sShadowedEntityId = (String) attributes.get(
+	            			com.alfaariss.oa.util.session.ProxyAttributes.class, com.alfaariss.oa.util.session.ProxyAttributes.PROXY_SHADOWED_IDPID);
 	            	_logger.debug("Enabling Authn Request ShadowedEntityId support (shadowed entityId: "+_sShadowedEntityId+")");
 	            }
             }
