@@ -75,6 +75,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
     private final static String COLUMN_ALLOW_CREATE = "allow_create";
     private final static String COLUMN_NAMEIDFORMAT = "nameidformat";
     private final static String COLUMN_AVOID_SUBJCONF = "avoid_subjconf";
+    private final static String COLUMN_DISABLE_SSO = "disable_sso";
     /** date last modified */
     public static final String COLUMN_DATELASTMODIFIED = "date_last_modified";
 
@@ -235,6 +236,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                 boolean bScoping = resultSet.getBoolean(COLUMN_SCOPING);
                 boolean bNameIDPolicy = resultSet.getBoolean(COLUMN_NAMEIDPOLICY);
                 boolean bAvoidSubjectConfirmation = resultSet.getBoolean(COLUMN_AVOID_SUBJCONF);
+                boolean bDisableSSOForIDP = resultSet.getBoolean(COLUMN_DISABLE_SSO);
                 
                 // Implement date_last_modified column as optional
             	Date dLastModified = null;
@@ -258,6 +260,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     bScoping, bNameIDPolicy,
                     resultSet.getString(COLUMN_NAMEIDFORMAT),
                     bAvoidSubjectConfirmation,
+                    bDisableSSOForIDP,
                     dLastModified,
                     oMPM.getId());
                 listIDPs.add(idp);
@@ -349,6 +352,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             sbSelectIDPs.append(COLUMN_NAMEIDPOLICY).append(",");
             sbSelectIDPs.append(COLUMN_NAMEIDFORMAT).append(",");
             sbSelectIDPs.append(COLUMN_AVOID_SUBJCONF).append(",");
+            sbSelectIDPs.append(COLUMN_DISABLE_SSO).append(",");
             sbSelectIDPs.append(COLUMN_DATELASTMODIFIED);
             sbSelectIDPs.append(" FROM ");
             sbSelectIDPs.append(_sTable);
@@ -459,7 +463,8 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                 boolean bScoping = resultSet.getBoolean(COLUMN_SCOPING);
                 boolean bNameIDPolicy = resultSet.getBoolean(COLUMN_NAMEIDPOLICY);
                 boolean bAvoidSubjectConfirmation = resultSet.getBoolean(COLUMN_AVOID_SUBJCONF);
-                
+                boolean bDisableSSOForIDP = resultSet.getBoolean(COLUMN_DISABLE_SSO);
+
                 Date dLastModified = null;
             	try {
             		dLastModified = resultSet.getTimestamp(COLUMN_DATELASTMODIFIED);
@@ -478,6 +483,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     bScoping, bNameIDPolicy,
                     resultSet.getString(COLUMN_NAMEIDFORMAT),
                     bAvoidSubjectConfirmation,
+                    bDisableSSOForIDP,
                     dLastModified,
                     oMPM.getId());
             }
@@ -548,7 +554,8 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                 boolean bScoping = resultSet.getBoolean(COLUMN_SCOPING);
                 boolean bNameIDPolicy = resultSet.getBoolean(COLUMN_NAMEIDPOLICY);
                 boolean bAvoidSubjectConfirmation = resultSet.getBoolean(COLUMN_AVOID_SUBJCONF);
-                
+                boolean bDisableSSOForIDP = resultSet.getBoolean(COLUMN_DISABLE_SSO);
+
                 Date dLastModified = null;
             	try {
             		dLastModified = resultSet.getTimestamp(COLUMN_DATELASTMODIFIED);
@@ -566,6 +573,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
                     bScoping, bNameIDPolicy,
                     resultSet.getString(COLUMN_NAMEIDFORMAT),
                     bAvoidSubjectConfirmation,
+                    bDisableSSOForIDP,
                     dLastModified,
                     oMPM.getId());
             }
