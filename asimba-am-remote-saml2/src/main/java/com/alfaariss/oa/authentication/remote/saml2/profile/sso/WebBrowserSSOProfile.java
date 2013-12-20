@@ -88,6 +88,8 @@ import com.alfaariss.oa.authentication.remote.saml2.profile.AbstractAuthNMethodS
 import com.alfaariss.oa.authentication.remote.saml2.util.ResponseValidator;
 import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
 import com.alfaariss.oa.engine.user.provisioning.translator.standard.StandardProfile;
+import com.alfaariss.oa.sso.SSOService;
+import com.alfaariss.oa.sso.authentication.web.IWebAuthenticationMethod;
 import com.alfaariss.oa.util.saml2.SAML2ConditionsWindow;
 import com.alfaariss.oa.util.saml2.SAML2Exchange;
 import com.alfaariss.oa.util.saml2.SAML2SecurityException;
@@ -648,13 +650,14 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
         IUser oSessionUser = session.getUser();
         if (oSessionUser == null && oAssertionUser == null) {
             //No user found: error
-            _logger.debug("Response user conditions not met (no user found)");
+            _logger.error("Response user conditions not met (no user found)");
             return UserEvent.AUTHN_METHOD_FAILED;
         }
         else if (oSessionUser != null && oAssertionUser != null) {
             //verify UID
             if (!oSessionUser.getID().equals(oAssertionUser.getID())) {
-                _logger.debug("Response user conditions not met (UID has changed during remote authN)");
+                _logger.error("Response user conditions not met (UID has changed from "+oSessionUser.getID()+
+                		" to "+oAssertionUser.getID()+"during remote authN)");
                 return UserEvent.AUTHN_METHOD_FAILED;
             }
         }
@@ -734,6 +737,13 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
         
         //reset session so not to confuse other SAML components in the chain.
         request.setAttribute(SAML2AuthNConstants.RESPONSE_ENDPOINT_PARAM, new Boolean(false));
+        
+        // set attribute in session context to reflecft whether SSO should be used for this IDP
+        if (samlResponseOrganization.disableSSO()) {
+        	session.getAttributes().put(SSOService.class,
+        			_sMethodID, IWebAuthenticationMethod.DISABLE_SSO,
+        			"true");
+        }
         
         return UserEvent.AUTHN_METHOD_SUCCESSFUL;
     }
