@@ -1058,7 +1058,11 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
         if (_sSPNameQualifier != null)
             nameID.setSPNameQualifier(_sSPNameQualifier);
         
-        nameID.setNameQualifier(_sEntityID);
+        if (_sShadowedEntityId != null) {
+        	nameID.setNameQualifier(_sShadowedEntityId);
+        } else {
+        	nameID.setNameQualifier(_sEntityID);
+        }
         
         SubjectBuilder subjectBuilder = 
             (SubjectBuilder)_builderFactory.getBuilder(
