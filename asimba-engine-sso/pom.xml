@@ -29,4 +29,5 @@
     	<version>1.1.4-SNAPSHOT</version>
     </dependency>
   </dependencies>
+  <description>Implements the management of SSO-sessions, to take care of whether a new SSO-session should be created or an existing SSO-session should be resumed.</description>
 </project>
