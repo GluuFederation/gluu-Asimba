@@ -22,6 +22,7 @@
  */
 package com.alfaariss.oa.profile.saml2.profile.sso.protocol;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -140,6 +141,8 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
     private NameIDFormatter _nameIDFormatter;
     private SAML2Requestor _saml2Requestor;
     private SPSSODescriptor _spSSODescriptor;
+    private String _sRequestedAuthnContextComparisonType;
+    private List<String> _lRequestedAuthnContextClassRefs;
     private CryptoManager _cryptoManager;
     private boolean _bCompatible;
     
@@ -174,6 +177,8 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
             _sSPNameQualifier = null;
             _nameIDFormatter = nameIDFormatter;
             _saml2Requestor = saml2Requestor;
+            _sRequestedAuthnContextComparisonType = null;
+            _lRequestedAuthnContextClassRefs = new ArrayList<String>();
             _cryptoManager = cryptoManager;
             _bCompatible = bCompatible;
             
@@ -416,6 +421,24 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
         return _sSPNameQualifier;
     }
     
+    /**
+     * Returns the list of requested AuthnContext ClassRef values. If no values
+     * were requested, an empty list is returned.
+     */
+    public List<String> getRequestedAuthnContextClassRefs()
+    {
+    	return _lRequestedAuthnContextClassRefs;
+    }
+    
+    /**
+     * Return the RequestedAuthnContextComparisonType value, if provided. Otherwise, returns null.
+     */
+    public String getRequestedAuthnContextComparisonType()
+    {
+    	return _sRequestedAuthnContextComparisonType;
+    }
+    
+    
     private void processSubject(Subject subject, ISessionAttributes oAttributes) 
         throws StatusException, OAException
     {
@@ -500,19 +523,18 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
     {
         AuthnContextComparisonTypeEnumeration authnContextComparisonTypeEnumeration = requestedAuthnContext.getComparison();
         if (authnContextComparisonTypeEnumeration != null)
-        {//DD: add Comparison value as session attribute for proxy modus
-            oAttributes.put(ProxyAttributes.class, 
-                ProxyAttributes.AUTHNCONTEXT_COMPARISON_TYPE, authnContextComparisonTypeEnumeration.toString());
-            _logger.debug("Using requested RequestedAuthnContext Comparison: " 
-                + authnContextComparisonTypeEnumeration);
+        {
+        	_sRequestedAuthnContextComparisonType = authnContextComparisonTypeEnumeration.toString();
         }
         
         //TODO (MHO) Add optional support RequestedAuthnContext support. (Force AuthN Profiles and Update session state)
+        
+        // Process RequestedAuthnContext/AuthnContextClassRef[*]/.
         List<AuthnContextClassRef> listClassRefs = 
             requestedAuthnContext.getAuthnContextClassRefs();
         if (listClassRefs.size() > 0)
         {
-            List<String> listSupportedClassRefs = new Vector<String>();
+            List<String> listSupportedClassRefs = new ArrayList<String>();
             
             for (AuthnContextClassRef acClassRef: listClassRefs)
             {
@@ -530,11 +552,9 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
                 throw new StatusException(RequestorEvent.REQUEST_INVALID, 
                     StatusCode.RESPONDER_URI, StatusCode.NO_AUTHN_CONTEXT_URI);
             }
-            
-            //DD Only add the supplied ClassRefs for using in proxy modus 
-            oAttributes.put(ProxyAttributes.class, 
-                ProxyAttributes.AUTHNCONTEXT_CLASS_REFS, listSupportedClassRefs);
-            
+
+            _lRequestedAuthnContextClassRefs = listSupportedClassRefs;
+
             _logger.debug("Using requested RequestedAuthnContext ClassRefs: " 
                 + listSupportedClassRefs);
         }

@@ -27,9 +27,12 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
@@ -120,6 +123,12 @@ public class WebBrowserSSO extends AbstractSAML2Profile
     /** SPNameQualifier */
     public final static String TGT_REQUEST_SPNAMEQUALIFIER = "SPNameQualifier";
     
+    /** RequestedAuthnContext mode: passthrough (default) */
+    public final static String REQ_AUTHNCONTEXT_PASSTHROUGH = "passthrough";
+    /** RequestedAuthnContext mode: filter */
+    public final static String REQ_AUTHNCONTEXT_FILTER = "filter";
+    
+    
     /** Type: sourceid */
     public final static String TYPE_SOURCEID = "sourceid";
     
@@ -130,6 +139,7 @@ public class WebBrowserSSO extends AbstractSAML2Profile
     private Log _logger;
     private BindingProperties _requestBindingProperties;
     private BindingProperties _responseBindingProperties;
+    private String _requestedAuthnContextMode;
     private Hashtable<String, String> _htAuthnContexts;
     private NameIDFormatter _nameIDFormatter;
     private String _sAttributeNameFormatDefault;
@@ -536,6 +546,7 @@ public class WebBrowserSSO extends AbstractSAML2Profile
                 _cryptoManager, _issueInstantWindow, _bCompatible, _bEnableProxiedEntityId);
             
             session = protocol.processRequest(authnRequest);
+            processRequestedAuthnContext(session, protocol);
             
             if (!_requestBindingProperties.isSupported(protocol.getProtocolBinding()))
             {
@@ -586,6 +597,63 @@ public class WebBrowserSSO extends AbstractSAML2Profile
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
     }
+    
+    
+    /**
+     * If no authncontext classrefs are requested, be done.
+     * If request_mode=filter, actively map requested authn context to authn profile, and register the resulting
+     *   authnprofiles as List<String> in session key ProxyAttributes.class, ProxyAttributes.REQUESTED_AUTHNPROFILES
+     * If request_mode=passthrough, pass on the requested authn context info in SAML2 Proxy session key
+     *   ProxyAttributes.class, ProxyAttributes.AUTHNCONTEXT_CLASS_REFS
+     * @param session
+     * @param protocol
+     */
+    private void processRequestedAuthnContext(ISession session, AuthenticationRequestProtocol protocol)
+    {
+    	List<String> requestedAuthnContextClassRefs = protocol.getRequestedAuthnContextClassRefs();
+    	if (requestedAuthnContextClassRefs.size() == 0) return;
+    	
+    	if (_requestedAuthnContextMode.equals(REQ_AUTHNCONTEXT_FILTER)) {
+        	List<String> requestedAuthnProfiles = new ArrayList<String>();
+
+    		Iterator<String> reqACCRIterator = requestedAuthnContextClassRefs.iterator();
+    		while (reqACCRIterator.hasNext()) {
+    			String requestedACCR = reqACCRIterator.next();
+    			
+	    		for(Entry<String, String> authnContextMapping: _htAuthnContexts.entrySet()) {
+	    			if (authnContextMapping.getValue().equals(requestedACCR)) {
+	    				requestedAuthnProfiles.add(authnContextMapping.getKey());
+	    			}
+	    		}
+    		}
+    		
+    		// Put the collected authnprofiles in session
+    		session.getAttributes().put(com.alfaariss.oa.util.session.ProxyAttributes.class, 
+    				com.alfaariss.oa.util.session.ProxyAttributes.REQUESTED_AUTHNPROFILES, 
+    				requestedAuthnProfiles);
+    		
+            _logger.debug("Using filtered requested AuthnContextClassRefs: " 
+                    + requestedAuthnContextClassRefs);
+    		
+    	} else { // _requestedAuthnContextMode.equals(REQ_AUTHNCONTEXT_PASSTHROUGH)
+    		ISessionAttributes oAttributes = session.getAttributes();
+    		// Move the requested authnContextClassRefs in SAML2 Proxy session state:
+            oAttributes.put(ProxyAttributes.class, 
+                ProxyAttributes.AUTHNCONTEXT_CLASS_REFS, requestedAuthnContextClassRefs);
+            
+            _logger.debug("Using proxied requested AuthnContextClassRefs: " 
+                    + requestedAuthnContextClassRefs);
+            
+            String requestedAuthnContextComparisonType = protocol.getRequestedAuthnContextComparisonType();
+            if (requestedAuthnContextComparisonType != null) {
+                oAttributes.put(ProxyAttributes.class, 
+                		ProxyAttributes.AUTHNCONTEXT_COMPARISON_TYPE, requestedAuthnContextComparisonType);
+                    _logger.debug("Using proxied requested AuthnContextComparisonType: " 
+                        + requestedAuthnContextComparisonType);
+            }
+    	}
+    }
+    
     
     private void processAuthenticationResponse(HttpServletRequest request,
         HttpServletResponse response, ISession session) throws OAException
@@ -701,11 +769,17 @@ public class WebBrowserSSO extends AbstractSAML2Profile
                         StatusCode.NO_PASSIVE_URI);
                     break;
                 }
+                case AUTHN_SELECTION_FAILED:	// No profile could be selected -> no authn context
+                {
+                    samlResponse = protocol.createErrorResponse(
+                            protocol.getDestination(), StatusCode.RESPONDER_URI, 
+                            StatusCode.NO_AUTHN_CONTEXT_URI);
+                    break;
+                }
                 case USER_CANCELLED:
                 case AUTHN_FAILED:
                 case PRE_AUTHZ_FAILED:
                 case POST_AUTHZ_FAILED:
-                case AUTHN_SELECTION_FAILED:
                 case USER_BLOCKED:
                 case USER_UNKNOWN:
                 default:
@@ -843,6 +917,7 @@ public class WebBrowserSSO extends AbstractSAML2Profile
         throws OAException
     {
         Hashtable<String, String> htAuthnContexts = new Hashtable<String, String>();
+        _requestedAuthnContextMode = REQ_AUTHNCONTEXT_PASSTHROUGH;
         
         try
         {
@@ -861,6 +936,17 @@ public class WebBrowserSSO extends AbstractSAML2Profile
             }
             else
             {
+            	String requestMode = configurationManager.getParam(eAuthentication, "request_mode");
+            	if (requestMode != null) {
+            		if (! (REQ_AUTHNCONTEXT_FILTER.equalsIgnoreCase(requestMode)) ||
+            				(REQ_AUTHNCONTEXT_PASSTHROUGH.equalsIgnoreCase(requestMode))) {
+            			_logger.error("Invalid value configured for optional authentication@request_mode: "+requestMode+
+            					"; allowed: '"+REQ_AUTHNCONTEXT_FILTER+"' or '"+REQ_AUTHNCONTEXT_PASSTHROUGH+"'");
+            				
+            		}
+            		_requestedAuthnContextMode = requestMode;
+            	}
+            	
                 eProfile = configurationManager.getSection(eAuthentication, 
                     "profile");
                 if (eProfile == null)

@@ -1131,7 +1131,7 @@ public class WebProfile implements ISSOProfile, IService, IAuthority
                 if(oSession.getAuthNProfiles().isEmpty())  
                 {
                     oSession.setState(SessionState.AUTHN_SELECTION_FAILED);
-                    _systemLogger.debug("No required profiles available for session: " 
+                    _systemLogger.error("No allowed authentication profiles available for session: " 
                         + oSession.getId());
                     
                     try

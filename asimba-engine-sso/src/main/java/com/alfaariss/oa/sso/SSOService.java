@@ -367,8 +367,7 @@ public class SSOService implements IComponent
             else 
             {
                 List<IAuthenticationProfile> listFilteredProfiles = filterRegisteredProfiles(oSession);
-                if (!listFilteredProfiles.isEmpty())
-                    oSession.setAuthNProfiles(listFilteredProfiles);
+                oSession.setAuthNProfiles(listFilteredProfiles);
                 
                 if (oSession.getAuthNProfiles().size() == 1 && !bShowAllways)
                 {
@@ -549,10 +548,8 @@ public class SSOService implements IComponent
                         {
                             //Check if TGT profile is sufficient 
                             IAuthenticationProfile tgtProfile = oTgt.getAuthenticationProfile();                   
-                            List<String> oRequiredAuthenticationProfileIDs = 
-                                oRequestorPool.getAuthenticationProfileIDs();                           
-                            Iterator<String> iter = 
-                                oRequiredAuthenticationProfileIDs.iterator();
+                            List<String> oRequiredAuthenticationProfileIDs = oRequestorPool.getAuthenticationProfileIDs();                           
+                            Iterator<String> iter = oRequiredAuthenticationProfileIDs.iterator();
                             while(iter.hasNext() && !bTGTSufficient)
                             {
                                //Retrieve next profile
@@ -563,7 +560,43 @@ public class SSOService implements IComponent
                                    bTGTSufficient = 
                                        tgtProfile.compareTo(requiredProfile) >= 0;
                                }
-                            }  
+                            }
+                            
+                            // bTGTSufficient represents whether the executed authentication methods of a TGT
+                            // are good enough for the profiles that are allowed for the requesting Requestor
+                            
+                            // If this is the case, check if the Requestor has explicitly requested one or more
+                            // specific AuthenticationProfiles, and if so, whether these are already performed
+                            if (bTGTSufficient) {
+	                            @SuppressWarnings("unchecked")
+	                    		List<String> requestedAuthnProfiles = (List<String>) 
+	                            		oSession.getAttributes().get(ProxyAttributes.class, ProxyAttributes.REQUESTED_AUTHNPROFILES);
+	                            if (requestedAuthnProfiles != null) {
+	                            	iter = requestedAuthnProfiles.iterator();
+	                            	boolean tgtProfileSatisfiesRequestedProfile = false;
+	                            	while(iter.hasNext() && !tgtProfileSatisfiesRequestedProfile) {
+	                            		AuthenticationProfile requestedAuthnProfile = 
+	                                            _authenticationProfileFactory.getProfile(iter.next());
+	                            		if (requestedAuthnProfile != null) {
+	                            			tgtProfileSatisfiesRequestedProfile =
+	                            					tgtProfile.compareTo(requestedAuthnProfile) >= 0;
+	                            					
+	                            			_systemLogger.debug("tgtProfile ("+tgtProfile.getAuthenticationMethods().toString()+") "+
+	                            					(tgtProfileSatisfiesRequestedProfile ? "DOES" : "does NOT")+
+	                            					" satisfy authentication profile '"+
+	                            					requestedAuthnProfile.getID()+
+	                            					"' ("+requestedAuthnProfile.getAuthenticationMethods().toString() + ")");
+	                            		}
+	                            	}
+	                            	if (!tgtProfileSatisfiesRequestedProfile) {
+	                            		_systemLogger.info("Do not resume SSO, as Requested AuthenticationProfile requires "+
+	                            				"extra authentication methods to be performed.");
+	                            		bTGTSufficient = false;
+	                            	} else {
+	                            		_systemLogger.info("Allow SSO, as TGT satisfies Requested AuthenticationProfile.");
+	                            	}
+	                            }
+                            }
                         }  
                         
                         if (bTGTSufficient)
@@ -746,8 +779,36 @@ public class SSOService implements IComponent
                 
                 if (isRegistered)
                     listFilteredProfiles.add(oProfile);
-            }   
+            }
+            // At this point, listFilteredProfiles only contains the authentication profiles that contain all the 
+            // authentication methods that are registered for the authenticated user
         }
+        else 
+        {
+        	// Allow all profiles as set the session, if there was no user authenticated
+        	listFilteredProfiles = oSession.getAuthNProfiles();
+        }
+        
+        // Now apply requested authnprofiles filtering, when applicable 
+        // Filtering here means: only allow profiles from requestedAuthnProfiles
+        @SuppressWarnings("unchecked")
+		List<String> requestedAuthnProfiles = (List<String>) 
+        		oSession.getAttributes().get(ProxyAttributes.class, ProxyAttributes.REQUESTED_AUTHNPROFILES);
+        if (requestedAuthnProfiles != null) {
+        	IAuthenticationProfile authnProfile;
+        	Iterator<IAuthenticationProfile> authnProfileIterator = listFilteredProfiles.iterator();
+        	while (authnProfileIterator.hasNext()) {
+        		authnProfile = authnProfileIterator.next();
+        		
+            	if (! requestedAuthnProfiles.contains(authnProfile.getID())) {
+            		authnProfileIterator.remove();
+            		_systemLogger.info("Removing "+authnProfile.getID()+" from allowed authnprofiles for the user: "+
+            				"doesn't match the requested authn profiles");
+            		
+            	}
+        	}
+        }
+        
         return listFilteredProfiles;
     }
     

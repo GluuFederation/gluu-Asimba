@@ -52,5 +52,10 @@ public class ProxyAttributes implements Serializable
     public final static String PROXY_URLPATH_CONTEXT = "urlpath.context";
     /** The established IDP ID (EntityId, ASOrgCode etc) that we are pretending to be for a requestor */
     public final static String PROXY_SHADOWED_IDPID = "shadowed.idpId";
+    
+    /** a list of authnprofiles that as requested by the requestor (from SAML2 RequestedAuthnContext, 
+     * or A-Select levels). 
+     * Contains a List&lt;String&gt; of authnprofiles of which one is to be selected */ 
+    public final static String REQUESTED_AUTHNPROFILES = "requested_authnprofile";
 
 }
