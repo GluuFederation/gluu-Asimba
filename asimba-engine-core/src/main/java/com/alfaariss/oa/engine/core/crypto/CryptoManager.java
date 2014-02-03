@@ -272,14 +272,14 @@ public class CryptoManager implements IComponent
             {
                 _logger.error("Invalid signature provider", e);
                 throw new CryptoException(SystemErrors.ERROR_INTERNAL);
-            }     
+            }
+            
+            _logger.debug("Established Signature instance of provider " + signature.getProvider().getName());
         }
         else
             _logger.debug("Signing disabled");
         
-        _logger.debug("Established Signature instance of provider " + signature.getProvider().getName());
         return signature;
-        
     }
     
     /**
