@@ -22,6 +22,9 @@
  */
 package com.alfaariss.oa.util.saml2.binding;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -49,7 +52,14 @@ public abstract class AbstractEncodingFactory extends AbstractBindingFactory
 {
     /** system logger */
     private static Log _logger = LogFactory.getLog(AbstractEncodingFactory.class);
-        
+       
+    /** static'ly define the supported encoding bindings */
+    static final List<String> _supportedBindings = Arrays.asList(
+    		SAMLConstants.SAML2_ARTIFACT_BINDING_URI,
+    		SAMLConstants.SAML2_POST_BINDING_URI,
+    		SAMLConstants.SAML2_REDIRECT_BINDING_URI,
+    		SAMLConstants.SAML2_SOAP11_BINDING_URI);
+    
     /**
      * Default protected constructor.
      * @param prop The bindings configuration properties.
@@ -58,6 +68,15 @@ public abstract class AbstractEncodingFactory extends AbstractBindingFactory
     {   
         super(prop);
     }
+    
+    /**
+     * Return the bindings that we support.
+     * @return
+     */
+    public static List<String> getSupportedBindings() {
+    	return _supportedBindings;
+    }
+    
     
     /**
      * Retrieve an encoding factory based on the given binding type.

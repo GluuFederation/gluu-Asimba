@@ -762,7 +762,15 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
             
             if (ssoServices.size() > 0)
             {
-                return ssoServices.get(0).getBinding();
+            	// Return the first binding that we can support:
+            	for(SingleSignOnService ssos: ssoServices) {
+            		if (AbstractEncodingFactory.getSupportedBindings().contains(ssos.getBinding())) {
+            			return ssos.getBinding();
+            		}
+            	}
+            	
+            	_logger.error("Could not find a binding that we support in IDP's metadata; supported: "+
+            			AbstractEncodingFactory.getSupportedBindings());
             }
         }
         else
