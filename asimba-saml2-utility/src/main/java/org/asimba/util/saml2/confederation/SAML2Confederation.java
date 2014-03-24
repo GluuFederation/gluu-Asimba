@@ -346,6 +346,8 @@ public class SAML2Confederation implements IConfederation, IComponent {
 			} else if (! "false".equalsIgnoreCase(sDisableSSO)) {
 				_oLogger.error("Invalid value configured for "+EL_DISABLE_SSO+": '"+sDisableSSO+"'");
 				throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+			} else {
+				_bDisableSSOForIDPs = false;
 			}
 			
 		} else {
@@ -354,7 +356,6 @@ public class SAML2Confederation implements IConfederation, IComponent {
 		
 		_oLogger.info("SSO for IDPs from remote federation is "+
 				(_bDisableSSOForIDPs?"disabled":"enabled")+" by default ");
-		
 		
 		_oLogger.info("Started SAMLconfederation from asimba.xml");
 	}
