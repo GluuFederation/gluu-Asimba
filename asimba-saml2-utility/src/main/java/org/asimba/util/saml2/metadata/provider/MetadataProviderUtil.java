@@ -70,17 +70,17 @@ public class MetadataProviderUtil {
     /**
      * Use default, shared, timer instance
      */
-    public static Timer DEFAULT_TIMER = null;
+    public static final Timer DEFAULT_TIMER = null;
     
     /**
      * Use default, shared, ParserPool
      */
-    public static ParserPool DEFAULT_PARSERPOOL = null;
+    public static final ParserPool DEFAULT_PARSERPOOL = null;
     
     /**
      * Use default basic HTTPClient instance 
      */
-    public static HttpClient DEFAULT_HTTPCLIENT = null;
+    public static final HttpClient DEFAULT_HTTPCLIENT = null;
     
     /**
      * ParserPool instance that is used as fallback, when none provided
@@ -104,7 +104,7 @@ public class MetadataProviderUtil {
 				// Create named timer as daemon thread
 				// Be warned that this is not managed anywhere!
 				_oSharedTimer = new Timer("MetadataProviderUtil-Timer", true);
-				_oLogger.info("Creating static Timer thread for MetadataProviderUtil: ");
+				_oLogger.info("Creating static Timer thread for MetadataProviderUtil: " + _oSharedTimer.toString());
 			}
 			if (_oLogger.isTraceEnabled()) {
 				_oLogger.trace("Using shared Timer instance.");
@@ -149,7 +149,6 @@ public class MetadataProviderUtil {
 	 */
 	public static MetadataProvider createProviderForURL(String sMetadataSource, 
 			ParserPool oParserPool, Timer oTimer, HttpClient oHttpClient)
-		throws OAException
 	{
 		// No source provided, so no MetadataProvider returned: 
 		if (sMetadataSource == null) {
@@ -160,7 +159,7 @@ public class MetadataProviderUtil {
 			new URL(sMetadataSource);
 		} catch (MalformedURLException mfue) {
 			_oLogger.error("Invalid URL provided: " + sMetadataSource);
-			throw new OAException(SystemErrors.ERROR_INTERNAL);
+			return null;
 		}
 		
 		oParserPool = getParserPool(oParserPool);
@@ -181,7 +180,7 @@ public class MetadataProviderUtil {
 			
 		} catch (MetadataProviderException e) {
 			_oLogger.error("Exception when creating HTTPMetadataProvider: "+e.getMessage());
-			throw new OAException(SystemErrors.ERROR_INTERNAL);
+			return null;
 		}
 		
 		return oHTTPMetadataProvider;
@@ -197,7 +196,6 @@ public class MetadataProviderUtil {
 	 * @throws OAException
 	 */
     public static MetadataProvider createProviderForURL(String sMetadataSource)
-		throws OAException
 	{
     	return createProviderForURL(sMetadataSource, 
     			DEFAULT_PARSERPOOL, DEFAULT_TIMER, DEFAULT_HTTPCLIENT);
@@ -212,7 +210,6 @@ public class MetadataProviderUtil {
 	 * @throws OAException
 	 */
     public static MetadataProvider createProviderForURL(String sMetadataSource, int iTimeoutMs)
-		throws OAException
 	{
     	HttpClient oHttpClient;
     	
@@ -234,7 +231,6 @@ public class MetadataProviderUtil {
      */
     public static MetadataProvider createProviderForFile(String sMetadataSource, 
 			ParserPool oParserPool, Timer oTimer)
-		throws OAException
 	{
 		// No source provided, so no MetadataProvider returned: 
 		if (sMetadataSource == null) {
@@ -261,7 +257,7 @@ public class MetadataProviderUtil {
 
 		} catch (MetadataProviderException e) {
 			_oLogger.error("Exception when creating HTTPMetadataProvider: "+e.getMessage());
-			throw new OAException(SystemErrors.ERROR_INTERNAL);
+			return null;
 		}
 		
 		return oFileMetadataProvider;
@@ -269,7 +265,6 @@ public class MetadataProviderUtil {
     
     
     public static MetadataProvider createProviderForFile(String sMetadataSource)
-    	throws OAException
     {
     	return createProviderForFile(sMetadataSource, 
     			DEFAULT_PARSERPOOL, DEFAULT_TIMER);
@@ -437,9 +432,14 @@ public class MetadataProviderUtil {
     	oProvider = MetadataProviderUtil.createProviderForFile(sMetadataFile, oParserPool, 
     			oRefreshTimer);
         
-    	// Start managing it:
-    	if (oMPM != null) {
-    		oMPM.setProviderFor(sId, oProvider, oRefreshTimer);
+    	if (oProvider != null) {
+	    	// Start managing it:
+	    	if (oMPM != null) {
+	    		oMPM.setProviderFor(sId, oProvider, oRefreshTimer);
+	    	}
+    	} else {
+    		// Unsuccessful creation; clean up created Timer
+    		oRefreshTimer.cancel();
     	}
 
         return oProvider;
@@ -504,9 +504,14 @@ public class MetadataProviderUtil {
     	oProvider = MetadataProviderUtil.createProviderForURL(sMetadataURL, oParserPool, 
     			oRefreshTimer, oHttpClient);
         
-    	// Start managing it:
-    	if (oMPM != null) {
-    		oMPM.setProviderFor(sId, oProvider, oRefreshTimer);
+    	if (oProvider != null) {
+	    	// Start managing it:
+	    	if (oMPM != null) {
+	    		oMPM.setProviderFor(sId, oProvider, oRefreshTimer);
+	    	}
+    	} else {
+    		// Unsuccessful creation; clean up created Timer
+    		oRefreshTimer.cancel();
     	}
 
         return oProvider;

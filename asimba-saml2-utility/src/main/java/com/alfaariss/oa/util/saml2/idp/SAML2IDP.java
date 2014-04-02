@@ -258,14 +258,14 @@ public class SAML2IDP extends AbstractIDP
     public MetadataProvider getMetadataProvider() throws OAException
     {
     	if (_oMetadataProvider != null) {
-    		_oLogger.trace("Returning existing MetadataProvider for SAML2 IDP '"+_sID+"'");
+    		_oLogger.debug("Returning existing MetadataProvider for SAML2 IDP '"+_sID+"'");
     		return _oMetadataProvider;
     	}
     	
     	// If there is a local metadata document available, return the
     	// MetadataProvider that is based on this document
     	if (_oMetadataXMLObject != null) {
-    		_oLogger.trace("Creating new XMLObject MetadataProvider for SAML2 IDP '"+_sID+"'");
+    		_oLogger.debug("Creating new XMLObject MetadataProvider for SAML2 IDP '"+_sID+"'");
 
     		XMLObjectMetadataProvider oMP = new XMLObjectMetadataProvider(_oMetadataXMLObject);
 			oMP.initialize();
@@ -274,7 +274,7 @@ public class SAML2IDP extends AbstractIDP
 			
     	} 
 		if (_sMetadata != null) {
-    		_oLogger.trace("Creating new XML-String MetadataProvider for SAML2 IDP '"+_sID+"'");
+    		_oLogger.debug("Creating new XML-String MetadataProvider for SAML2 IDP '"+_sID+"'");
 
     		// This is the case after de-serialization (i.e. when session resumes)
 			// Re-instantiate XMLProvider from retrieved metadata
@@ -300,7 +300,7 @@ public class SAML2IDP extends AbstractIDP
 			}
 		}
     	
-		_oLogger.trace("Creating new MetadataProvider from configured source for SAML2 IDP '"+_sID+"'");
+		_oLogger.debug("Creating new MetadataProvider from configured source for SAML2 IDP '"+_sID+"'");
 		
     	// First time a MetadataProvider request is being handled for this SAML2IDP instance:
     	MetadataProviderConfiguration oMPC = new MetadataProviderConfiguration(
