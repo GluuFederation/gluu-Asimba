@@ -41,6 +41,7 @@ import com.alfaariss.oa.api.IComponent;
 import com.alfaariss.oa.api.attribute.IAttributes;
 import com.alfaariss.oa.api.attribute.ISessionAttributes;
 import com.alfaariss.oa.api.attribute.ITGTAttributes;
+import com.alfaariss.oa.api.authentication.IAuthenticationContexts;
 import com.alfaariss.oa.api.authentication.IAuthenticationMethod;
 import com.alfaariss.oa.api.authentication.IAuthenticationProfile;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
@@ -55,6 +56,7 @@ import com.alfaariss.oa.engine.core.attribute.UserAttributes;
 import com.alfaariss.oa.engine.core.attribute.gather.AttributeGatherer;
 import com.alfaariss.oa.engine.core.attribute.release.IAttributeReleasePolicy;
 import com.alfaariss.oa.engine.core.attribute.release.factory.IAttributeReleasePolicyFactory;
+import com.alfaariss.oa.engine.core.authentication.AuthenticationContexts;
 import com.alfaariss.oa.engine.core.authentication.AuthenticationException;
 import com.alfaariss.oa.engine.core.authentication.AuthenticationProfile;
 import com.alfaariss.oa.engine.core.authentication.factory.IAuthenticationProfileFactory;
@@ -68,8 +70,9 @@ import com.alfaariss.oa.util.session.ProxyAttributes;
  * Authentication and SSO Service.
  * 
  * Contains basic functionality that can be called from an SSO system 
- * e.g. WebSSO. 
+ * e.g. WebSSO.
  *  
+ * @author mdobrinic 
  * @author EVB
  * @author Alfa & Ariss
  *
@@ -435,6 +438,8 @@ public class SSOService implements IComponent
                 	   if (! disableSSOForMethod(oSession, method.getID())) {
                 		   _systemLogger.debug("Adding "+method.getID()+" to TGT SSO methods");
                 		   tgtProfile.addAuthenticationMethod(method);
+                		   
+                		   registerAuthenticationContext(oTgt, oSession, method);
                 	   } else {
                 		   _systemLogger.debug("Disabling SSO for method "+method.getID());
                 	   }
@@ -934,6 +939,53 @@ public class SSOService implements IComponent
     		_systemLogger.debug("No '"+ProxyAttributes.PROXY_URLPATH_CONTEXT+"' or no \"i\"-value found in session attributes.");
     		return true;
     	}
+    }
+    
+    
+    /**
+     * If the session registered an AuthenticationContext, make sure that it is copied over to the
+     * TGT so it can later be reused.
+     * 
+     * The TGT registers a Map: {String(AuthnMethod.id)->IAuthenticationContext, ...}
+     * 
+     * @param oTgt TGT to store the AuthenticationContext in
+     * @param oSession Session to resolve the AuthenticationContext from
+     * @param oAuthnMethod AuthenticationMethod of which to find the AuthenticationContext
+     */
+    private void registerAuthenticationContext(ITGT oTgt, ISession oSession, IAuthenticationMethod oAuthnMethod)
+    {
+    	ISessionAttributes oSessionAttributes = oSession.getAttributes();
+    	if (! oSessionAttributes.contains(AuthenticationContexts.class, AuthenticationContexts.ATTR_AUTHCONTEXTS)) {
+    		_systemLogger.debug("The ISession did not contain AuthenticationContexts; skipping.");
+    		return;
+    	}
+    	
+    	IAuthenticationContexts oSessionAuthenticationContexts = 
+    			(IAuthenticationContexts) oSessionAttributes.get(AuthenticationContexts.class, AuthenticationContexts.ATTR_AUTHCONTEXTS);
+    	
+    	if (! oSessionAuthenticationContexts.contains(oAuthnMethod.getID())) {
+    		_systemLogger.debug("The Session's AuthenticationContexts did not contain context for "
+    				+oAuthnMethod.getID()+"; skipping.");
+    		return;
+    	}
+    	
+    	IAuthenticationContexts oTGTAuthenticationContexts;
+    	ITGTAttributes oTGTAttributes = oTgt.getAttributes();
+    	
+    	if (! oTGTAttributes.contains(AuthenticationContexts.class, AuthenticationContexts.ATTR_AUTHCONTEXTS)) {
+    		oTGTAuthenticationContexts = new AuthenticationContexts();
+    	} else {
+    		oTGTAuthenticationContexts =
+    				(IAuthenticationContexts) oTGTAttributes.get(AuthenticationContexts.class, AuthenticationContexts.ATTR_AUTHCONTEXTS);
+    	}
+    	
+    	//Store Method's AuthenticationContext from Session into TGT: 
+    	oTGTAuthenticationContexts.setAuthenticationContext(
+    			oAuthnMethod.getID(), oSessionAuthenticationContexts.getAuthenticationContext(oAuthnMethod.getID()));;
+
+    	//Update the AuthenticationContexts in the TGT attributes:
+    	oTGTAttributes.put(AuthenticationContexts.class, AuthenticationContexts.ATTR_AUTHCONTEXTS, oTGTAuthenticationContexts);
+    	_systemLogger.debug("TGT AuthenticationContexts registered for "+oTGTAuthenticationContexts.getStoredAuthenticationMethods());
     }
 
 }
