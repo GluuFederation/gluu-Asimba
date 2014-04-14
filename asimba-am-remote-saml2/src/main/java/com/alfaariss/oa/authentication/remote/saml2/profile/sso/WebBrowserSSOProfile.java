@@ -22,6 +22,7 @@
  */
 package com.alfaariss.oa.authentication.remote.saml2.profile.sso;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asimba.util.saml2.assertion.SAML2TimestampWindow;
@@ -42,6 +44,8 @@ import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.core.ArtifactResponse;
 import org.opensaml.saml2.core.Assertion;
+import org.opensaml.saml2.core.Audience;
+import org.opensaml.saml2.core.AudienceRestriction;
 import org.opensaml.saml2.core.AuthenticatingAuthority;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.saml2.core.AuthnContextClassRef;
@@ -86,6 +90,8 @@ import com.alfaariss.oa.authentication.remote.saml2.SAML2AuthNConstants;
 import com.alfaariss.oa.authentication.remote.saml2.beans.SAMLRemoteUser;
 import com.alfaariss.oa.authentication.remote.saml2.profile.AbstractAuthNMethodSAML2Profile;
 import com.alfaariss.oa.authentication.remote.saml2.util.ResponseValidator;
+import com.alfaariss.oa.engine.core.authentication.AuthenticationContext;
+import com.alfaariss.oa.engine.core.authentication.AuthenticationContexts;
 import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
 import com.alfaariss.oa.engine.user.provisioning.translator.standard.StandardProfile;
 import com.alfaariss.oa.sso.SSOService;
@@ -423,7 +429,8 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
         throws OAException
     {
         //SAML Response handling.
-        
+        AuthenticationContext oCurrentAuthenticationContext = new AuthenticationContext();
+    	
         StatusResponseType respMsg = null;
         SAML2IDP samlResponseOrganization = null;
         
@@ -627,6 +634,7 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
             _logger.debug("Assertion issuer not found or correct");
             return UserEvent.AUTHN_METHOD_FAILED;
         }
+        oCurrentAuthenticationContext.set(AuthenticationContext.ATTR_ISSUER, sAssertionIssuer);
 
         Conditions conditions = assertion.getConditions();
         if (conditions != null)
@@ -636,6 +644,8 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
                 _logger.debug("Response conditions not met");
                 return UserEvent.AUTHN_METHOD_FAILED;
             }
+            
+            setAudienceInAuthnContext(conditions, oCurrentAuthenticationContext);
         }
 
         Subject subject = assertion.getSubject();
@@ -698,7 +708,9 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
                 AuthnContextClassRef classRef = authnContext.getAuthnContextClassRef();
                 if (classRef != null)
                 {
+                	// NOTE: When multiple AuthnStatements are returned, this will only store the last one!
                     session.getAttributes().put(ProxyAttributes.class, ProxyAttributes.AUTHNCONTEXT_CLASS_REF, classRef.getAuthnContextClassRef());
+                    oCurrentAuthenticationContext.set(AuthenticationContext.ATTR_AUTHNCONTEXT_CLASSREF, classRef.getAuthnContextClassRef());
                 }
                 
                 List<AuthenticatingAuthority> listAuthorities = authnContext.getAuthenticatingAuthorities();
@@ -711,6 +723,11 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
                             listAuthenticatingAuthorities.add(sURI);
                     }
                 }
+            }
+            
+            if (stmt.getAuthnInstant() != null) {
+            	// NOTE: When multiple AuthnStatements are returned, this will only store the last one!
+            	oCurrentAuthenticationContext.set(AuthenticationContext.ATTR_AUTHENTICATION_TIME, stmt.getAuthnInstant().toString());
             }
         }
         
@@ -744,6 +761,17 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
         			_sMethodID, IWebAuthenticationMethod.DISABLE_SSO,
         			"true");
         }
+        
+        // Register the current Authentication Context in the Session
+        AuthenticationContexts oAuthenticationContexts = 
+        		(AuthenticationContexts) session.getAttributes().get(AuthenticationContexts.class, AuthenticationContexts.ATTR_AUTHCONTEXTS);
+        if (oAuthenticationContexts == null) {
+        	oAuthenticationContexts = new AuthenticationContexts();
+        	session.getAttributes().put(AuthenticationContexts.class, AuthenticationContexts.ATTR_AUTHCONTEXTS, oAuthenticationContexts);
+        }
+        
+        oAuthenticationContexts.setAuthenticationContext(_sMethodID, oCurrentAuthenticationContext);
+        session.persist();
         
         return UserEvent.AUTHN_METHOD_SUCCESSFUL;
     }
@@ -937,5 +965,31 @@ public class WebBrowserSSOProfile extends AbstractAuthNMethodSAML2Profile
             //false
         }
         return false;
+    }
+    
+    private void setAudienceInAuthnContext(Conditions oConditions, AuthenticationContext oAuthnContext)
+    {
+        List<AudienceRestriction> lAudienceRestrictions = oConditions.getAudienceRestrictions();
+        if (lAudienceRestrictions == null) return;
+        
+        List<String> lAudienceList = new ArrayList<String>();
+        
+        for(AudienceRestriction oAudienceRestriction : lAudienceRestrictions)
+        {
+            List<Audience> lAudiences = oAudienceRestriction.getAudiences();
+            if (lAudiences == null) continue;
+            
+            for(Audience oAudience: lAudiences) {
+            	String sAudience = oAudience.getAudienceURI();
+            	if (sAudience != null) lAudienceList.add(sAudience);
+            }
+        }
+        
+        if (lAudienceList.size()>0) {
+        	String value = StringUtils.join(lAudienceList.iterator(), " ");
+        	oAuthnContext.set(AuthenticationContext.ATTR_AUDIENCE, value);
+        	
+        	_logger.debug("Audience set in local AuthenticationContext ("+value+")");
+        }
     }
 }
