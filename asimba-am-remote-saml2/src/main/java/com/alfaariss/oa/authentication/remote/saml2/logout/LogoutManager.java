@@ -23,6 +23,7 @@
 package com.alfaariss.oa.authentication.remote.saml2.logout;
 
 import java.util.Hashtable;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -261,8 +262,15 @@ public class LogoutManager implements ITGTListener, IAuthority
                     String sTGTID = tgt.getId();
                     
                     //DD currently only one session index is supported
-                    String sessionIndex = samlUser.getSessionIndexes().get(0);
-                    if (sessionIndex != null)
+                    String sessionIndex = null;
+                    List<String> lSessionIndexes = samlUser.getSessionIndexes();
+                    if (lSessionIndexes.size() > 0) sessionIndex = lSessionIndexes.get(0);
+                    
+                    if (sessionIndex == null)
+                    {
+                    	_logger.debug("No (optional) sessionIndex in response from idp '"+sRemoteOrganization+"'");
+                    }
+                    else // sessionIndex != null
                     {
                         _aliasStoreIDPRole.putAlias(NameIDFormatter.TYPE_ALIAS_TGT, 
                             sRemoteOrganization, sTGTID, sessionIndex);
