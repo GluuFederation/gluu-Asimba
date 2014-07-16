@@ -134,6 +134,7 @@ public class GoogleAppsUnspecifiedFormatHandler extends DefaultUnspecifiedFormat
 		// Get the property to establish how to behave:
 		IRequestor oRequestor = 
 				Engine.getInstance().getRequestorPoolFactory().getRequestor(sEntityID);
+		
 		String sPropertyValue = (String) oRequestor.getProperty(_sRequestorPropertySelector);
 				
 		String sUserAttributeName = (String) oRequestor.getProperty(_sRequestorPropertyAttribute);
@@ -145,20 +146,23 @@ public class GoogleAppsUnspecifiedFormatHandler extends DefaultUnspecifiedFormat
 		
 		// Do we need to do our own handling?
 		if ((_sRequestorPropertyValue == null && sPropertyValue != null) ||
-				(_sRequestorPropertyValue != null) && sPropertyValue.equalsIgnoreCase(_sRequestorPropertyValue))
+				(_sRequestorPropertyValue != null) && _sRequestorPropertyValue.equalsIgnoreCase(sPropertyValue))
 		{
+			_oLogger.debug("Requestor "+sEntityID+" marked for GoogleApps-style NameID format.");
+			
 			sResult = getUserAttributeValue(oUser, sUserAttributeName, _bGAppsRemoveAfterUse);
-			_oLogger.debug("GoogleApps Requestor '"+sEntityID+"'; NameID established as "+sResult);
 		}
 		else {
+			_oLogger.debug("Requestor "+sEntityID+" marked for Default Unspecified NameID format.");
+
 			// Attribute did not get used, but see if we still need to remove it:
 			if (_bGAppsRemoveAfterUse) {
 				oUser.getAttributes().remove(sUserAttributeName);	// does this do anything???
 			}
 			
 			sResult = super.format(oUser, sEntityID, sTGTID, oSession);
-			_oLogger.debug("Non GoogleApps Requestor '"+sEntityID+"'; NameID established as "+sResult);
 		}
+		_oLogger.debug("NameID established as "+sResult);
 		
 		return sResult;
 	}
@@ -203,7 +207,7 @@ public class GoogleAppsUnspecifiedFormatHandler extends DefaultUnspecifiedFormat
 		// Also, initialize our own properties:
 		Element elGAppsAttribute = oConfigManager.getSection(elConfig, EL_GAPPS_ATTRIBUTE);
 		if (elGAppsAttribute == null) {
-			_oLogger.error("Optional " + EL_GAPPS_ATTRIBUTE+" element is not configured.");
+			_oLogger.error("Required " + EL_GAPPS_ATTRIBUTE+" element is not configured.");
 			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
 		} else {
 			String sName = oConfigManager.getParam(elGAppsAttribute, EL_ATTR_GAPPS_NAME);
@@ -222,7 +226,7 @@ public class GoogleAppsUnspecifiedFormatHandler extends DefaultUnspecifiedFormat
 			}
 		}
 		
-		_oLogger.info("GoogleApps Attributename set to "+_sAttributeName+"; the value "+
+		_oLogger.info("GoogleApps Attributename set to "+_sGAppsAttributeName+"; the value "+
 				(_bGAppsRemoveAfterUse?"WILL":"WILL NOT")+" be removed after use.");
 		
 		Element elReqProperty = oConfigManager.getSection(elConfig, EL_SELECTOR_PROPERTY);
