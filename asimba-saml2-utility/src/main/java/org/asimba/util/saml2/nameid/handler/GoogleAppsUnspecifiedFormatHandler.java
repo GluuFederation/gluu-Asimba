@@ -151,6 +151,11 @@ public class GoogleAppsUnspecifiedFormatHandler extends DefaultUnspecifiedFormat
 			_oLogger.debug("Requestor "+sEntityID+" marked for GoogleApps-style NameID format.");
 			
 			sResult = getUserAttributeValue(oUser, sUserAttributeName, _bGAppsRemoveAfterUse);
+			
+			if (sResult == null) {
+				sResult = oUser.getID();
+				_oLogger.warn("User does not have attribute '"+sUserAttributeName+"' set, so using ID as NameID value.");
+			}
 		}
 		else {
 			_oLogger.debug("Requestor "+sEntityID+" marked for Default Unspecified NameID format.");

@@ -172,11 +172,12 @@ public class DefaultPersistentFormatHandler implements INameIDFormatHandler {
 			if (oAttributes == null || !oAttributes.contains(sAttributeName)) {
 				_oLogger.info("Attribute '"+sAttributeName+"' is not available for user '"+
 						oUser.getID()+"'");
+			} else {
+				s = (String) oAttributes.get(sAttributeName);
+				
+				if (bRAU)
+					oUser.getAttributes().remove(sAttributeName);
 			}
-			s = (String) oAttributes.get(sAttributeName);
-			
-			if (bRAU)
-				oUser.getAttributes().remove(sAttributeName);
 		}
 		
 		return s;
