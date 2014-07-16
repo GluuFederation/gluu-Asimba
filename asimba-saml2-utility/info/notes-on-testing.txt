@@ -1,0 +1,21 @@
+Notes on testing
+====================
+
+2014/07/16:
+When creating Unit Tests for testing the GoogleAppsUnspecifiedFormatHandler class, there have been
+made some extra dependencies in the pom.xml file to deal with in the 'test'-scope of the project.
+
+Mockito is used for mocking, PowerMock is used to be able to mock static/singleton classes.
+
+The dependencies for testing, are:
+- org.mockito:mockito-all
+- org.powermock:powermock-module-junit4
+- org.powermock:powermock-api-mockito
+
+
+2014/07/16:
+To enable configurable logging for the Unit-tests, the ch.qos.logback:logback-classic artifact
+was added to the 'test'-scope of the project. This was done to override the default SimpleLogger
+logger class, that does not support TRACE or DEBUG level logging.
+The test-scoped logger is configured in /src/test/resources/logback.xml
+ 
