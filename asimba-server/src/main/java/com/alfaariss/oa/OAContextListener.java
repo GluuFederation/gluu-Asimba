@@ -47,12 +47,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asimba.utility.filesystem.PathTranslator;
 
-import com.alfaariss.oa.OAException;
-import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.engine.core.EngineLauncher;
 
 /**
  * Starts the Engine with the start of the context.
+ * 
+ * Initializes from a file "asimba.properties", or accepts a system property 
+ * "asimba.properties.file" that specifies the full qualified path to a file that is processed
+ * as asimba.properties file. This overrules the search for an asimba.properties file.
  *
  * <b>PathTranslator: ${webapp.root}</b><br/>
  * On startup, a mounting-point with the absolute location of the webapp root
@@ -67,10 +69,11 @@ import com.alfaariss.oa.engine.core.EngineLauncher;
  */
 public class OAContextListener implements ServletContextListener
 {
-	/**
-	 * Name of the file that contains property-list for configuring server
-	 */
+	/** Name of the file that contains property-list for configuring server */
 	public static final String PROPERTIES_FILENAME = "asimba.properties";
+	
+	/** Name of the system property that specified the asimba.properties file location */
+	public static final String PROPERTIES_FILENAME_PROPERTY = "asimba.properties.file";
 	
 	/**
 	 * PathTranslator: Key for the mounting point for WebApp root directory
@@ -137,6 +140,16 @@ public class OAContextListener implements ServletContextListener
             
             // Add MountingPoint to PathTranslator
             PathTranslator.getInstance().addKey(MP_WEBAPP_ROOT, oServletContext.getRealPath(""));
+            
+            // Try to see whether there is a system property with the location of the properties file:
+            String sPropertiesFilename = System.getProperty(PROPERTIES_FILENAME_PROPERTY);
+            if (null != sPropertiesFilename && ! "".equals(sPropertiesFilename)) {
+            	File fConfig = new File(sPropertiesFilename);
+            	if (fConfig.exists()) {
+            		_logger.info("Reading Asimba properties from "+fConfig.getAbsolutePath());
+            		pConfig.putAll(getProperties(fConfig));
+            	}
+            }
             
             String sWebInf = oServletContext.getRealPath("WEB-INF");
             StringBuffer sbConfigFile = new StringBuffer(sWebInf);
