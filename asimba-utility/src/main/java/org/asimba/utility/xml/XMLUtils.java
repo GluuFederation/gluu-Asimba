@@ -61,7 +61,9 @@ public class XMLUtils {
 	
 
 	/**
-	 * Create the DOM Document from the XML-document in the provided string
+	 * Create the DOM Document from the XML-document in the provided string<br/>
+	 * Defaults to non-namespace-aware DocumentBuilder
+	 * 
 	 * @param sXML String representation of an XML document
 	 * @return DOM Document representation of the XML document
 	 * @throws OAException when something goes wrong
@@ -69,8 +71,25 @@ public class XMLUtils {
 	public static Document getDocumentFromString(String sXML)
 		throws OAException
 	{
+		return getDocumentFromString(sXML, false);
+	}
+	
+	
+	/**
+	 * Create the DOM Document from the XML-document in the provided string
+	 * 
+	 * @param sXML String that contains XML document
+	 * @param namespaceAware Whether the document should be built with namespace awareness
+	 * @return DOM Document representation of the XML document
+	 * @throws OAException
+	 */
+	public static Document getDocumentFromString(String sXML, boolean namespaceAware)
+			throws OAException
+	{
 		DocumentBuilderFactory oDocumentBuilderFactory = 
 				DocumentBuilderFactory.newInstance();
+		
+		oDocumentBuilderFactory.setNamespaceAware(namespaceAware);
 
 		try {
 			DocumentBuilder oDocumentBuilder;
