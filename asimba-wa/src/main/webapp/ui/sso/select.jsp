@@ -39,8 +39,8 @@
 	var="errors" scope="request"/>  
 <html>
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-		<link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/default.css" type="text/css">
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+		<link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/default.css" type="text/css"></link>
 		<link rel="shortcut icon" href="${pageContext.request.contextPath}/static/images/logo.ico"  type="image/x-icon" />
 		<title>
 			<fmt:message bundle="${messages}" key="sso_selection_page_title">
@@ -59,7 +59,7 @@
 				<img 
 					src="${pageContext.request.contextPath}/<fmt:message bundle='${messages}' key='page_logo' />" 
 					alt="<fmt:message bundle='${messages}' key='page_logo_alt' />" 
-					id="headerlogo">
+					id="headerlogo" />
 				<h1><fmt:message bundle='${messages}' key='page_title'/></h1>
 			</div>
 			<div id="subheader">
@@ -93,7 +93,7 @@
 					</p>
 																	
 					<form id="selectionForm" class="oaForm imageSelection" action="${pageContext.request.contextPath}/sso/web" method="post" name="select">
-						<input type="hidden" name="asid" value="${requestScope.asid}">					
+						<input type="hidden" name="asid" value="${requestScope.asid}" />					
 						<c:set var="remoteCounter" value="0"/>
 						<c:set var="localCounter" value="0"/>	
 						<fieldset>
@@ -115,7 +115,7 @@
 											<li>
 												<a href='${pageContext.request.contextPath}/sso/web?asid=${requestScope.asid}&amp;profile=<c:out value="${authenticationProfile.ID}"/>'>
 													<img src='${pageContext.request.contextPath}/${liImage == liImageValue ? imageLocal : liImage}' 
-														alt='<c:out value="${authenticationProfile.friendlyName}"/>'>													
+														alt='<c:out value="${authenticationProfile.friendlyName}"/>' />													
 													<c:out value="${authenticationProfile.friendlyName}"/>
 												</a>
 											</li>																	
@@ -150,7 +150,7 @@
 										<li>
 											<a href='${pageContext.request.contextPath}/sso/web?asid=${requestScope.asid}&amp;profile=<c:out value="${authenticationProfile.ID}"/>'>
 												<img src='${pageContext.request.contextPath}/${liImage == liImageValue ? imageRemote : liImage}' 
-													alt='<c:out value="${authenticationProfile.friendlyName}"/>'>	
+													alt='<c:out value="${authenticationProfile.friendlyName}"/>' />	
 												<c:out value="${authenticationProfile.friendlyName}"/>
 											</a>
 										</li>
@@ -162,7 +162,7 @@
 						<fieldset>
 							<legend></legend>
 							<input type="submit" name="cancel" 
-								value="<fmt:message bundle='${messages}' key='cancel_button'/>">
+								value="<fmt:message bundle='${messages}' key='cancel_button'/>" />
 						</fieldset>
 					</form>		
 				</div>
