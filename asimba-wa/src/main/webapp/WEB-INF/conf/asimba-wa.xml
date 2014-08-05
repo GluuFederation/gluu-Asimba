@@ -1,0 +1,477 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+ * Asimba Server
+ *
+ * Copyright (C) 2012-2014 Asimba
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see www.gnu.org/licenses
+ * 
+ * Asimba - Serious Open Source SSO - More information on www.asimba.org
+ * 
+ -->
+<!--
+ 
+  asimba-wa.xml
+  
+  Configuration for integration testing of the asimba-wa distribution. 
+  
+  The following features are configured in this distribution:
+  - SAML2 IDP, presenting as EntityID "urn:asimba:server:asimba-wa"
+  - Username/password authentication for some testusers
+  
+  The following tests are run:
+  1) 
+  
+ -->
+<asimba-server>
+	<!--  Server configuration -->
+	<server id="urn:asimba:server:asimba-wa" friendlyname="asimba-wa server">
+		<organization id="asimba.org" friendlyname="Asimba SSO"/>
+	</server>
+
+	<!-- 
+		Crypto configuration describes the behavior of the central cryptographic services
+		and keystores that are used for protocol operations. There is a keystore that holds
+		the cryptographic credentials (private- and public key and certificate) of the server itself
+		as well as a truststore, that works as a placeholder for certificates of trusted entities 
+	 -->
+	<crypto>
+		<message_digest algorithm="SHA1"/>		
+		<random_generator algorithm="SHA1PRNG" />
+		
+		<signing algorithm="SHA1withRSA">
+			<signingfactory class="com.alfaariss.oa.engine.crypto.keystore.KeystoreSigningFactory">
+				<keystore>
+					<file>${webapp.root}/WEB-INF/test-data/asimba-test-keystore.jks</file>
+					<type>JKS</type>
+					<keystore_password>changeit</keystore_password>		
+					<alias>asimba-demo</alias>	
+					<password>changeit</password>
+				</keystore>
+	
+				<!-- No truststore in baseline config yet; to enable the truststore, rename 
+				     the 'no_truststore' element to 'truststore' 
+				-->
+				<no_truststore>
+					<file>${webapp.root}/WEB-INF/sample-data/asimba-demo-truststore.jks</file>
+					<type>JKS</type>
+					<keystore_password>changeit</keystore_password>
+				</no_truststore>
+			</signingfactory>
+		</signing>
+	</crypto>
+
+	<storagefactory class="com.alfaariss.oa.engine.storage.jdbc.JDBCFactory">
+		<model>
+			<environment_context>java:comp/env</environment_context>
+			<resource-ref>jdbc/oaModel</resource-ref>
+		</model>
+		<system>
+			<environment_context>java:comp/env</environment_context>
+			<resource-ref>jdbc/oaSystem</resource-ref>
+		</system>
+	</storagefactory>
+		
+		
+	<!-- Configure sessionfactory implementation and behavior.
+	Use JDBC backend with test settings for expiration and limits
+	For Apache Derby: add explicit validation query
+	 -->
+	<sessionfactory class="com.alfaariss.oa.engine.session.jdbc.JDBCSessionFactory">
+		<expire>600</expire>
+	    <interval>20</interval>
+	    <max>100</max>
+	    <validation query="SELECT id,tgt_id,state,requestor_id,url,expiration,forced_authenticate,passive,sessionuser,attributes,forced_userid,locale,selected_authn_profile,authn_profiles FROM session FETCH FIRST ROW ONLY" />
+	</sessionfactory>
+
+	<!-- Configure the TicketGrantingTicket-factory implemententation and behavior. 
+	Use JDBC backend with test settings for expiration and limits
+	For Apache Derby: add explicit validation query	
+	-->
+	<tgtfactory class="com.alfaariss.oa.engine.tgt.jdbc.JDBCTGTFactory">
+        <expire>3600</expire>
+        <interval>20</interval>
+        <max>1000</max>
+        <alias_store id="sp" enabled="true">
+        	<validation query="SELECT tgt_id,sp_id FROM alias_store_sp FETCH FIRST ROW ONLY"/>
+        </alias_store>
+        <alias_store id="idp" enabled="true">
+        	<validation query="SELECT tgt_id,sp_id FROM alias_store_sp FETCH FIRST ROW ONLY"/>
+        </alias_store>
+        <!-- For Apache Derby, override default validation query to check database schema -->
+        <validation query="SELECT id,expiration,tgtuser,authn_profile,authn_profile_ids,requestor_ids,attributes FROM tgt FETCH FIRST ROW ONLY" />
+    </tgtfactory>
+	
+	<requestorpoolfactory class="com.alfaariss.oa.engine.requestor.jdbc.JDBCFactory">
+			<!-- cache : control caching of requestor pools
+			@enabled : "true" or "false", whether to enable the cache feature of the JDBC requestorpool -->
+			<cache enabled="true" />
+			<validation>
+				<pools query="SELECT id,enabled,forced,friendlyname,postauthz_profile_id,preauthz_profile_id,releasepolicy FROM requestorpool_pool FETCH FIRST ROW ONLY" />
+				<pool_properties query="SELECT pool_id,name,value FROM requestorpool_properties FETCH FIRST ROW ONLY" />
+				<authentication query="SELECT authn_profile_id,pool_id FROM requestorpool_authnprofile FETCH FIRST ROW ONLY" />
+				<requestors query="SELECT id,enabled,friendlyname,pool_id FROM requestorpool_requestor FETCH FIRST ROW ONLY" />
+				<requestor_properties query="SELECT requestor_id,name,value FROM requestorpool_requestor_properties FETCH FIRST ROW ONLY" />
+			</validation>
+	</requestorpoolfactory>
+
+
+	<!-- authentication: define Authentication Profiles; an AuthenticationProfile is made up of one or 
+	     more authentication methods, which are executed sequentially. The behaviour of the actual authentication
+	     methods is defined in the websso section of the configuration  -->
+	<authentication class="com.alfaariss.oa.engine.authentication.jdbc.JDBCFactory">
+		<validation>
+			<profiles query="SELECT id,enabled,friendlyname FROM authn_profile FETCH FIRST ROW ONLY" />
+			<methods query="SELECT id,profile_id FROM authn_method FETCH FIRST ROW ONLY" />
+			<profile_properties query="SELECT profile_id,name,value FROM authn_profile_properties FETCH FIRST ROW ONLY" />
+		</validation>
+	</authentication>
+	
+	<attributerelease class="com.alfaariss.oa.engine.attribute.release.jdbc.JDBCFactory">
+		<validation>
+			<policy query="SELECT id,friendlyname,enabled FROM attributerelease_policy FETCH FIRST ROW ONLY" />
+			<attribute query="SELECT policy_id,expression FROM attributerelease_expression FETCH FIRST ROW ONLY" />
+		</validation>
+	</attributerelease>
+	
+	
+	<!-- Configure User Provisioning
+	     The main section defines which translator (from username to resolved user instance) is
+	     used.
+	 -->
+	<userfactory class="com.alfaariss.oa.engine.user.provisioning.ProvisioningFactory">
+		<main>
+			<translator>standard</translator>
+		</main>
+		
+		<!-- 
+		Translator links a user provisioning profile and a back-end (external) storage
+		that the profile works on
+		-->
+		<translator id="standard" class="com.alfaariss.oa.engine.user.provisioning.translator.standard.StandardTranslator">
+			<main>
+				<externalstorage>asimba_users</externalstorage>
+				<profile>file</profile>
+			</main>
+			<profile id="file" class="com.alfaariss.oa.engine.user.provisioning.translator.standard.StandardProfile">
+				<account>
+					<enabled default="true" />
+					<authentication>
+						<method id="GuestAuthenticationMethod">
+							<registered default="true" />
+						</method>
+						<method id="IdentifyingMethod">
+							<registered default="true" />
+						</method>
+						<method id="AsimbaUsersXmlPassword">
+							<registered default="true" />
+						</method>
+					</authentication>
+				</account>
+			</profile>
+		</translator>
+		<storagemanager>			
+			<storage id="asimba_users" class="org.asimba.engine.user.provisioning.external.storage.file.AsimbaUsersXml">
+				<file>${webapp.root}/WEB-INF/test-data/asimba-test-users.xml</file>
+			</storage>
+		</storagemanager>
+	</userfactory>
+
+	<!--  IDP Profiles -->	
+	<profiles>
+		<profile id="saml2" class="com.alfaariss.oa.profile.saml2.SAML2Profile">
+			<baseURL>http://localhost:8080/asimba-wa/profiles/saml2</baseURL>
+			<websso path="/sso/web" />
+			<requestors signing="true" />
+			<IssueInstant>
+				<window before_offset="60" after_offset="60" />	<!-- defaults -->
+			</IssueInstant>
+			
+			<!-- 
+				Metadata configuration allows specific attributes of the SAML entity to be entered
+				so they can be published as part of the metadata
+			 -->
+			<metadata entityID="urn:asimba.org:testserver:asimba-wa">
+				<signing enabled="true" />
+				<organization url="http://www.asimba.org" />
+				<ContactPersons>
+					<ContactPerson contactType="administrative">
+						<Company>Asimba</Company>
+						<EmailAddresses>
+							<EmailAddress>info@asimba.org</EmailAddress>
+						</EmailAddresses>
+						<TelephoneNumbers>
+							<TelephoneNumber>0800-ASIMBA;)</TelephoneNumber>
+						</TelephoneNumbers>
+					</ContactPerson>
+				</ContactPersons>
+			</metadata>
+			
+			<!-- 
+				Configure the SAML profiles, like SSO and Single Logout
+			 -->
+			<profiles>
+				<!-- SAML Profiles configuration -->
+				<profile id="sso/web" class="com.alfaariss.oa.profile.saml2.profile.sso.WebBrowserSSO">
+	                <idpproxy enableShadowedEntityId="true" />
+					<bindings default="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect">
+						<binding id="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" />
+						<binding id="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
+							<property name="path" value="/ui/profiles/saml2/http-post.jsp" />
+						</binding>
+						<binding id="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact">
+							<property name="post" value="TRUE" />
+							<property name="path" value="/ui/profiles/saml2/http-artifact-post.jsp" />
+						</binding>
+					</bindings>
+					<nameid default="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent">
+						<format id="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"
+							class="org.asimba.util.saml2.nameid.handler.MSO365PersistentFormatHandler">
+							<!-- immutableid_attribute configures the attribute that can overrule local 
+								immutableId generation -->
+							<immutable_attribute name="mso365immutableid" removeAfterUse="true" />
+							<!-- uid_attribute@name is used as input to calculate the value for ImmutableID -->
+							<uid_attribute name="IDPEmail" removeAfterUse="false" />
+							<opaque enabled="true" salt="somesalt" />
+						</format>
+<!-- 						<format id="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent">
+							<attribute name="email"/>
+							<opaque enabled="FALSE" salt="0"/>
+						</format> -->
+						<format id="urn:oasis:names:tc:SAML:2.0:nameid-format:transient">
+							<length>16</length>
+						</format>
+						<format id="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
+							class="org.asimba.util.saml2.nameid.handler.GoogleAppsUnspecifiedFormatHandler">
+							<!-- GoogleApps configuration -->
+							<googleapps_attribute name="_uid" removeAfterUse="true" />
+							<selector_property name="saml2.nameid.unspecified11" />
+							<attribute_property name="saml2.nameid.arg.attributename" />
+							<!-- Fallback configuration -->
+							<opaque enabled="false" />
+							<!-- Configure the "uid" attribute to become the NameID value -->
+							<attribute name="uid" removeAfterUse="false" />
+							<ignoreRequestorContext value="true" />
+						</format>
+ 						<format id="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">
+							<attribute name="email"/>
+						</format>
+					</nameid>	                
+					<response>
+						<expiration offset="120" />
+						<attributes nameformat="urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified" />
+					</response>
+
+					<authentication request_mode="passthrough">
+						<profile id="local.guest" authncontext="urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified" />
+						<profile id="local.identifying" authncontext="urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified" />
+						<profile id="local.asimba.passwd" authncontext="urn:oasis:names:tc:SAML:2.0:ac:classes:Password" />
+					</authentication>
+				</profile> <!-- sso/web -->
+				
+				<profile id="sso/logout" class="com.alfaariss.oa.profile.saml2.profile.sso.SingleLogout">
+					<bindings default="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect">
+                        <binding id="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" />
+                        <binding id="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
+                            <property name="path" value="/ui/profiles/saml2/http-post.jsp" />
+                        </binding>
+                        <binding id="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact" >
+                        	<property name="post" value="false" />
+                        	<property name="path" value="/ui/profiles/saml2/http-artifact-post.jsp" />                                                       
+                        </binding>
+                        <binding id="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" />
+                    </bindings>
+                    
+                    <nameid default="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent">
+						<format id="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"
+							class="org.asimba.util.saml2.nameid.handler.MSO365PersistentFormatHandler">
+							<!-- immutableid_attribute configures the attribute that can overrule local 
+								immutableId generation -->
+							<immutable_attribute name="mso365immutableid" removeAfterUse="true" />
+							<!-- uid_attribute@name is used as input to calculate the value for ImmutableID -->
+							<uid_attribute name="IDPEmail" removeAfterUse="false" />
+							<opaque enabled="true" salt="somesalt" />
+						</format>
+<!-- 						<format id="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent">
+							<attribute name="email"/>
+							<opaque enabled="FALSE" salt="0"/>
+						</format> -->
+						<format id="urn:oasis:names:tc:SAML:2.0:nameid-format:transient">
+							<length>16</length>
+						</format>
+						<format id="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
+							class="org.asimba.util.saml2.nameid.handler.GoogleAppsUnspecifiedFormatHandler">
+							<!-- GoogleApps configuration -->
+							<googleapps_attribute name="_uid" removeAfterUse="true" />
+							<selector_property name="saml2.nameid.unspecified11" />
+							<attribute_property name="saml2.nameid.arg.attributename" />
+							<!-- Fallback configuration -->
+							<opaque enabled="false" />
+							<!-- Configure the "uid" attribute to become the NameID value -->
+							<attribute name="uid" removeAfterUse="false" />
+							<ignoreRequestorContext value="true" />
+						</format>
+ 						<format id="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">
+							<attribute name="email"/>
+						</format>
+					</nameid>
+				</profile> <!-- sso/logout -->
+				
+				<profile id="artifact" class="com.alfaariss.oa.profile.saml2.profile.artifactresolution.ArtifactResolutionService">
+					<artifactfactory class="com.alfaariss.oa.util.saml2.storage.artifact.jdbc.JDBCArtifactMapFactory">
+						<expire>60</expire>
+					    <interval>60</interval>
+					</artifactfactory>
+				</profile> <!-- artifact -->
+				
+				<profile id="idp" class="com.alfaariss.oa.profile.saml2.profile.metadata.IDPMetadata" />
+			</profiles>
+		</profile>
+
+		
+		<!-- Also add development profile aselect: -->
+		<profile id="aselect" class="com.alfaariss.oa.profile.aselect.processor.ASelectProcessor" >
+			<redirect_url>http://localhost:8080/asimba-wa/profiles/aselect</redirect_url>
+			<logout enabled="true" />
+			<error>
+				<jsp path="/ui/profiles/aselect/error.jsp" />
+				<handling local="FALSE" />
+			</error>
+			<ws enabled="true" force_requestor_id="true" />
+			
+			<!-- optional websso configuration tweaks -->
+			<websso>
+				<path>/sso</path>
+				<url>http://localhost:8080/asimba-wa/sso</url>
+			</websso>
+			<requesthandlers>
+				<sp enabled="TRUE" app_level="9">
+					<!-- 
+						requestorpool : Configure the requestors from the specified pool
+							as allowed requestors
+					 -->
+					<requestorpool id="requestorpool.1">
+						<signing enabled="FALSE" />
+						<app_level>2</app_level>
+						<!-- uid: when @attribute is not configured, uses the authenticated 
+							userid instead of the configured attribute
+							i.e.
+							<uid attribute="phonenr">
+							will return the value of the "phonenr" attribute as the user-id
+						-->
+						<uid> <!-- attribute="email"  --> 
+							<opaque enabled="FALSE" salt="bad"/>
+						</uid>
+					</requestorpool>
+				</sp>
+				<idp enabled="true" app_level="0" />
+			</requesthandlers>
+			<authentication authsp_level="0">
+				<profile id="local.guest" authsp_level="1" />
+				<profile id="local.identifying" authsp_level="1" />
+				<profile id="local.asimba.passwd" authsp_level="10" />
+			</authentication>
+		</profile>
+	</profiles>
+
+
+
+	<!-- websso: configure the behaviour of the server frontend. This is made up of
+	       * authentication: the authentication methods
+	       * profiles: the IDP profiles (SAML, A-Select, etc.)
+	       * postauthorization: the web postauthorization phase
+	-->
+	<websso>
+		<authentication always_show_select_form="false">
+			<methods>
+				<!--
+					The Guest Authentication Method immediately returns the identity of a configured user
+					The guest user is identified by the user@id attribute, and must exist in the
+					UserFactory
+				 -->
+				<method id="GuestAuthenticationMethod" friendlyname="Guest authentication" enabled="true" 
+					class="com.alfaariss.oa.authentication.guest.GuestAuthenticationMethod">
+					<user id="guest"/>
+				</method>
+				
+				<!-- 
+					The Identifying Authentication Method requests a userid. When this userid exists, the
+					user is established as authenticated user. So, no authentication is performed. It does
+					require the user ot enter an existing (UserFactory provided) userid.
+					Use this to test stuff.
+				 -->
+				<method id="IdentifyingMethod" friendlyname="Identifying provided username" enabled="true"
+					class="com.alfaariss.oa.authentication.identifying.IdentifyingAuthenticationMethod">
+					<!-- retries: number of tries before stopping, -1 for unlimited attempts -->
+					<retries>-1</retries>
+					
+					<!-- template@path: the JSP file that is presented to the user in which she can
+					     provide the user-id that will be looked up in the UserFactory 
+					-->
+					<template path="/ui/sso/authn/identifying/identifying.jsp" />
+				</method>
+			
+				<!-- 
+					The AsimbaUsersXml Password method uses the asimba-test-users.xml file as input to
+					authenticate users. The method can be configured with a password entry JSP-template,
+					and the number of password attempts that a user has 
+				 -->
+				<method id="AsimbaUsersXmlPassword" friendlyname="Password authentication (AsimbaUsers)" enabled="true"
+					class="com.alfaariss.oa.authentication.password.PasswordAuthenticationMethod">
+					<template path="/ui/sso/authn/password/password.jsp" />
+					<retries>1000</retries>
+					
+					<!-- Password Handler -->
+					<password_handler class="org.asimba.am.password.asimbausersxml.AsimbaUsersXmlHandler">
+						<default realm="@asimba.org"/>
+						<resource realm="@asimba.org" 
+							file="${webapp.root}/WEB-INF/test-data/asimba-test-users.xml">
+							<full_uid>false</full_uid>
+						</resource>
+					</password_handler>
+				</method>
+			</methods>
+		</authentication>
+	</websso>
+
+	
+	<attributegatherer id="asimba.gatherer.1" friendlyname="Collect attributes from all sources" 
+			enabled="true">
+		<processor id="AsimbaUsersXml" friendlyname="Source asimba-test-users.xml" 
+				class="org.asimba.engine.attribute.gather.processor.file.AsimbaUsersXmlGatherer">
+			<file>${webapp.root}/WEB-INF/test-data/asimba-test-users.xml</file>
+			
+			<!-- 
+			gather can specify a whitelist of attributes to gather
+			if omitted, all available attributes are gathered
+			-->
+			<!--
+			<gather>
+				<attribute name="whitelist-attribute-name" />
+			</gather>
+			 -->
+			
+			<mapper>
+				<map ext="ext.phonenr" int="phonenr" />
+			</mapper>
+		</processor>
+	</attributegatherer>
+	
+	
+	<!--  Helpers -->
+	<helpers>
+		<helper id="stylesheet" enabled="true" 
+			class="com.alfaariss.oa.helper.stylesheet.StyleSheetHelper" />
+	</helpers>
+</asimba-server>

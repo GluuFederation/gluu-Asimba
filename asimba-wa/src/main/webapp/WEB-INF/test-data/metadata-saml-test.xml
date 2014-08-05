@@ -1,0 +1,19 @@
+<!--
+   Unsigned metadata for urn:asimba:requestor:saml-test test sp
+   Used in Asimba integration tests (asimba-wa, etc.)
+-->
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="urn:asimba:requestor:saml-test">
+  <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol">
+    <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="http://localhost:8080/requestor-saml-test/index.php" index="0"/>
+    <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:1.0:profiles:browser-post" Location="http://localhost:8080/requestor-saml-test/index.php" index="1"/>
+  </md:SPSSODescriptor>
+  <md:Organization>
+    <md:OrganizationName xml:lang="en">Asimba</md:OrganizationName>
+    <md:OrganizationDisplayName xml:lang="en">Asimba - Serious Open Source SSO</md:OrganizationDisplayName>
+    <md:OrganizationURL xml:lang="en">http://www.asimba.org</md:OrganizationURL>
+  </md:Organization>
+  <md:ContactPerson contactType="technical">
+    <md:GivenName>Administrator</md:GivenName>
+    <md:EmailAddress>baseline@asimba.org</md:EmailAddress>
+  </md:ContactPerson>
+</md:EntityDescriptor>

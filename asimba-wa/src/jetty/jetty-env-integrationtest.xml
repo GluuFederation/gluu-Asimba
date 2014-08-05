@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Context configuration for Integration Tests -->
+<Configure id='wac' class="org.eclipse.jetty.webapp.WebAppContext">
+	<New id="asimba_wa_db" class="org.eclipse.jetty.plus.jndi.Resource">
+		<Arg>
+			<Ref refid="wac" />
+		</Arg>
+		<Arg>jdbc/asimba_wa_db</Arg>
+		<Arg>
+			<New class="org.apache.commons.dbcp.BasicDataSource">
+				<Set name="username">username</Set>
+				<Set name="password">password</Set>
+				<Set name="url">jdbc:derby://localhost/memory:asimba-wa-db</Set>
+				<Set name="driverClassName">org.apache.derby.jdbc.ClientDriver</Set>
+			</New>
+		</Arg>
+	</New>
+	
+	<!-- Create mappings because we're using one big DB instead of multiple DB's -->
+	<New id="mapModelToDB" class="org.eclipse.jetty.plus.jndi.Link">
+		<Arg>
+			<Ref refid='wac' />
+		</Arg>
+		<Arg>jdbc/oaModel</Arg>			<!-- name in web.xml -->
+		<Arg>jdbc/asimba_wa_db</Arg>	<!-- name in container environment -->
+	</New>
+	<New id="mapSystemToDB" class="org.eclipse.jetty.plus.jndi.Link">
+		<Arg>
+			<Ref refid='wac' />
+		</Arg>
+		<Arg>jdbc/oaSystem</Arg>		<!-- name in web.xml -->
+		<Arg>jdbc/asimba_wa_db</Arg>	<!-- name in container environment -->
+	</New>
+	
+	<!-- Configure asimba-wa.xml to overrule default asimba.xml name -->
+ 	<Get name="ServletContext">
+		<Call name="setInitParameter">
+			<Arg>configuration.handler.filename</Arg>
+			<Arg>
+				<SystemProperty name="asimba.dir"/>/src/main/webapp/WEB-INF/conf/asimba-wa.xml
+			</Arg>
+		</Call>
+	</Get>
+
+</Configure>
+
+<!-- alternatively try: 
+		<New class="org.apache.commons.dbcp.BasicDataSource">
+			<Set name="username">username</Set>
+			<Set name="password">password</Set>
+			<Set name="url">jdbc:derby://localhost/memory:asimba-wa-db;create=true
+			</Set>
+			<Set name="driverClassName">org.apache.derby.jdbc.ClientDriver</Set>
+		</New>
+	
+	<New id="asimba_wa_db" class="org.eclipse.jetty.plus.jndi.Resource"> 
+		<Arg>
+			<Ref refid="wac"/>
+		</Arg>
+		<Arg>jdbc/asimba_wa_db</Arg>
+		<Arg>
+			<New class="org.apache.derby.jdbc.EmbeddedDataSource"> 
+				<Set name="DatabaseName">asimba-wa-db</Set>
+				<Set name="User">username</Set>
+				<Set name="Password">password</Set>
+			</New>
+		</Arg> 
+	</New> 
+
+
+or:
+
+<Arg>
+	<Ref refid="wac"/>
+</Arg>
+<Arg>jdbc/asimba_wa_db</Arg>
+<Arg>
+<New class="org.apache.commons.dbcp.BasicDataSource">
+<Set name="driverClassName">org.apache.derby.jdbc.EmbeddedDriver</Set>
+<Set name="url">jdbc:derby://memory:asimba-wa-db;create=false</Set>
+<Set name="username">username</Set>
+<Set name="password">password</Set>
+</New>
+</Arg>
+-->
+ 

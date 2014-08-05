@@ -1,0 +1,39 @@
+<!-- 
+	asimba-users.xml demonstration userstore
+ -->
+<asimba-users version="1.1">
+	<!-- global: define attributes that are applied to all the users -->
+	<global>
+		<country>Netherlands</country>
+	</global>
+	
+	<!-- user : define user instances with their attributes, 
+				see baseline documentation for more information 
+	-->
+	<user id="asimba1" org="Asimba-Laboratory">
+		<authMethod type="password-plain">
+			<property name="password">asimba1</property>
+		</authMethod>
+		<phonenr>+1234567890</phonenr>
+		<firstname>Alice</firstname>
+		<lastname>Simba</lastname>
+		<email>alice@asimba.org</email>
+		<role>user</role>
+	</user>
+	<user id="johndoe" org="Asimba-Laboratory">
+		<authMethod type="password-plain">
+			<property name="password">johndoe</property>
+		</authMethod>
+		<phonenr>+9876543210</phonenr>
+		<firstname>John</firstname>
+		<lastname>Doe</lastname>
+		<email>john@asimba.org</email>
+		<role>manager</role>
+	</user>
+	<user id="guest" org="Guests">
+		<firstname>Guest</firstname>
+		<lastname>User</lastname>
+		<email>no@email.com</email>
+		<role>guest</role>
+	</user>
+</asimba-users>

@@ -12,7 +12,7 @@
 	<listener> 
 		<listener-class>com.alfaariss.oa.OAContextListener</listener-class> 
 	</listener> 
- 
+	
 	<!-- Asimba Core Manager -->
 	<servlet>
 		<servlet-name>ManagerServlet</servlet-name>
@@ -98,5 +98,25 @@
 		</auth-constraint>
     </security-constraint>
 
+
+	<!-- add standard resource-ref definitions when using the JDBC backend;
+	these must be provided by the Application Server context! -->
+	<resource-ref>
+		<res-ref-name>jdbc/oaModel</res-ref-name>
+		<res-type>javax.sql.DataSource</res-type>
+		<res-auth>Container</res-auth>
+	</resource-ref>
+	<resource-ref>
+		<res-ref-name>jdbc/oaSystem</res-ref-name>
+		<res-type>javax.sql.DataSource</res-type>
+		<res-auth>Container</res-auth>
+	</resource-ref>
+	
+<!-- 	<resource-ref>
+		<res-ref-name>jdbc/oaLogging</res-ref-name>
+		<res-type>javax.sql.DataSource</res-type>
+		<res-auth>Container</res-auth>
+	</resource-ref>
+ -->	
 
 </web-app>
