@@ -1,0 +1,75 @@
+	Asimba Integration Test: asimba-wa
+==================================================
+
+This project packages an Asimba distribution together with a series of 
+Integration Tests that test a typical configuration of this distribution.
+
+The aismba-wa src/main directory specifies the context of the running Asimba 
+server instance, that is tested from the tests that are implemented in the 
+src/test directory.  
+
+This means that src/main/webapp/WEB-INF/conf/asimba-wa.xml is used to
+configure asimba-wa. Configuring Asimba also means initializing the
+database with a schema and load it with configuration data from 
+src/main/resources/sql
+
+The asimba-wa project creates the context from its src/test directory.
+The configuration is read from src/test/webapp/WEB-INF/conf/asimba-wa.xml ; 
+this is configured in the Java-system property in integration-jetty-env.xml
+
+The asimba-wa.properties file that specifies which configurationprovider to use, 
+is configured in the init-property 'asimba.properties.file' that is set in the
+startup-options of Jetty in Maven's pom.xml.
+
+
+* Running the tests
+There is a Maven default profile, that ensures that all the tests are run except for dev-specific 
+tests. These dev-specific tests only make sense while debugging, as they make sure that the
+post-integration phase is never reached, so the environment stays up, so it can be used as
+server to make requests to.
+
+Default startup (excludes Dev-tests)
+	$ mvn clean verify
+
+Startup that includes the dev-tests
+	$ mvn -PdevIntegrationTests clean verify 
+
+
+
+	Extended information
+==================================================
+
+* Keystore Generation
+
+% keytool -genkeypair -keyalg RSA -alias "asimba-test" -keypass changeit -keystore asimba-test-keystore.jks -storepass changeit
+What is your first and last name?
+  [Unknown]:  Alice
+What is the name of your organizational unit?
+  [Unknown]:  ^C%                                                                                                                                                                                                                                        speedym% keytool -genkeypair -keyalg RSA -alias "asimba-test" -keypass changeit -keystore asimba-test-keystore.jks -storepass changeit
+What is your first and last name?
+  [Unknown]:  Asimba Test Server
+What is the name of your organizational unit?
+  [Unknown]:  Lab
+What is the name of your organization?
+  [Unknown]:  Asimba
+What is the name of your City or Locality?
+  [Unknown]:  Zwolle
+What is the name of your State or Province?
+  [Unknown]:  OVR
+What is the two-letter country code for this unit?
+  [Unknown]:  NL
+Is CN=Asimba Test Server, OU=Lab, O=Asimba, L=Zwolle, ST=OVR, C=NL correct?
+  [no]:  yes
+
+
+
+* MySQL to Derby notes
+When using TEXT-type to store byte[] (setBytes()), make column type:
+TEXT -> LONG VARCHAR FOR BIT DATA
+
+
+
+* Run Maven with verbose class loading feedback
+On commandline, enter:
+	$ MAVEN_OPTS="-verbose:class" mvn clean verify
+This will let the Classloader show which classes are loaded at what time.
