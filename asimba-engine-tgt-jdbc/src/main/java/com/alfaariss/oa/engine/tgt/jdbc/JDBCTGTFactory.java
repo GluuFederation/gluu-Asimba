@@ -1294,6 +1294,7 @@ public class JDBCTGTFactory extends AbstractStorageFactory implements ITGTFactor
                  throw new DatabaseException(SystemErrors.ERROR_CONFIG_READ);
              }
              
+             _logger.debug("Running validation query "+sVerificationQuery);
              pVerify = oConnection.prepareStatement(sVerificationQuery);
              try
              {
