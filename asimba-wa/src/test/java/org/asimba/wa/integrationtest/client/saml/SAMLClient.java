@@ -1,3 +1,24 @@
+/*
+ * Asimba - Serious Open Source SSO
+ * 
+ * Copyright (C) 2014 Asimba
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see www.gnu.org/licenses
+ * 
+ * Asimba - Serious Open Source SSO - More information on www.asimba.org
+ * 
+ */
 package org.asimba.wa.integrationtest.client.saml;
 
 import java.io.IOException;
@@ -47,7 +68,13 @@ public class SAMLClient extends AbstractHttpClientServerTest {
 	
 
 	/**
-	 * Register the requestor dynamically, its metadata??
+	 * Register the requestor directly in the asimba-wa database<br/>
+	 * This adds records to:<br/>
+	 * <ul>
+	 * <li>requestorpool_requestor ; adding the requestor</li>
+	 * <li>requestorpool_requestor_properties ; adding signing=false and metadata.url/timeout properties</li>
+	 * </ul>
+	 * The metadata-url is established dynamically to end up in our local servlet (SAMLSPHandler)
 	 * @param requestorPool
 	 */
 	public void registerInRequestorPool(String requestorPool)
@@ -68,7 +95,6 @@ public class SAMLClient extends AbstractHttpClientServerTest {
 		" ('"+_entityId+"', '"+requestorPool+"', '"+_entityId+" friendlyname', true, CURRENT_TIMESTAMP)";
 		_logger.info("Registering requestor:\n{}", sql);
 		
-		
 		AsimbaWaDerbyDb.getInstance().executeSql(sql);
 
 		sql = "INSERT INTO requestorpool_requestor_properties(requestor_id, name, value) VALUES" +
@@ -78,7 +104,8 @@ public class SAMLClient extends AbstractHttpClientServerTest {
 		_logger.info("Registering requestor properties:\n{}", sql);
 		
 		AsimbaWaDerbyDb.getInstance().executeSql(sql);
-
+		
+		_logger.debug("Added requestor {} in requestorpool {}", _entityId, requestorPool);
 	}
 	
 	
@@ -167,7 +194,6 @@ public class SAMLClient extends AbstractHttpClientServerTest {
 			_logger.error("Binding {} not (yet) supported.", binding);
 			return null;
 		}
-		
 	}
 
 	
@@ -176,7 +202,4 @@ public class SAMLClient extends AbstractHttpClientServerTest {
 		// Get this from the SAMLSP Handler:
 		return _samlSPHandler.getSAMLResponse();
 	}
-	
-	
-	
 }

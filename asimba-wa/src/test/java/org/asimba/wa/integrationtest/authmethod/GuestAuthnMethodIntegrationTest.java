@@ -1,3 +1,24 @@
+/*
+ * Asimba - Serious Open Source SSO
+ * 
+ * Copyright (C) 2014 Asimba
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see www.gnu.org/licenses
+ * 
+ * Asimba - Serious Open Source SSO - More information on www.asimba.org
+ * 
+ */
 package org.asimba.wa.integrationtest.authmethod;
 
 import static org.junit.Assert.assertEquals;
@@ -26,6 +47,22 @@ import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
+/**
+ * Tests the configured Guest Authentication Method<br/>
+ * This method always returns the configured guest-user's identity<br/>
+ * <br/>
+ * Uses a SAML2 client to request the authenticated user.<br/>
+ * The SAML2 client is dynamically established, and inserted in the requestor-database
+ * on the fly<br/>
+ * The SAML2 client also starts up a servlet that serves up the metadata containing the
+ * ACS-URL that asimba-wa should use to return the Response to<br/>
+ * <br/>
+ * Note: SAML2 AuthnRequest specific features (XML Signatures, Requesting NameIDFormat, etc)
+ * are part of the SAML2 tests.
+ *   
+ * @author mdobrinic
+ *
+ */
 public class GuestAuthnMethodIntegrationTest {
 	private static Logger _logger = LoggerFactory.getLogger(GuestAuthnMethodIntegrationTest.class);
 
