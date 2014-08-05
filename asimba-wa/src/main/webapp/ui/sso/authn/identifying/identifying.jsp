@@ -93,7 +93,7 @@
 					<div id="contentWarning" class="warning">				
 						<ul>
 							<c:forEach items="${requestScope.details}" var="warning">
-								<li><fmt:message bundle="${warnings}" key="${warning}" /></li>
+								<li><a name="warning.${warning}"></a><fmt:message bundle="${warnings}" key="${warning}" /></li>
 							</c:forEach>
 						</ul>							
 					</div>
