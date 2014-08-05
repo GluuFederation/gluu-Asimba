@@ -53,7 +53,7 @@
 			<fmt:message bundle='${messages}' key='page_subtitle'/>
 		</div>
 		<div id="content">	
-			<div>
+			<div id="assertMainPageOK">
 				<p>
 					<fmt:message bundle='${messages}' key='welcome'/>
 				</p>
