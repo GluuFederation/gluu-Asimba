@@ -42,7 +42,19 @@ import com.alfaariss.oa.engine.core.tgt.factory.ITGTAliasStore;
 import com.alfaariss.oa.util.database.DatabaseException;
 
 /**
- * Stores TGT aliasses in a JDBC database.
+ * Stores TGT aliasses in a JDBC database.<br/>
+ * <br/>
+ * The actual queries that are used to perform tasks, are by default generated dynamically.<br/>
+ * Generated queries are compatible with MySQL 5.x SQL syntax.<br/>
+ * When another database is used, it is possible to override the generated queries from
+ * the asimba.xml configuration file.<br/>
+ * The following queries can be overridden:
+ * <ul>
+ * <li>remove_expired: query that removes records in alias_store_% that reference a 
+ * TGT that no longer exists</li> 
+ * </ul>
+ * Override a query with<br/>
+ * &lt;[query-type] query="[sql-query]" /&gt;
  * 
  * @author MHO
  * @author Alfa & Ariss
@@ -123,6 +135,8 @@ public class JDBCTGTAliasStore implements ITGTAliasStore
         sbInfo.append("' : ");
         sbInfo.append(bIsAliasSupportEnabled ? "enabled" : "disabled");
         _logger.info(sbInfo.toString());
+        
+        _logger.info("Started "+getClass().getName()+"-"+getClass().getPackage().getImplementationVersion());
     }
      
 	/**
@@ -670,16 +684,37 @@ public class JDBCTGTAliasStore implements ITGTAliasStore
              _sAliasColumnEntityID = _sID + ALIAS_STORE_COLUMN_ENTITY_ID_POSTFIX;
          
          //queries for Alias store
-         StringBuffer sbQueryRemoveExpired = new StringBuffer("DELETE FROM ");
-         sbQueryRemoveExpired.append(_sAliasTableName);
-         sbQueryRemoveExpired.append(" WHERE ");
-         sbQueryRemoveExpired.append(_sAliasColumnTGTID);
-         sbQueryRemoveExpired.append(" NOT IN (SELECT ");
-         sbQueryRemoveExpired.append(_sTGTTableName).append(".").append(_sTGTColumnID);
-         sbQueryRemoveExpired.append(" FROM ");
-         sbQueryRemoveExpired.append(_sTGTTableName);
-         sbQueryRemoveExpired.append(")");
-         _sAliasQueryRemoveExpired = sbQueryRemoveExpired.toString();
+         //<remove_expired query="..."/>
+         _sAliasQueryRemoveExpired = null;
+         Element eRemoveExpired = configurationManager.getSection(eConfig, "remove_expired");
+         if(eRemoveExpired != null)
+         {
+        	 _sAliasQueryRemoveExpired = configurationManager.getParam(eRemoveExpired, "query");
+             if(_sAliasQueryRemoveExpired == null || _sAliasQueryRemoveExpired.length() == 0)
+             {
+                 _logger.warn("Empty remove_expired query found for alias store '"+_sAliasTableName+"'");
+             }
+             else
+             {
+            	 _logger.info("Setting configured remove_expired query");
+             }
+         }
+
+         if (_sAliasQueryRemoveExpired == null)
+         {
+        	 _logger.debug("Building remove_expired query manually (MySQL NOT-IN syntax)");
+	         StringBuffer sbQueryRemoveExpired = new StringBuffer("DELETE FROM ");
+	         sbQueryRemoveExpired.append(_sAliasTableName);
+	         sbQueryRemoveExpired.append(" WHERE ");
+	         sbQueryRemoveExpired.append(_sAliasColumnTGTID);
+	         sbQueryRemoveExpired.append(" NOT IN (SELECT ");
+	         sbQueryRemoveExpired.append(_sTGTTableName).append(".").append(_sTGTColumnID);
+	         sbQueryRemoveExpired.append(" FROM ");
+	         sbQueryRemoveExpired.append(_sTGTTableName);
+	         sbQueryRemoveExpired.append(")");
+	         _sAliasQueryRemoveExpired = sbQueryRemoveExpired.toString();
+         }
+         
          _logger.debug("Using alias remove expired query: " + _sAliasQueryRemoveExpired);
          
          StringBuffer sbQuerySelect = new StringBuffer("SELECT ");
