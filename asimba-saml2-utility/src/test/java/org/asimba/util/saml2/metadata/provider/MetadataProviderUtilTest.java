@@ -114,7 +114,6 @@ public class MetadataProviderUtilTest extends TestCase {
 
 		String id = "someID";
 		// Example that throws an exception when no network connectivity is available
-		//    	String url = "https://security.moo.nl/websts/FederationMetadata_KNProd_MOOTest.xml";
 		String url = "https://localhost/test.xml";
 
 
