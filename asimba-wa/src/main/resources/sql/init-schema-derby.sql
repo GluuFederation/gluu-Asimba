@@ -160,7 +160,29 @@ CREATE TABLE artifact(
   id VARCHAR(60) NOT NULL,
   issuer VARCHAR(255) DEFAULT NULL,
   relyingparty VARCHAR(255) DEFAULT NULL,
-  expiration timestamp NOT NULL,
+  expiration TIMESTAMP NOT NULL,
   message clob,
+  PRIMARY KEY (id)
+);
+
+
+-- for saml2 authmethod:
+CREATE TABLE saml2_orgs
+(
+  id VARCHAR(255) NOT NULL,
+  sourceid blob NOT NULL,
+  friendlyname VARCHAR(255) NOT NULL,
+  metadata_url VARCHAR(255),
+  metadata_timeout integer NOT NULL DEFAULT -1,
+  metadata_file VARCHAR(255),
+  enabled boolean DEFAULT true,
+  acs_index boolean NOT NULL DEFAULT true,
+  scoping boolean NOT NULL DEFAULT true,
+  nameidpolicy boolean NOT NULL DEFAULT true,
+  allow_create boolean,
+  nameidformat VARCHAR(255) DEFAULT NULL,
+  date_last_modified TIMESTAMP,
+  avoid_subjconf boolean NOT NULL DEFAULT false,
+  disable_sso boolean NOT NULL DEFAULT false,
   PRIMARY KEY (id)
 );

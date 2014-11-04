@@ -1,3 +1,24 @@
+/*
+ * Asimba - Serious Open Source SSO
+ * 
+ * Copyright (C) 2014 Asimba
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see www.gnu.org/licenses
+ * 
+ * Asimba - Serious Open Source SSO - More information on www.asimba.org
+ * 
+ */
 package org.asimba.wa.integrationtest.authmethod;
 
 import static org.junit.Assert.assertEquals;
@@ -10,8 +31,8 @@ import java.util.Map;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.asimba.wa.integrationtest.RunConfiguration;
-import org.asimba.wa.integrationtest.client.saml.Response;
-import org.asimba.wa.integrationtest.client.saml.SAMLClient;
+import org.asimba.wa.integrationtest.saml2.model.Response;
+import org.asimba.wa.integrationtest.saml2.sp.SAML2SP;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,16 +65,22 @@ public class IdentifyingAuthnMethodIntegrationTest {
 	private static Logger _logger = LoggerFactory.getLogger(IdentifyingAuthnMethodIntegrationTest.class);
 
 	private WebClient _webClient;
+	private String _samlWebSSOUrl;
+	private SAML2SP _samlClient;
 
 	@Before
-	public void setup()
+	public void setup() throws Exception
 	{
 		_webClient = new WebClient();
+		_samlWebSSOUrl = RunConfiguration.getInstance().getProperty("asimbawa.saml.websso.url");
+		_samlClient = new SAML2SP("urn:asimba:requestor:samlclient-test:identifying", null);	// no SSL context (yet...)
+		_samlClient.registerInRequestorPool("requestorpool.1");
 	}
 
 	@After
 	public void stop()
 	{
+		_samlClient.unregister();
 		_webClient.closeAllWindows();
 	}
 
@@ -63,12 +90,7 @@ public class IdentifyingAuthnMethodIntegrationTest {
 	{
 		_logger.trace("testKnownUser entered");
 
-		// Setup the SAML Client with asimba-wa
-		SAMLClient samlClient = new SAMLClient("urn:asimba:requestor:samlclient-test:identifying", null);
-		samlClient.registerInRequestorPool("requestorpool.1");
-
-		HtmlPage htmlPage = navigateToIdentifyingForm(samlClient, _webClient);
-
+		HtmlPage htmlPage = navigateToIdentifyingForm(_samlClient, _webClient);
 		String knownUser = RunConfiguration.getInstance().getProperty("identifying.user.known");
 
 		HtmlForm form = htmlPage.getFormByName("login");
@@ -83,11 +105,11 @@ public class IdentifyingAuthnMethodIntegrationTest {
 		assertEquals("OK", content);
 		
 		// Now make assertions from the received SAMLResponse
-		Response samlResponse = samlClient.getReceivedResponse();
+		Response samlResponse = _samlClient.getReceivedResponse();
 		assertNotNull(samlResponse);
 		assertEquals("urn:oasis:names:tc:SAML:2.0:status:Success", samlResponse.getStatusCode());
 
-		Map<String, String> attributes = samlResponse.getAttributes();
+		Map<String, String> attributes = samlResponse.getAssertion().getParsedAttributes();
 		_logger.info("Attributes received: {}", attributes);
 
 		// Do some assertions on the attributes (guest-user related)
@@ -107,11 +129,7 @@ public class IdentifyingAuthnMethodIntegrationTest {
 	{
 		_logger.trace("testUnknownUser entered");
 		
-		// Setup the SAML Client with asimba-wa
-		SAMLClient samlClient = new SAMLClient("urn:asimba:requestor:samlclient-test:identifying", null);
-		samlClient.registerInRequestorPool("requestorpool.1");
-
-		HtmlPage htmlPage = navigateToIdentifyingForm(samlClient, _webClient);
+		HtmlPage htmlPage = navigateToIdentifyingForm(_samlClient, _webClient);
 
 		String unknownUser = RunConfiguration.getInstance().getProperty("identifying.user.unknown");
 
@@ -136,13 +154,11 @@ public class IdentifyingAuthnMethodIntegrationTest {
 	}
 
 
-	private HtmlPage navigateToIdentifyingForm(SAMLClient samlClient, WebClient webClient) throws Exception
+	private HtmlPage navigateToIdentifyingForm(SAML2SP samlClient, WebClient webClient) throws Exception
 	{
-		String samlWebSSOUrl = RunConfiguration.getInstance().getProperty("asimbawa.saml.websso.url");
-		
 		// Make the AuthnRequest
 		String content;
-		WebRequest webRequest = samlClient.getAuthnWebRequest(samlWebSSOUrl, SAMLConstants.SAML2_REDIRECT_BINDING_URI);
+		WebRequest webRequest = samlClient.getAuthnWebRequest(_samlWebSSOUrl, SAMLConstants.SAML2_REDIRECT_BINDING_URI);
 		_logger.debug("Sending (httpclient) request to {}", webRequest.getUrl().toString());
 
 		HtmlPage htmlPage = _webClient.getPage(webRequest);

@@ -187,3 +187,24 @@ CREATE TABLE artifact
   message text,
   CONSTRAINT artifact_pkey PRIMARY KEY (id)
 );
+
+
+-- for SAML2AuthenticationMethod:
+CREATE TABLE `saml2_orgs` (
+  `id` varchar(255) NOT NULL,
+  `sourceid` text NOT NULL,
+  `friendlyname` varchar(255) NOT NULL,
+  `metadata_url` varchar(255) DEFAULT NULL,
+  `metadata_timeout` int(11) NOT NULL DEFAULT '-1',
+  `metadata_file` varchar(255) DEFAULT NULL,
+  `enabled` tinyint(1) DEFAULT '1',
+  `acs_index` tinyint(1) NOT NULL DEFAULT '1',
+  `scoping` tinyint(1) NOT NULL DEFAULT '1',
+  `nameidpolicy` tinyint(1) NOT NULL DEFAULT '1',
+  `allow_create` tinyint(1) DEFAULT NULL,
+  `nameidformat` varchar(255) DEFAULT NULL,
+  `avoid_subjconf` tinyint(1) NOT NULL DEFAULT '0',
+  `disable_sso` tinyint(1) DEFAULT '0',
+  `date_last_modified` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) DEFAULT CHARSET=utf8;

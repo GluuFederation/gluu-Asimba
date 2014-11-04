@@ -157,6 +157,12 @@
     	<artifactId>asimba-am-password-asimbausersxml</artifactId>
     	<version>${asimba.version}</version>
     </dependency>
+    <dependency>
+    	<groupId>org.asimba</groupId>
+    	<artifactId>asimba-am-remote-saml2</artifactId>
+    	<version>${asimba.version}</version>
+    </dependency>
+    
 
     <dependency>
     	<groupId>javax.servlet</groupId>

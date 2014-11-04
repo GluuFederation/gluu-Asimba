@@ -13,10 +13,6 @@ configure asimba-wa. Configuring Asimba also means initializing the
 database with a schema and load it with configuration data from 
 src/main/resources/sql
 
-The asimba-wa project creates the context from its src/test directory.
-The configuration is read from src/test/webapp/WEB-INF/conf/asimba-wa.xml ; 
-this is configured in the Java-system property in integration-jetty-env.xml
-
 The asimba-wa.properties file that specifies which configurationprovider to use, 
 is configured in the init-property 'asimba.properties.file' that is set in the
 startup-options of Jetty in Maven's pom.xml.
@@ -41,11 +37,7 @@ Startup that includes the dev-tests
 
 * Keystore Generation
 
-% keytool -genkeypair -keyalg RSA -alias "asimba-test" -keypass changeit -keystore asimba-test-keystore.jks -storepass changeit
-What is your first and last name?
-  [Unknown]:  Alice
-What is the name of your organizational unit?
-  [Unknown]:  ^C%                                                                                                                                                                                                                                        speedym% keytool -genkeypair -keyalg RSA -alias "asimba-test" -keypass changeit -keystore asimba-test-keystore.jks -storepass changeit
+ % keytool -genkeypair -keyalg RSA -alias "asimba-test" -keypass changeit -keystore asimba-test-keystore.jks -storepass changeit
 What is your first and last name?
   [Unknown]:  Asimba Test Server
 What is the name of your organizational unit?
@@ -62,6 +54,28 @@ Is CN=Asimba Test Server, OU=Lab, O=Asimba, L=Zwolle, ST=OVR, C=NL correct?
   [no]:  yes
 
 
+* Add RemoteSAML IDP certificate to the keystore used for testing
+This is not the same one, instead it is located in src/test/resources.
+
+% keytool -genkeypair -keyalg RSA -alias "asimba-test-idp" -keypass changeit -keystore asimba-integrationtest-keystore.jks -storepass changeit
+What is your first and last name?
+  [Unknown]:  Asimba Mock IDP
+What is the name of your organizational unit?
+  [Unknown]:  Lab
+What is the name of your organization?
+  [Unknown]:  Asimba
+What is the name of your City or Locality?
+  [Unknown]:  Zwolle
+What is the name of your State or Province?
+  [Unknown]:  OVR
+What is the two-letter country code for this unit?
+  [Unknown]:  NL
+Is CN=Asimba Mock IDP, OU=Lab, O=Asimba, L=Zwolle, ST=OVR, C=NL correct?
+  [no]:  y
+
+
+
+
 
 * MySQL to Derby notes
 When using TEXT-type to store byte[] (setBytes()), make column type:
@@ -73,3 +87,12 @@ TEXT -> LONG VARCHAR FOR BIT DATA
 On commandline, enter:
 	$ MAVEN_OPTS="-verbose:class" mvn clean verify
 This will let the Classloader show which classes are loaded at what time.
+
+
+
+* Inspect Derby database contents
+Use the command line tool 'ij' that can be found in the Apache Derby binary distribution:
+
+	$ DERBY_HOME/bin/ij
+	ij> connect 'jdbc:derby://localhost/memory:asimba-wa-db';
+	

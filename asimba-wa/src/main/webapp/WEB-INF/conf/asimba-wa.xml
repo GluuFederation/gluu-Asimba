@@ -102,7 +102,7 @@
 	<tgtfactory class="com.alfaariss.oa.engine.tgt.jdbc.JDBCTGTFactory">
         <expire>3600</expire>
         <interval>20</interval>
-        <max>1000</max>
+        <max>10000</max>
         <alias_store id="sp" enabled="true">
         	<validation query="SELECT tgt_id,sp_id FROM alias_store_sp FETCH FIRST ROW ONLY"/>
         </alias_store>
@@ -175,6 +175,9 @@
 							<registered default="true" />
 						</method>
 						<method id="AsimbaUsersXmlPassword">
+							<registered default="true" />
+						</method>
+						<method id="SAML2AuthNMethod">
 							<registered default="true" />
 						</method>
 					</authentication>
@@ -335,6 +338,19 @@
 					</artifactfactory>
 				</profile> <!-- artifact -->
 				
+				<profile id="sp/sso/web" class="com.alfaariss.oa.authentication.remote.saml2.profile.re.ResponseEndpoint">
+					<signing authnRequestsSigned="true" wantAssertionsSigned="true" />
+					<bindings default="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
+						<binding id="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
+							<property name="path" value="/ui/profiles/saml2/http-post.jsp" />
+						</binding>
+						<binding id="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact" >					
+							<property name="post" value="false" />
+							<property name="path" value="/ui/profiles/saml2/http-artifact-post.jsp" />
+						</binding>
+					</bindings>
+				</profile>
+				
 				<profile id="idp" class="com.alfaariss.oa.profile.saml2.profile.metadata.IDPMetadata" />
 			</profiles>
 		</profile>
@@ -441,6 +457,23 @@
 						</resource>
 					</password_handler>
 				</method>
+				
+				<!-- 
+				SAML2 SP Profile
+				 -->
+	            <method id="SAML2AuthNMethod" friendlyname="Remote SAML2 authentication" class="com.alfaariss.oa.authentication.remote.saml2.SAML2AuthenticationMethod">
+	                <idpprofile id="saml2" />
+					<idps id="saml2" class="com.alfaariss.oa.authentication.remote.saml2.idp.storage.jdbc.IDPJDBCStorage">
+						<validation>
+							<saml2_orgs query="SELECT id, sourceid, friendlyname, metadata_url, metadata_timeout, metadata_file, enabled, acs_index, scoping, nameidpolicy, allow_create, nameidformat, avoid_subjconf, disable_sso, date_last_modified FROM saml2_orgs FETCH FIRST ROW ONLY" />
+						</validation>
+					</idps>
+					<logout enabled="true"/>
+	                <authnstmt>
+	                    <window before_offset="36000" after_offset="60"/>
+	                </authnstmt>
+				</method>
+				
 			</methods>
 		</authentication>
 	</websso>

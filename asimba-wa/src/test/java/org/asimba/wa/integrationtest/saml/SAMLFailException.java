@@ -21,14 +21,32 @@
  */
 package org.asimba.wa.integrationtest.saml;
 
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-
-public class CustomAuthnRequestTest {
-
+/**
+ * Report failure
+ * @author mdobrinic
+ *
+ */
+public class SAMLFailException extends Exception {
 	
-	@Test @Category(SAMLTests.class)
-	public void test()
+	/** version */
+	private static final long serialVersionUID = 9083779435689457895L;
+
+	public SAMLFailException()
 	{
+	}
+	
+	public SAMLFailException(String msg)
+	{
+		super(msg);
+	}
+	
+	public SAMLFailException(Throwable t)
+	{
+		super(t);
+	}
+	
+	public SAMLFailException(String msg, Throwable t)
+	{
+		super(msg,t);
 	}
 }

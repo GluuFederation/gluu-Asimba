@@ -25,14 +25,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import java.net.URI;
-import java.util.List;
 import java.util.Map;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.asimba.wa.integrationtest.client.saml.Response;
-import org.asimba.wa.integrationtest.client.saml.SAMLClient;
+import org.asimba.wa.integrationtest.RunConfiguration;
+import org.asimba.wa.integrationtest.saml2.model.Response;
+import org.asimba.wa.integrationtest.saml2.sp.SAML2SP;
+import org.asimba.wa.integrationtest.util.AsimbaHtmlPage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,20 +64,23 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 public class GuestAuthnMethodIntegrationTest {
 	private static Logger _logger = LoggerFactory.getLogger(GuestAuthnMethodIntegrationTest.class);
 
-	private static final String ASIMBAWA_SAML_WEBSSO_REDIRECT_URI = 
-			"http://localhost:8080/asimba-wa/profiles/saml2/sso/web";
-	
 	private WebClient _webClient;
+	private String _samlWebSSOUrl;
+	private SAML2SP _samlClient;
 	
 	@Before
-	public void setup()
+	public void setup() throws Exception
 	{
 		_webClient = new WebClient();
+		_samlWebSSOUrl = RunConfiguration.getInstance().getProperty("asimbawa.saml.websso.url");
+		_samlClient = new SAML2SP("urn:asimba:requestor:samlclient-test", null);	// no SSL context (yet...)
+		_samlClient.registerInRequestorPool("requestorpool.1");
 	}
 	
 	@After
 	public void stop()
 	{
+		_samlClient.unregister();
 		_webClient.closeAllWindows();
 	}
 	
@@ -89,13 +90,9 @@ public class GuestAuthnMethodIntegrationTest {
 	{
 		_logger.trace("guestSuccessTest entered.");
 		
-		// Setup the SAML Client with asimba-wa
-		SAMLClient samlClient = new SAMLClient("urn:asimba:requestor:samlclient-test", null);	// no SSL context (yet...)
-		samlClient.registerInRequestorPool("requestorpool.1");
-	
 		// Make the AuthnRequest
 		String content;
-		WebRequest webRequest = samlClient.getAuthnWebRequest(ASIMBAWA_SAML_WEBSSO_REDIRECT_URI, SAMLConstants.SAML2_REDIRECT_BINDING_URI);
+		WebRequest webRequest = _samlClient.getAuthnWebRequest(_samlWebSSOUrl, SAMLConstants.SAML2_REDIRECT_BINDING_URI);
 		_logger.info("Sending (httpclient) request to {}", webRequest.getUrl().toString());
 		
 		HtmlPage htmlPage = _webClient.getPage(webRequest);
@@ -104,46 +101,31 @@ public class GuestAuthnMethodIntegrationTest {
 		
 		// Make assertions about the response:
 		// -- one of the items has a link that has "profile=local.guest" in querystring
-		HtmlAnchor theAnchor = null;
-		// alternative to:
-		//	List<?> list = htmlPage.getByXPath(
-		//		"/html/body/div[@id='container']/div[@id='content']/div[@id='contentMain']/form[@id='selectionForm']/fieldset/ul/li/a");
-		List<HtmlAnchor> anchors = htmlPage.getAnchors();
-		theanchorloop:
-		for(HtmlAnchor anchor: anchors) {
-			String href = anchor.getHrefAttribute();
-			List<NameValuePair> params = URLEncodedUtils.parse(new URI(href), "UTF-8");
-			for(NameValuePair nvp: params) 
-			{
-				if ("profile".equals(nvp.getName()))
-				{
-					if ("local.guest".equals(nvp.getValue()))
-					{
-						theAnchor = anchor;
-						break theanchorloop;
-					}
-				}
-			}
-		}
 		
-		_logger.info("Found anchor: {}", theAnchor);
+		AsimbaHtmlPage asimbaHtmlPage = new AsimbaHtmlPage(htmlPage);
+		
+		// Make assertions about the response:
+		// -- one of the items has a link that has "profile=remote.saml" in querystring
+		HtmlAnchor theAnchor = asimbaHtmlPage.findLinkWithParameterValue("profile", "local.guest");
 		assertNotNull(theAnchor);
+
 
 		// Select a link by "clicking" on it; should result in the redirect to the SAMLSP Servlet:
 		TextPage textPage = theAnchor.click();
 		
 		content = textPage.getContent();
 		_logger.info("Received (2): {}", content);	// expect: "OK"
+		assertEquals("OK", content);
 		
 		// Now make assertions from the received SAMLResponse
-		Response samlResponse = samlClient.getReceivedResponse();
+		Response samlResponse = _samlClient.getReceivedResponse();
 		assertNotNull(samlResponse);
 		assertEquals("urn:oasis:names:tc:SAML:2.0:status:Success", samlResponse.getStatusCode());
 		
-		_logger.info("NameID:{}", samlResponse.getSubjectNameId());
-		_logger.info("NameIDFormat:{}", samlResponse.getSubjectNameIdFormat());
+		_logger.info("NameID:{}", samlResponse.getAssertion().getSubjectNameId());
+		_logger.info("NameIDFormat:{}", samlResponse.getAssertion().getSubjectNameIdFormat());
 		
-		Map<String, String> attributes = samlResponse.getAttributes();
+		Map<String, String> attributes = samlResponse.getAssertion().getParsedAttributes();
 		_logger.info("Attributes received: {}", attributes);
 		
 		// Do some assertions on the attributes (guest-user related)
@@ -151,4 +133,55 @@ public class GuestAuthnMethodIntegrationTest {
 		assertEquals("Guest", attributes.get("firstname"));
 		assertNull(attributes.get("phonenr"));
 	}
+	
+	
+	@Test
+	public void testThousand() throws Exception
+	{
+		final int ATTEMPTS = 1000;
+		
+		int attemptsLeft = ATTEMPTS;
+		
+		long start = System.currentTimeMillis();
+		
+		while (attemptsLeft > 0) 
+		{
+			_logger.info("Attempts left: {}", attemptsLeft);
+			_webClient.getCookieManager().clearCookies();
+			
+			// Make the AuthnRequest
+			String content;
+			WebRequest webRequest = _samlClient.getAuthnWebRequest(_samlWebSSOUrl, SAMLConstants.SAML2_REDIRECT_BINDING_URI);
+			
+			HtmlPage htmlPage = _webClient.getPage(webRequest);
+			content = htmlPage.asXml();
+			
+			// Make assertions about the response:
+			// -- one of the items has a link that has "profile=local.guest" in querystring
+			AsimbaHtmlPage asimbaHtmlPage = new AsimbaHtmlPage(htmlPage);
+			
+			// Make assertions about the response:
+			// -- one of the items has a link that has "profile=remote.saml" in querystring
+			HtmlAnchor theAnchor = asimbaHtmlPage.findLinkWithParameterValue("profile", "local.guest");
+			assertNotNull(theAnchor);
+	
+
+			// Select a link by "clicking" on it; should result in the redirect to the SAMLSP Servlet:
+			TextPage textPage = theAnchor.click();
+			
+			content = textPage.getContent();
+			_logger.info("Received (2): {}", content);	// expect: "OK"
+			assertEquals("OK", content);
+			
+			attemptsLeft --;
+		}
+			
+		
+		long end = System.currentTimeMillis();
+		
+		_logger.info("Time run for {} attempts in seconds: {}s", ATTEMPTS, ((end - start)/1000) );
+		
+
+	}
+	
 }

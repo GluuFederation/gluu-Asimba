@@ -19,7 +19,7 @@
  * Asimba - Serious Open Source SSO - More information on www.asimba.org
  * 
  */
-package org.asimba.wa.integrationtest.client.saml;
+package org.asimba.wa.integrationtest.util;
 
 import java.util.Arrays;
 import java.util.Collection;
