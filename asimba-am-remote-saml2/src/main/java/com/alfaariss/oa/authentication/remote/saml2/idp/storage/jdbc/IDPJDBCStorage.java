@@ -25,6 +25,7 @@ package com.alfaariss.oa.authentication.remote.saml2.idp.storage.jdbc;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
@@ -39,6 +40,7 @@ import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
+import com.alfaariss.oa.api.configuration.ConfigurationException;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.engine.core.idp.storage.IIDP;
 import com.alfaariss.oa.engine.idp.storage.jdbc.AbstractJDBCStorage;
@@ -161,7 +163,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
         
         _oLogger.info("Using table: " + _sTable);
         
-        createQueries();
+        createQueries(configManager, config);
         
         // Instantiate MetadataProviderManager
         // Set with ID of this IDPStorage instance
@@ -333,12 +335,15 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
         return retrieveBySourceID(baSourceID);
     }
 
-    private void createQueries() throws OAException
+    private void createQueries(IConfigurationManager configManager, Element config) throws OAException
     {
         Connection connection = null;
         PreparedStatement pVerify = null;
         try
         {  
+            connection = _dataSource.getConnection();
+        	
+        	Element eValidation = configManager.getSection(config, "validation");
             StringBuffer sbSelectIDPs = new StringBuffer("SELECT ");
             sbSelectIDPs.append(COLUMN_ID).append(",");
             sbSelectIDPs.append(COLUMN_SOURCEID).append(",");
@@ -360,22 +365,7 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
             StringBuffer sbVerify = new StringBuffer(sbSelectIDPs);
             sbVerify.append(" LIMIT 1");
             
-            connection = _dataSource.getConnection();
-            
-            pVerify = connection.prepareStatement(sbVerify.toString());
-            try
-            {
-                pVerify.executeQuery();
-            }
-            catch(Exception e)
-            {
-                StringBuffer sbError = new StringBuffer("Invalid table configured '");
-                sbError.append(_sTable);
-                sbError.append("' verified with query: ");
-                sbError.append(sbVerify.toString());
-                _oLogger.error(sbError.toString(), e);
-                throw new DatabaseException(SystemErrors.ERROR_INIT);
-            }    
+            validateTable(configManager, connection, eValidation, "saml2_orgs", sbVerify.toString());
             
             sbSelectIDPs.append(" WHERE ");
             sbSelectIDPs.append(COLUMN_ENABLED);
@@ -612,4 +602,72 @@ public class IDPJDBCStorage extends AbstractJDBCStorage
         }
         return saml2IDP;
     }
+    
+    
+    //TODO move to utility class
+    private void validateTable(IConfigurationManager configManager, Connection oConnection, 
+    		Element eValidation, String table, String sDefault) throws DatabaseException, SQLException
+    {
+        String sVerificationQuery = null;
+        PreparedStatement pVerification = null;
+        try
+        {
+            if(eValidation != null)
+            {
+                Element e = configManager.getSection(eValidation, table);
+                if(e != null)
+                {
+                    sVerificationQuery = configManager.getParam(e, "query");
+                    if(sVerificationQuery == null || sVerificationQuery.length() == 0)
+                    {
+                        //DD Do not verify the table if empty query configured
+                        _oLogger.warn("Empty validation query found, table structure is not validated for table:  " + table);
+                        //finally is executed before return
+                        return;
+                    }
+                    _oLogger.info("Validation query found: " + sVerificationQuery);
+                }
+            }
+            
+            if(sVerificationQuery == null)
+            {
+                //DD Use default query if no query parameter configured                               
+                sVerificationQuery = sDefault;
+                _oLogger.info("No validation query found, using default: " + sDefault);
+            }
+            
+            pVerification = oConnection.prepareStatement(sVerificationQuery);
+            try
+            {
+                pVerification.executeQuery();
+            }
+            catch(Exception e)
+            {
+                StringBuffer sbError = new StringBuffer("Invalid table configured '");
+                sbError.append(table);
+                sbError.append("' verified with query: ");
+                sbError.append(sVerificationQuery);
+                _oLogger.error(sbError.toString(), e);
+                throw new DatabaseException(SystemErrors.ERROR_INIT);
+            }        
+            _oLogger.info("Table structure validated for table: " + table);
+        }
+        catch(ConfigurationException e)
+        {            
+        	_oLogger.error("Invalid validation query found for table: " + table, e);
+            throw new DatabaseException(SystemErrors.ERROR_CONFIG_READ);
+        }
+        finally
+        {
+            try
+            {
+                if (pVerification != null)
+                    pVerification.close();
+            }
+            catch (Exception e)
+            {
+            	_oLogger.error("Could not close verification statement", e);
+            }
+        }
+    } 
 }
