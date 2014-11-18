@@ -79,16 +79,17 @@ public class CustomOpenSAMLBootstrap extends DefaultBootstrap
      * @throws ConfigurationException thrown if there is a problem initializing the OpenSAML library
      */
     public static synchronized void bootstrap() throws ConfigurationException {
-
         initializeXMLSecurity();
-
-        initializeVelocity();
 
         initializeXMLTooling(xmlToolingConfigs);
 
         initializeArtifactBuilderFactories();
 
         initializeGlobalSecurityConfiguration();
+
+        initializeParserPool();
+        
+        initializeESAPI();
     }
     
     /**

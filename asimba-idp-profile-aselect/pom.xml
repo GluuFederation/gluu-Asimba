@@ -11,6 +11,8 @@
   <url>http://maven.apache.org</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <opensaml.version>2.6.1</opensaml.version>
+    <axis2.version>1.6.1</axis2.version>
   </properties>
   <dependencies>
     <dependency>
@@ -29,6 +31,11 @@
     	<version>1.2.1-SNAPSHOT</version>
     </dependency>
     <dependency>
+    	<groupId>org.asimba</groupId>
+    	<artifactId>asimba-am-remote-aselect</artifactId>
+    	<version>1.2.1-SNAPSHOT</version>
+    </dependency>
+    <dependency>
     	<groupId>org.apache.ws.commons.axiom</groupId>
     	<artifactId>axiom-api</artifactId>
     	<version>1.2.12</version>
@@ -36,12 +43,33 @@
     <dependency>
     	<groupId>org.apache.axis2</groupId>
     	<artifactId>axis2</artifactId>
-    	<version>1.6.1</version>
+    	<version>${axis2.version}</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.apache.axis2</groupId>
+    	<artifactId>axis2-transport-http</artifactId>
+    	<version>${axis2.version}</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.apache.axis2</groupId>
+    	<artifactId>axis2-transport-local</artifactId>
+    	<version>${axis2.version}</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.apache.rampart</groupId>
+    	<artifactId>rampart-core</artifactId>
+    	<version>${axis2.version}</version>
+    	<exclusions>
+    		<exclusion>
+    			<groupId>org.apache.xalan</groupId>
+    			<artifactId>xalan</artifactId>
+    		</exclusion>
+    	</exclusions>
     </dependency>
     <dependency>
     	<groupId>org.apache.rampart</groupId>
     	<artifactId>rampart</artifactId>
-    	<version>1.6.1</version>
+    	<version>${axis2.version}</version>
     	<type>mar</type>
     	<exclusions>
     		<exclusion>
@@ -54,32 +82,7 @@
     		</exclusion>
     	</exclusions>
     </dependency>
-    <dependency>
-    	<groupId>org.asimba</groupId>
-    	<artifactId>asimba-am-remote-aselect</artifactId>
-    	<version>1.2.1-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-    	<groupId>org.apache.rampart</groupId>
-    	<artifactId>rampart-core</artifactId>
-    	<version>1.6.1</version>
-    	<exclusions>
-    		<exclusion>
-    			<groupId>org.apache.xalan</groupId>
-    			<artifactId>xalan</artifactId>
-    		</exclusion>
-    	</exclusions>
-    </dependency>
-    <dependency>
-    	<groupId>org.apache.axis2</groupId>
-    	<artifactId>axis2-transport-http</artifactId>
-    	<version>1.6.1</version>
-    </dependency>
-    <dependency>
-    	<groupId>org.apache.axis2</groupId>
-    	<artifactId>axis2-transport-local</artifactId>
-    	<version>1.6.1</version>
-    </dependency>
+
 <!--     <dependency>
     	<groupId>org.opensaml</groupId>
     	<artifactId>opensaml</artifactId>
@@ -100,7 +103,7 @@
   		<dependency>
   			<groupId>org.opensaml</groupId>
   			<artifactId>opensaml</artifactId>
-  			<version>2.5.1-1</version>
+  			<version>${opensaml.version}</version>
   		</dependency>
   		<dependency>
   			<groupId>xml-apis</groupId>

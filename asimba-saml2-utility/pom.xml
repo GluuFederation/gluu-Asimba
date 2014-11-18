@@ -13,6 +13,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <powermock.version>1.5.5</powermock.version>
     <mockito.version>1.9.5</mockito.version>
+    <opensaml.version>2.6.1</opensaml.version>
   </properties>
   <dependencies>
     <dependency>
@@ -64,7 +65,18 @@
     <dependency>
     	<groupId>org.opensaml</groupId>
     	<artifactId>opensaml</artifactId>
-    	<version>2.5.1-1</version>
+    	<version>${opensaml.version}</version>
+    </dependency>
+    <dependency>
+    	<groupId>xml-apis</groupId>
+    	<artifactId>xml-apis</artifactId>
+    	<version>1.4.01</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.owasp.esapi</groupId>
+    	<artifactId>esapi</artifactId>
+    	<version>2.1.0</version>
+    	<scope>test</scope>
     </dependency>
     <dependency>
 		<groupId>joda-time</groupId>
