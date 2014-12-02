@@ -696,7 +696,7 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
         {
             if (_spSSODescriptor == null)
             {
-                _logger.debug(
+                _logger.error(
                     "No SPSSODescriptor in metadata: Can't resolve response target for request: " 
                     + authnRequest.getID());
                 
@@ -712,7 +712,7 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
                     _spSSODescriptor.getAssertionConsumerServices();
                 if (listACS == null)
                 {
-                    _logger.debug("No AssertionConsumerServices in metadata for requestor: " 
+                    _logger.error("No AssertionConsumerServices in metadata for requestor: " 
                         + _session.getRequestorId());
                     throw new StatusException(RequestorEvent.REQUEST_INVALID, 
                         StatusCode.RESPONDER_URI);      
@@ -736,7 +736,7 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
                     sbError.append(intAssertionConsumerServiceIndex);
                     sbError.append("' supplied in request: ");
                     sbError.append(authnRequest.getID());
-                    _logger.debug(sbError.toString());
+                    _logger.error(sbError.toString());
                     
                     throw new StatusException(RequestorEvent.REQUEST_INVALID, 
                         StatusCode.RESPONDER_URI);
@@ -757,7 +757,7 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
                     _spSSODescriptor.getDefaultAssertionConsumerService();
                 if (acs == null)
                 {
-                    _logger.debug(
+                    _logger.error(
                         "No default AssertionConsumerServices in metadata for requestor: " 
                         + _session.getRequestorId());
                     throw new StatusException(RequestorEvent.REQUEST_INVALID, 
@@ -768,7 +768,7 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
                 if (_sAssertionConsumerServiceURL == null)
                 {
                     _sAssertionConsumerServiceURL = acs.getLocation();
-                    _logger.debug("No 'ResponseLocation' found, using Location: " 
+                    _logger.error("No 'ResponseLocation' found, using Location: " 
                         + _sAssertionConsumerServiceURL);
                 }
                 _sBindingURI = acs.getBinding();
@@ -786,7 +786,7 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
         }
         else
         {
-            _logger.debug(
+            _logger.error(
                 "No AssertionConsumerServiceURL as target for response available for request: " 
                 + authnRequest.getID());
             throw new StatusException(RequestorEvent.REQUEST_INVALID, 
@@ -802,7 +802,7 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
         }
         else
         {
-            _logger.debug(
+            _logger.error(
                 "No ProtocolBinding for response available for request: " 
                 + authnRequest.getID());
             throw new StatusException(RequestorEvent.REQUEST_INVALID, 
