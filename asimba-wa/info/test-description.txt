@@ -31,6 +31,14 @@ Startup that includes the dev-tests
 	$ mvn -PdevIntegrationTests clean verify 
 
 
+* Debug the running Jetty instance
+Set Maven environment variable to include JVM debug settings, like:
+	$ export MAVEN_OPTS=-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n
+	$ mvn -PdevIntegrationTests clean verify
+Now create a "Remote Java Application" as Debug Configuration, that attaches to the process on localhost port 8000.
+It might be necessary to add source lookup locations. 
+
+
 
 	Extended information
 ==================================================
