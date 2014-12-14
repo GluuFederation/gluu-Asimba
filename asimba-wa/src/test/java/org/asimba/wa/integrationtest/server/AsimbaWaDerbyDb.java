@@ -24,10 +24,9 @@ package org.asimba.wa.integrationtest.server;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-
 import javax.sql.DataSource;
-
 import org.apache.commons.dbcp.BasicDataSource;
+import org.asimba.wa.integrationtest.RunConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,10 +44,10 @@ public class AsimbaWaDerbyDb {
 	
 	private AsimbaWaDerbyDb()
 	{
-		String driverClassName = "org.apache.derby.jdbc.ClientDriver";
-		String url = "jdbc:derby://localhost/memory:asimba-wa-db";
-		String username = "username";
-		String password = "password";
+            String driverClassName = RunConfiguration.getInstance().getProperty("db.driverClass");
+            String url = RunConfiguration.getInstance().getProperty("db.connectionString");
+            String username = RunConfiguration.getInstance().getProperty("db.username");
+            String password = RunConfiguration.getInstance().getProperty("db.password");
 		
 		BasicDataSource ds = null;
         ds = new BasicDataSource();
