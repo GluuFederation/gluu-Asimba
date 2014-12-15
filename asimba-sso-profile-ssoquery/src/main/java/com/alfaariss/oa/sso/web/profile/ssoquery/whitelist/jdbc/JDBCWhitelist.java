@@ -43,10 +43,29 @@ import com.alfaariss.oa.util.database.DatabaseException;
 import com.alfaariss.oa.util.database.jdbc.DataSourceFactory;
 
 /**
- * Whitelist implementation that uses the JDBC as storage.
+ * Whitelist implementation that uses the JDBC as storage.<br/>
+ * <br/>
+ * Configuration example<br/>
+ * <br/>
+ * &lt;whitelist class="com.alfaariss.oa.sso.web.profile.ssoquery.whitelist.jdbc.JDBCWhitelist"&gt;<br/>
+ * &nbsp;&lt;resource&gt;<br/>
+ * &nbsp;&nbsp;&lt;table name="custom_table_name" /&gt;<br/>
+ * &lt;/resource&gt;<br/>
+ * &nbsp;&lt;allowWildcard&gt;...&lt;/allowWildcard&gt;<br/>
+ * &lt;/whitelist&gt;<br/>
+ * <br/>
+ * resource: optional; by default, the global model database is used as backend; otherwise
+ * a custom resource can be configured (see http://sourceforge.net/p/asimba/wiki/Asimba%20Database%20Resource%20Configuration/)<br/>
+ * table@name: optional; default table name is ssoquery_whitelist; can be overruled. Note that it can only be overruled when
+ * a resource is explicitly defined as well<br/>
+ * allowWildcard: optional; by default, a value must is being tested for an exact match. When allowWildcard is non-null (any value
+ * will activate), a value is being tested as a wildcard value. Remove from configuration to disable.
  * 
  * @author MHO
+ * @author Gerben Jongerius
  * @author Alfa & Ariss
+ * @author Finalist
+ * 
  * @since 1.4
  */
 public class JDBCWhitelist implements IWhitelist
@@ -157,7 +176,14 @@ public class JDBCWhitelist implements IWhitelist
             sbQuery.append(sTable);
             sbQuery.append(" WHERE ");
             sbQuery.append(COLUMN_ITEM);
-            sbQuery.append("=?");
+
+            String allowWildcard = configurationManager.getParam(config, "allowWildcard");
+            if (allowWildcard != null) {
+            	_logger.info("Using wildcard tests for whitelist matches");
+                sbQuery.append(" LIKE ?");
+            } else {
+                sbQuery.append("=?");
+            }
             
             _querySelectItem = sbQuery.toString();
             _logger.info("Using item selection query: " + _querySelectItem);
