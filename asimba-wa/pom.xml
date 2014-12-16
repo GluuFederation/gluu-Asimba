@@ -4,7 +4,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>1.3.0</version>
+    <version>1.3.1-SNAPSHOT</version>
   </parent>
   <name>Asimba SSO Server</name>
   <artifactId>asimba-wa</artifactId>
@@ -15,7 +15,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <asimba.version>1.3.0</asimba.version>
+    <asimba.version>1.3.1-SNAPSHOT</asimba.version>
     <!-- for integration testing -->
     <jetty.version>9.2.2.v20140723</jetty.version>
     <test.data.db>asimba-wa-db</test.data.db>
