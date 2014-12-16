@@ -52,12 +52,12 @@
     <site>
       <id>asimba-site</id>
       <name>Asimba Maven Site</name>
-      <url>scpext://www.asimba.org/var/www/www.asimba.org/maven/site</url>
+      <url>scpexe://www.asimba.org/var/www/www.asimba.org/maven/site</url>
     </site>
     <repository>
       <id>asimba-artifact-repository</id>
       <name>Asimba Artifact Repository</name>
-      <url>scpext://www.asimba.org/var/www/www.asimba.org/maven/repo</url>
+      <url>scpexe://www.asimba.org/var/www/www.asimba.org/maven/repo</url>
     </repository>
   </distributionManagement>
 
