@@ -110,7 +110,7 @@ public class MemoryTGTFactory extends AbstractStorageFactory
     }
 
     /**
-     * Restore an existing TGT from the storage.
+     * Retrieve an existing TGT from the storage.
      *
      * Try to find a existing TGT in the storage and return the stored TGT. 
      * @see IEntityManager#retrieve(java.lang.Object)

@@ -57,7 +57,11 @@ public class MemorySession extends AbstractSession
     }
 
     /**
-     * Set a new Session ID.
+     * Set a new Session ID.<br/>
+     * <br/>
+     * Note: default package private visibility, so JGroupsSessionFactory<br/> 
+     * can set the Id but others can not.
+     * 
      * @param id The new session ID.
      */
     void setId(String id)
