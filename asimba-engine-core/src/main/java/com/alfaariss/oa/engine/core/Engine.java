@@ -26,6 +26,7 @@ import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.asimba.engine.core.cluster.IClusterStorageFactory;
 import org.asimba.engine.core.confederation.IConfederationFactory;
 import org.w3c.dom.Element;
 
@@ -89,6 +90,7 @@ public class Engine implements IComponent
     private IAuthorizationFactory _postAuthorizationFactory;
     private IAttributeReleasePolicyFactory _attributeReleasePolicyFactory;
     private IDataStorageFactory _storageFactory; 
+    private IClusterStorageFactory _clusterStorageFactory;
     private IDPStorageManager _idpStorageManager;
     
     /** Manager for confederations */
@@ -174,6 +176,17 @@ public class Engine implements IComponent
         return _requestorPoolFactory;
     }
 
+
+    /**
+     * Return configured ClusterStorageFactory
+     * @return
+     */
+    public IClusterStorageFactory getClusterStorageFactory()
+    {
+    	return _clusterStorageFactory;
+    }
+    
+    
     /**
      * Retrieve the TGTFactory.
      *
@@ -376,6 +389,34 @@ public class Engine implements IComponent
                 _logger.error("Configured 'storagefactory' class isn't an IDataStorageFactory", e); 
                 throw new OAException(SystemErrors.ERROR_CONFIG_READ);
             }
+            
+            //Start Cluster Storage Factory
+            try
+            {
+                Element eClusterStorageFactory = _configurationManager.getSection(
+                    eConfig, "clusterstoragefactory");            
+                if (eClusterStorageFactory == null)
+                {
+                    _logger.info("No optional 'clusterstoragefactory' configuration section found");
+                }
+                else
+                {
+                	_logger.info("Found 'clusterstoragefactory' configuration.");
+                	
+                    oComponent = getComponent(eClusterStorageFactory, (IComponent)_clusterStorageFactory);
+                    if (oComponent != null)
+                    	_clusterStorageFactory = (IClusterStorageFactory)oComponent;
+                    
+                    ((IComponent)_clusterStorageFactory).start(
+                        _configurationManager, eClusterStorageFactory);
+                }
+            }
+            catch(ClassCastException e)
+            {
+                _logger.error("Configured 'storagefactory' class isn't an IDataStorageFactory", e); 
+                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+            }
+            
             
             
             //Start crypto manager
