@@ -113,6 +113,9 @@
     <module>asimba-am-remote-saml2</module>
     <module>asimba-server</module>
     <module>asimba-idp-profile-catalog</module>
+    <module>asimba-engine-cluster</module>
+    <module>asimba-engine-tgt-jgroups</module>
+    <module>asimba-engine-session-jgroups</module>
   </modules>
 
   <properties>
@@ -244,6 +247,11 @@
   			<artifactId>commons-logging</artifactId>
   			<version>1.1.1</version>
   		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.3.2</version>
+		</dependency>
   	</dependencies>
   </dependencyManagement>
 </project>
