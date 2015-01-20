@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- XML fragment that provides a valid JGroupCluster configuration -->
+<root>
+  <cluster class="org.asimba.engine.cluster.JGroupCluster" id="test">
+    <cluster_name>test-cluster</cluster_name>
+    <config_location>tcp.xml</config_location>
+    <node id="one">
+      <options>
+        <option name="tcp_bind_addr" value="127.0.0.1"/>
+        <option name="tcp_bind_port" value="7800"/>
+        <option name="tcp_initial_hosts" value="127.0.0.1[7800],127.0.0.1[7801]"/>
+      </options>
+    </node>
+    <node id="two">
+      <options>
+        <option name="tcp_bind_addr" value="127.0.0.1"/>
+        <option name="tcp_bind_port" value="7801"/>
+        <option name="tcp_initial_hosts" value="127.0.0.1[7800],127.0.0.1[7801]"/>
+      </options>
+    </node>
+  </cluster>
+</root>
