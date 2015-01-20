@@ -113,7 +113,7 @@
     <module>asimba-am-remote-saml2</module>
     <module>asimba-server</module>
     <module>asimba-idp-profile-catalog</module>
-    <module>asimba-engine-cluster</module>
+    <module>asimba-engine-cluster-jgroups</module>
     <module>asimba-engine-tgt-jgroups</module>
     <module>asimba-engine-session-jgroups</module>
   </modules>
