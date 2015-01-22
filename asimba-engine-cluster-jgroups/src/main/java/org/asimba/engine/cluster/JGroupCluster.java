@@ -194,16 +194,16 @@ public class JGroupCluster implements ICluster, IComponent {
 					// Apply custom options:
 					Map<String, String> mOptions = _mCustomOptions.get(sNodeId);
 					
-					_oLogger.debug("System property "+PROP_ASIMBA_NODE_ID+" specified; applying"
-							+ "custom properties JGroupCluster'"+_sID+"'");
+					_oLogger.info("System property "+PROP_ASIMBA_NODE_ID+" specified; applying"
+							+ "custom properties JGroupCluster '"+_sID+"', node '" + sNodeId + "'");
 
 					for (Entry<String, String> prop: mOptions.entrySet()) {
 						System.setProperty(prop.getKey(), prop.getValue());
 					}
 							
 				} else {
-					_oLogger.debug("No "+PROP_ASIMBA_NODE_ID+" system property specified, so no "
-							+ "custom properties applied for JGroupCluster'"+_sID+"'");
+					_oLogger.info("No "+PROP_ASIMBA_NODE_ID+" system property specified, so no "
+							+ "custom properties applied for JGroupCluster '"+_sID+"'");
 				}
 
 				_jChannel = new JChannel(_sConfigLocation);
@@ -219,16 +219,16 @@ public class JGroupCluster implements ICluster, IComponent {
 		}
 
 		return _jChannel;
-	} 
+	}
 
-	
 	@Override
-	public void close() 
+	public void close()
 	{
 		if (_jChannel != null) {
 			_jChannel.close();
-			
+
 			_jChannel = null;
 		}
 	}
+
 }

@@ -22,22 +22,24 @@
 package org.asimba.engine.tgt.jgroups;
 
 import java.io.UnsupportedEncodingException;
+import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.asimba.engine.cluster.ClusterConfiguration;
 import org.asimba.engine.core.cluster.ICluster;
 import org.asimba.engine.core.cluster.IClusterStorageFactory;
 import org.jgroups.JChannel;
 import org.jgroups.blocks.ReplicatedHashMap;
+import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.UserEvent;
 import com.alfaariss.oa.api.configuration.ConfigurationException;
+import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.persistence.IEntity;
 import com.alfaariss.oa.api.persistence.IEntityManager;
 import com.alfaariss.oa.api.persistence.PersistenceException;
@@ -55,28 +57,25 @@ import com.alfaariss.oa.util.ModifiedBase64;
 import com.alfaariss.oa.util.logging.UserEventLogItem;
 import com.alfaariss.oa.util.storage.factory.AbstractStorageFactory;
 
-public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFactory<JGroupsTGT>
-{
+public class JGroupsTGTFactory extends AbstractStorageFactory implements
+ITGTFactory<JGroupsTGT> {
+
 	public static final String EL_CONFIG_CLUSTERID = "cluster_id";
 	public static final String EL_CONFIG_ALIAS_CLUSTERID = "alias_cluster_id";
 
-	private static Log _oLogger = LogFactory.getLog(JGroupsTGTFactory.class);
-	private static Log _oEventLogger = LogFactory.getLog(Engine.EVENT_LOGGER);
-	
 	private ReplicatedHashMap<String, JGroupsTGT> _mTGTs;
 
-	private ICluster _oCluster;
+	private ICluster _oCluster = null;
+	private ICluster _oAliasCluster = null;
 
 	private JGroupsTGTAliasStore _oSPAliasStore;
 	private JGroupsTGTAliasStore _oIDPAliasStore;
 
 	private List<ITGTListener> _lListeners;
+	private Log _oLogger;
+	private Log _oEventLogger;
 
 
-	public JGroupsTGTFactory() {
-        super();
-    }
-	
 	/**
 	 * Start component instantiates the replicated hashmap, as well as 
 	 * start managing the cleaner thread (should be moved to base class)
@@ -84,10 +83,14 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	@Override
 	public void start() throws OAException 
 	{
-		// this._configManager and this._eConfig are initialized at this point:
-		ClusterConfiguration oClusterConfiguration = new ClusterConfiguration(_configurationManager);
-		_oCluster = oClusterConfiguration.getClusterFromConfigById(_eConfig, EL_CONFIG_CLUSTERID);
+        _lListeners = new Vector<ITGTListener>();
+        _oLogger = LogFactory.getLog(JGroupsTGTFactory.class);
 
+		// this._configManager and this._eConfig are initialized at this point:
+		if (_oCluster == null) {
+			_oCluster = getClusterFromConfig(EL_CONFIG_CLUSTERID);
+		}
+		
 		JChannel jChannel = (JChannel) _oCluster.getChannel();
 		_mTGTs = new ReplicatedHashMap<>( jChannel );
 		try {
@@ -99,8 +102,13 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 			throw new OAException(SystemErrors.ERROR_INTERNAL);
 		}
 
-		ICluster oAliasCluster = 
-				oClusterConfiguration.getClusterFromConfigById(_eConfig, EL_CONFIG_ALIAS_CLUSTERID);
+		ICluster oAliasCluster;
+		if (_oAliasCluster == null) {
+			oAliasCluster = getClusterFromConfig(EL_CONFIG_ALIAS_CLUSTERID);
+		}
+		else {
+			oAliasCluster = _oAliasCluster;
+		}
 		JChannel jAliasChannel = (JChannel) oAliasCluster.getChannel();
 		ReplicatedHashMap<String, String> oAliasMap = new ReplicatedHashMap<>( jAliasChannel );
 		try {
@@ -113,14 +121,55 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 		_oSPAliasStore = new JGroupsTGTAliasStore("sp", oAliasMap, this);
 		_oIDPAliasStore = new JGroupsTGTAliasStore("idp", oAliasMap, this);
 
-
 		// TODO: This should move to superclass instead:
 		if(_tCleaner != null)
 			_tCleaner.start();
 	}
+	
+	/**
+	 * Convenience wrapper for start() to be used for testing
+	 * 
+	 * @param oConfigurationManager
+	 * @param eConfig
+	 * @param oCluster
+	 * @param oAliasCluster
+	 * @throws OAException
+	 */
+	public void start(IConfigurationManager oConfigurationManager,
+						Element eConfig, ICluster oCluster, ICluster oAliasCluster)
+			throws OAException
+	{
+		_configurationManager = oConfigurationManager;
+		_eConfig = eConfig;
+		_oCluster = oCluster;
+		_oAliasCluster = oAliasCluster;
+		start();
+	}
 
 
+	private ICluster getClusterFromConfig(String sConfigParam) throws ConfigurationException,
+	OAException {
+		String sClusterId = _configurationManager.getParam(_eConfig, sConfigParam);
 
+		if (sClusterId == null) {
+			_oLogger.fatal("Required Element '"+sConfigParam+"' is not configured.");
+			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+		}
+
+		IClusterStorageFactory oClusterStorageFactory = Engine.getInstance().getClusterStorageFactory();
+		if (oClusterStorageFactory == null) {
+			_oLogger.fatal("The required ClusterStorageFactory is NOT configured!");
+			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+		}
+
+		ICluster oCluster = oClusterStorageFactory.getCluster(sClusterId);
+		if (oCluster == null) {
+			_oLogger.fatal("Configured cluster '"+sClusterId+"' is not available.");
+			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+		}
+
+		return oCluster;
+	}
 
 
 	@Override
@@ -202,7 +251,12 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	public TGTListenerEvent persistPassingListenerEvent(JGroupsTGT tgt) throws PersistenceException
 	{
 		TGTListenerEvent passedEvent = performPersist(tgt, false);
-		_oLogger.debug("Passed '"+passedEvent+"' event for TGT with id: "+tgt.getId());
+
+		StringBuffer sbDebug = new StringBuffer("Passed '");
+		sbDebug.append(passedEvent);
+		sbDebug.append("' event for TGT with id: ");
+		sbDebug.append(tgt.getId());
+		_oLogger.debug(sbDebug.toString());
 
 		return passedEvent;
 	}
@@ -220,53 +274,53 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	 * 
 	 * Updating is necessary because changes need to be replicated
 	 * 
-	 * @param oTGT The TGT to persist. 
+	 * @param tgt The TGT to persist. 
 	 * @param bProcessEvent TRUE if event must be performed
 	 * @return the event that was or would be performed 
 	 * @throws PersistenceException If persistence fails.
 	 * @see IEntityManager#persist(IEntity)
 	 */
-	private synchronized TGTListenerEvent performPersist(JGroupsTGT oTGT, boolean bProcessEvent) throws PersistenceException
+	private synchronized TGTListenerEvent performPersist(JGroupsTGT tgt, boolean bProcessEvent) throws PersistenceException
 	{
 		TGTListenerEvent listenerEvent = null;
 		List<TGTEventError> listTGTEventErrors = null;
-		String sTGTID = oTGT.getId();
-		if (sTGTID == null) //New TGT
+		String tgtID = tgt.getId();
+		if(tgtID == null) //New TGT
 		{
 			byte[] baId = new byte[ITGT.TGT_LENGTH];
-			int iAllowedIdGenAttempts = 1000; 
+			int iMaxIdGenAttempts = 1000; 
 			do
 			{                
 				_random.nextBytes(baId);
 				try
 				{
-					sTGTID = ModifiedBase64.encode(baId);
+					tgtID = ModifiedBase64.encode(baId);
 				}
 				catch (UnsupportedEncodingException e)
 				{
 					_oLogger.error("Could not create tgt id for byte[]: " + baId, e);
 					throw new PersistenceException(SystemErrors.ERROR_INTERNAL);
 				}
-				iAllowedIdGenAttempts--;
+				iMaxIdGenAttempts--;
 			}
-			while(_mTGTs.containsKey(sTGTID) && (iAllowedIdGenAttempts>0)); //Key already exists    
+			while(_mTGTs.containsKey(tgtID) && (iMaxIdGenAttempts>0)); //Key already exists    
 
-			if (_mTGTs.containsKey(sTGTID)) {
+			if (_mTGTs.containsKey(tgtID)) {
 				_oLogger.error("Could not persist TGT because could not generate ID (which is weird!)");
 				throw new PersistenceException(SystemErrors.ERROR_INTERNAL);
 			}
 
-			oTGT.setId(sTGTID);
+			tgt.setId(tgtID);
 			//Update expiration time
-			oTGT.setTgtExpTime(System.currentTimeMillis() + _lExpiration);
-			_mTGTs.put(sTGTID, oTGT);      
+			tgt.setTgtExpTime(System.currentTimeMillis() + _lExpiration);
+			_mTGTs.put(tgtID, tgt);      
 
 			listenerEvent = TGTListenerEvent.ON_CREATE;
 			if (bProcessEvent)
 			{
 				try
 				{
-					processEvent(listenerEvent, oTGT);
+					processEvent(listenerEvent, tgt);
 				}
 				catch (TGTListenerException e)
 				{
@@ -274,16 +328,16 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 				}
 			}
 		}
-		else if(oTGT.isExpired()) //Expired
+		else if(tgt.isExpired()) //Expired
 		{
-			_oLogger.debug("TGT Expired: " + sTGTID);
+			_oLogger.debug("TGT Expired: " + tgtID);
 
 			listenerEvent = TGTListenerEvent.ON_REMOVE;
 			if (bProcessEvent)
 			{
 				try
 				{
-					processEvent(listenerEvent, oTGT);
+					processEvent(listenerEvent, tgt);
 				}
 				catch (TGTListenerException e)
 				{
@@ -291,26 +345,26 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 				}
 			}
 
-			int iCountR = _oSPAliasStore.remove(sTGTID);
-			int iCountF = _oIDPAliasStore.remove(sTGTID);
+			int iCountR = _oSPAliasStore.remove(tgtID);
+			int iCountF = _oIDPAliasStore.remove(tgtID);
 
 			if ((iCountR + iCountF) > 0) {
 				_oLogger.debug("Cleaned '"+iCountR+"' (requestor based) aliasses and '"+iCountF+
-						"' (remote enitity based) aliasses for TGT with id: "+sTGTID);
+						"' (remote enitity based) aliasses for TGT with id: "+tgtID);
 			}
 
-			IUser tgtUser = oTGT.getUser();
+			IUser tgtUser = tgt.getUser();
 			_oEventLogger.info(
-					new UserEventLogItem(null, sTGTID, null, UserEvent.TGT_EXPIRED, 
+					new UserEventLogItem(null, tgtID, null, UserEvent.TGT_EXPIRED, 
 							tgtUser.getID(), tgtUser.getOrganization(), null, null, 
 							this, null));
 
-			_mTGTs.remove(sTGTID);
+			_mTGTs.remove(tgtID);
 		}
 		else //Update
 		{
 			//Update expiration time
-			oTGT.setTgtExpTime(System.currentTimeMillis() + _lExpiration);
+			tgt.setTgtExpTime(System.currentTimeMillis() + _lExpiration);
 			//Storing can be omitted when using Hashtable
 
 			listenerEvent = TGTListenerEvent.ON_UPDATE;
@@ -318,7 +372,7 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 			{
 				try
 				{
-					processEvent(listenerEvent, oTGT);
+					processEvent(listenerEvent, tgt);
 				}
 				catch (TGTListenerException e)
 				{
@@ -335,14 +389,14 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 		return listenerEvent;
 	}
 
-
+	
 	public void clean(JGroupsTGT oJGroupsTGT) throws PersistenceException
 	{
 		List<TGTEventError> listTGTEventErrors = null;
-		String sTGTID = oJGroupsTGT.getId();
-
-		_oLogger.debug("Clean TGT: " + sTGTID);
-
+        String sTGTID = oJGroupsTGT.getId();
+        
+        _oLogger.debug("Clean TGT: " + sTGTID);
+        
 		try
 		{
 			processEvent(TGTListenerEvent.ON_REMOVE, oJGroupsTGT);
@@ -367,11 +421,11 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 						this, null));
 
 		_mTGTs.remove(sTGTID);
-
-		if (listTGTEventErrors != null)
-		{//TGT Event processing failed, error has been logged already
-			throw new TGTListenerException(listTGTEventErrors);
-		}
+		
+        if (listTGTEventErrors != null)
+        {//TGT Event processing failed, error has been logged already
+            throw new TGTListenerException(listTGTEventErrors);
+        }
 	}
 
 	/**
@@ -380,7 +434,6 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	@Override
 	public long poll() throws OAException 
 	{
-		if (_mTGTs == null) return 0;
 		return _mTGTs.size();
 	}
 
@@ -404,89 +457,79 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 
 
 	@Override
-	public JGroupsTGT retrieve(Object id) throws PersistenceException 
-	{
+	public JGroupsTGT retrieve(Object id) throws PersistenceException {
 		JGroupsTGT oJGroupTGT = _mTGTs.get(id);
 		if (oJGroupTGT != null) {
 			oJGroupTGT.resuscitate(this);
 		}
-
+		
 		return oJGroupTGT;
 	}
 
-	
 	@Override
-	public void addListener(ITGTListener listener) 
-	{
+	public void addListener(ITGTListener listener) {
 		_lListeners.add(listener);
 	}
 
 	@Override
-	public void removeListener(ITGTListener listener) 
-	{
+	public void removeListener(ITGTListener listener) {
 		_lListeners.remove(listener);
 	}
 
 	@Override
-	public List<ITGTListener> getListeners() 
-	{
+	public List<ITGTListener> getListeners() {
 		return Collections.unmodifiableList(_lListeners);
 	}
 
 	@Override
-	public void putAlias(String sType, String sRequestorID, String sTGTID, String sAlias) throws OAException 
-	{
+	public void putAlias(String sType, String sRequestorID, String sTGTID,
+			String sAlias) throws OAException {
 		_oLogger.error("method not supported: deprecated");
 		throw new OAException(SystemErrors.ERROR_INTERNAL);
 	}
 
-	
 	@Override
-	public String getAlias(String sType, String sRequestorID, String sTGTID) throws OAException 
-	{
+	public String getAlias(String sType, String sRequestorID, String sTGTID)
+			throws OAException {
 		_oLogger.error("method not supported: deprecated");
 		throw new OAException(SystemErrors.ERROR_INTERNAL);
 	}
 
-	
 	@Override
-	public String getTGTID(String sType, String sRequestorID, String sAlias) throws OAException 
-	{
+	public String getTGTID(String sType, String sRequestorID, String sAlias)
+			throws OAException {
 		_oLogger.error("method not supported: deprecated");
 		throw new OAException(SystemErrors.ERROR_INTERNAL);
 	}
 
-	
 	@Override
-	public boolean isAlias(String sType, String sRequestorID, String sAlias) throws OAException 
-	{
+	public boolean isAlias(String sType, String sRequestorID, String sAlias)
+			throws OAException {
 		_oLogger.error("method not supported: deprecated");
 		throw new OAException(SystemErrors.ERROR_INTERNAL);
 	}
-	
 
 	@Override
-	public boolean hasAliasSupport() 
-	{
+	public boolean hasAliasSupport() {
 		_oLogger.error("method not supported: deprecated");
 		return _oSPAliasStore != null;
 	}
 
-	
 	@Override
-	public ITGTAliasStore getAliasStoreSP() 
-	{
+	public ITGTAliasStore getAliasStoreSP() {
 		return _oSPAliasStore;
 	}
 
-	
 	@Override
-	public ITGTAliasStore getAliasStoreIDP() 
-	{
+	public ITGTAliasStore getAliasStoreIDP() {
 		return _oIDPAliasStore;
 	}
 
 
+	public void setSecureRandom(SecureRandom secRandom) {
+		_random = secRandom; 
+	}
+	
 	private void processEvent(TGTListenerEvent event, ITGT tgt) throws TGTListenerException
 	{
 		List<TGTEventError> listErrors = new Vector<TGTEventError>();

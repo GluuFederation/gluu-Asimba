@@ -21,6 +21,7 @@
  */
 package org.asimba.engine.tgt.jgroups;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +30,7 @@ import com.alfaariss.oa.api.tgt.TGTListenerEvent;
 import com.alfaariss.oa.api.user.IUser;
 import com.alfaariss.oa.engine.core.tgt.AbstractTGT;
 
-public class JGroupsTGT extends AbstractTGT {
+public class JGroupsTGT extends AbstractTGT implements Serializable {
 
 	//The persistence context
 	private transient JGroupsTGTFactory _oTGTFactory;
