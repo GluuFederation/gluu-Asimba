@@ -107,7 +107,7 @@ public class JGroupsTGTFactoryTest {
 		oAliasCluster.start(oConfigManager, eAliasClusterElement);
 		
 		oTGTFactory.setSecureRandom(mockedSecureRandom);
-		oTGTFactory.start(oConfigManager, eClusterElement, oCluster, oAliasCluster);
+		oTGTFactory.startForTesting(oConfigManager, eClusterElement, oCluster, oAliasCluster);
 
 		return oTGTFactory;
 	}

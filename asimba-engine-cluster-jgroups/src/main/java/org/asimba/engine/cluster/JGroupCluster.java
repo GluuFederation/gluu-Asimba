@@ -47,7 +47,7 @@ public class JGroupCluster implements ICluster, IComponent {
 	public static final String EL_OPTION = "option";
 	public static final String ATTR_NAME = "name";
 	public static final String ATTR_VALUE = "value";
-	public static final String[] ALLOWED_OPTIONS = {"tcp_bind_addr", "tcp_bind_port", "tcp_initial_hosts"};
+	public static final String[] ALLOWED_OPTIONS = {"jgroups.bind_addr", "jgroups.tcp.bind_port", "jgroups.tcpping.initial_hosts"};
 
 	/** System Properties */
 	public static final String PROP_ASIMBA_NODE_ID = "asimba.node.id";
