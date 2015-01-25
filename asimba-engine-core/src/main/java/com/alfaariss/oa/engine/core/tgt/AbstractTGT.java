@@ -21,6 +21,7 @@
  * 
  */
 package com.alfaariss.oa.engine.core.tgt;
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -39,9 +40,10 @@ import com.alfaariss.oa.engine.core.authentication.AuthenticationProfile;
  * @author Alfa & Ariss
  *
  */
-public abstract class AbstractTGT implements ITGT 
+public abstract class AbstractTGT implements ITGT, Serializable 
 { 
-    /** tgt id */
+	private static final long serialVersionUID = 1998890823651449352L;
+	/** tgt id */
     protected String _id;
     /** expire time */
     protected long _lExpireTime;

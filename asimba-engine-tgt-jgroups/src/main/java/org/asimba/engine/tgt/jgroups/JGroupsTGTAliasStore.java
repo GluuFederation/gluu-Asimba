@@ -35,7 +35,7 @@ import com.alfaariss.oa.api.persistence.PersistenceException;
 import com.alfaariss.oa.engine.core.tgt.factory.ITGTAliasStore;
 
 /**
- * Manages a map of aliasses, using a key like:<br/>
+ * Manages a map of aliases, using a key like:<br/>
  * "prefix type requestorid alias" -&gt; tgtid
  * 
  * @author mdobrinic
@@ -80,6 +80,7 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 		return StringUtils.join(aKey, INDEX_SEPARATOR);
 	}
 	
+	
 	private String getMapKey(String sType, String sEntityID, String sAlias) {
 		String[] aKey = {getPrefixTypeEntitySubKey(sType, sEntityID), sAlias};
 		return StringUtils.join(aKey, INDEX_SEPARATOR);
@@ -107,6 +108,7 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 		
 		JGroupsTGT oJGroupsTGT = _oTGTFactory.retrieve(sTGTID);
 		oJGroupsTGT.registerAlias(sKey);
+		_oTGTFactory.persist(oJGroupsTGT);
 	}
 
 
@@ -124,7 +126,7 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 		String sKeyPrefix = getPrefixTypeEntitySubKey(sType, sEntityID);
 		
 		for (String sKey: lAliasList) {
-			if (sKey.startsWith(sKeyPrefix)) {
+			if (sKey.startsWith(sKeyPrefix)) { // TODO check what was stored in lAliasLiast, should that not be the key + alias instead of just the alias?
 				// split always results in 4 elements, because putAlias enforces this 
 				// pref - type - req - alias => tgtid
 				String[] aKeyElements = sKey.split(INDEX_SEPARATOR);
@@ -197,6 +199,16 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 	}
 
 
+	public void setBlockingUpdates(boolean b) {
+		_oAliasMap.setBlockingUpdates(b);
+	}
+	
+	
+	public void stop() {
+		_oAliasMap.stop();
+	}
+	
+	
 	/**
 	 * Remove all aliases for a TGT with the provided TGT ID
 	 * @param sTGTID TGT to remove the aliases for

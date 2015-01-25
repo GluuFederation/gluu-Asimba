@@ -25,13 +25,14 @@ import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asimba.engine.cluster.ClusterConfiguration;
 import org.asimba.engine.core.cluster.ICluster;
-import org.asimba.engine.core.cluster.IClusterStorageFactory;
 import org.jgroups.JChannel;
 import org.jgroups.blocks.ReplicatedHashMap;
 import org.w3c.dom.Element;
@@ -39,7 +40,6 @@ import org.w3c.dom.Element;
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.UserEvent;
-import com.alfaariss.oa.api.configuration.ConfigurationException;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.persistence.IEntity;
 import com.alfaariss.oa.api.persistence.IEntityManager;
@@ -67,10 +67,14 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	private static Log _oEventLogger = LogFactory.getLog(Engine.EVENT_LOGGER);
 	
 	private ReplicatedHashMap<String, JGroupsTGT> _mTGTs;
-
-	private ICluster _oCluster;
+	private ReplicatedHashMap<String, String> _mAliasMap;
+	
+	private ICluster _oCluster = null;
 	private ICluster _oAliasCluster = null;
 
+	private JChannel _jChannel = null;
+	private JChannel _jAliasChannel = null;
+	
 	private JGroupsTGTAliasStore _oSPAliasStore;
 	private JGroupsTGTAliasStore _oIDPAliasStore;
 
@@ -96,8 +100,8 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 			_oCluster = oClusterConfiguration.getClusterFromConfigById(_eConfig, EL_CONFIG_CLUSTERID);
 		}
 
-		JChannel jChannel = (JChannel) _oCluster.getChannel();
-		_mTGTs = new ReplicatedHashMap<>( jChannel );
+		_jChannel = (JChannel) _oCluster.getChannel();
+		_mTGTs = new ReplicatedHashMap<String, JGroupsTGT>( _jChannel );
 		try {
 			// start gets the shared state in local hashmap, it is blocking,
 			// the timeout is not applied to the time needed to get the remote state
@@ -107,26 +111,22 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 			throw new OAException(SystemErrors.ERROR_INTERNAL);
 		}
 
-		ICluster oAliasCluster;
 		if (_oAliasCluster == null) {
-		oAliasCluster = 
-				oClusterConfiguration.getClusterFromConfigById(_eConfig, EL_CONFIG_ALIAS_CLUSTERID);
-		}
-		else {
-			oAliasCluster = _oAliasCluster;
+			_oAliasCluster = 
+					oClusterConfiguration.getClusterFromConfigById(_eConfig, EL_CONFIG_ALIAS_CLUSTERID);
 		}
 		
-		JChannel jAliasChannel = (JChannel) oAliasCluster.getChannel();
-		ReplicatedHashMap<String, String> oAliasMap = new ReplicatedHashMap<>( jAliasChannel );
+		_jAliasChannel = (JChannel) _oAliasCluster.getChannel();
+		_mAliasMap = new ReplicatedHashMap<String, String>( _jAliasChannel );
 		try {
-			oAliasMap.start(100000);
+			_mAliasMap.start(100000);
 		} catch (Exception e) {
 			_oLogger.error("Could not start Replicated HashMap: "+e.getMessage(), e);
 			throw new OAException(SystemErrors.ERROR_INTERNAL);
 		}
 
-		_oSPAliasStore = new JGroupsTGTAliasStore("sp", oAliasMap, this);
-		_oIDPAliasStore = new JGroupsTGTAliasStore("idp", oAliasMap, this);
+		_oSPAliasStore = new JGroupsTGTAliasStore("sp", _mAliasMap, this);
+		_oIDPAliasStore = new JGroupsTGTAliasStore("idp", _mAliasMap, this);
 
 
 		// TODO: This should move to superclass instead:
@@ -135,8 +135,19 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	}
 
 
+	@Override
+	public void stop() {
+		_mTGTs.stop();
+		_mAliasMap.stop();
+		_oIDPAliasStore.stop();
+		_oSPAliasStore.stop();
+		_oCluster.close();
+		_oAliasCluster.close();
+	}
+	
+	
 	/**
-	 * Convenience wrapper for start() to be used for testing
+	 * Convenience wrapper for start() to be used for unit testing
 	 * 
 	 * @param oConfigurationManager
 	 * @param eConfig
@@ -145,14 +156,19 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	 * @throws OAException
 	 */
 	public void startForTesting(IConfigurationManager oConfigurationManager,
-						Element eConfig, ICluster oCluster, ICluster oAliasCluster)
+						Element eConfig, ICluster oCluster, ICluster oAliasCluster,
+						SecureRandom secureRandom, long expiration)
 			throws OAException
 	{
 		_configurationManager = oConfigurationManager;
 		_eConfig = eConfig;
 		_oCluster = oCluster;
 		_oAliasCluster = oAliasCluster;
-		start(); // TODO make sure stop() mirrors start(), so that restart() works
+		_random = secureRandom;
+		_lExpiration = expiration;
+		start();
+		_mTGTs.setBlockingUpdates(true);
+		_mAliasMap.setBlockingUpdates(true);
 	}
 
 
@@ -294,7 +310,7 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 			oTGT.setId(sTGTID);
 			//Update expiration time
 			oTGT.setTgtExpTime(System.currentTimeMillis() + _lExpiration);
-			_mTGTs.put(sTGTID, oTGT);      
+			_mTGTs.put(sTGTID, oTGT);
 
 			listenerEvent = TGTListenerEvent.ON_CREATE;
 			if (bProcessEvent)
@@ -346,7 +362,7 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 		{
 			//Update expiration time
 			oTGT.setTgtExpTime(System.currentTimeMillis() + _lExpiration);
-			//Storing can be omitted when using Hashtable
+			_mTGTs.replace(sTGTID, oTGT);
 
 			listenerEvent = TGTListenerEvent.ON_UPDATE;
 			if (bProcessEvent)
@@ -441,7 +457,8 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	@Override
 	public JGroupsTGT retrieve(Object id) throws PersistenceException 
 	{
-		JGroupsTGT oJGroupTGT = _mTGTs.get(id);
+		String sId = id.toString();
+		JGroupsTGT oJGroupTGT = _mTGTs.get(sId);
 		if (oJGroupTGT != null) {
 			oJGroupTGT.resuscitate(this);
 		}
@@ -522,10 +539,15 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	}
 
 
-	public void setSecureRandom(SecureRandom secRandom) {
-		_random = secRandom; 
+	public int size() {
+		return _mTGTs.size();
 	}
-	
+
+
+	public Set<Entry<String, JGroupsTGT>> entrySet() {
+		return _mTGTs.entrySet();
+	}
+
 
 	private void processEvent(TGTListenerEvent event, ITGT tgt) throws TGTListenerException
 	{

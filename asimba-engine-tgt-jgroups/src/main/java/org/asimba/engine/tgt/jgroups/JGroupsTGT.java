@@ -32,6 +32,8 @@ import com.alfaariss.oa.engine.core.tgt.AbstractTGT;
 
 public class JGroupsTGT extends AbstractTGT implements Serializable {
 
+	private static final long serialVersionUID = -906089376628167771L;
+
 	//The persistence context
 	private transient JGroupsTGTFactory _oTGTFactory;
 
