@@ -455,7 +455,7 @@ public class KeystoreSigningFactory extends AbstractSigningFactory
             }
             
             // Establish real filename:
-            sKeystoreFile = PathTranslator.getInstance().map(sKeystoreFile);
+            sKeystoreFile = PathTranslator.getInstance().map(sKeystoreFile).trim();
 
             char[] caKeystorePassword = null;
             _sKeystorePassword = _configurationManager.getParam(eKeystore,
