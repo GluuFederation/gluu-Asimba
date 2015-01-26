@@ -22,6 +22,7 @@
  */
 package com.alfaariss.oa.api.authentication;
 
+import java.io.Serializable;
 import java.util.List;
 
 import com.alfaariss.oa.api.IManagebleItem;
@@ -32,8 +33,8 @@ import com.alfaariss.oa.api.IManagebleItem;
  * @author Alfa & Ariss
  *
  */
-public interface IAuthenticationProfile 
-	extends IManagebleItem, Comparable<IAuthenticationProfile> 
+public interface IAuthenticationProfile
+	extends IManagebleItem, Comparable<IAuthenticationProfile>, Serializable 
 {
 
     /**

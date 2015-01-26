@@ -21,10 +21,12 @@
  */
 package org.asimba.engine.session.jgroups;
 
+import java.io.Serializable;
+
 import com.alfaariss.oa.api.persistence.PersistenceException;
 import com.alfaariss.oa.engine.core.session.AbstractSession;
 
-public class JGroupsSession extends AbstractSession {
+public class JGroupsSession extends AbstractSession implements Serializable {
 
 	private transient JGroupsSessionFactory _oSessionFactory;
 	

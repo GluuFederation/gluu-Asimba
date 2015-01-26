@@ -22,6 +22,8 @@
 package org.asimba.engine.session.jgroups;
 
 import java.io.UnsupportedEncodingException;
+import java.security.SecureRandom;
+import java.util.Map.Entry;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,12 +31,15 @@ import org.asimba.engine.cluster.ClusterConfiguration;
 import org.asimba.engine.core.cluster.ICluster;
 import org.jgroups.JChannel;
 import org.jgroups.blocks.ReplicatedHashMap;
+import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.UserEvent;
+import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.persistence.PersistenceException;
 import com.alfaariss.oa.api.session.ISession;
+import com.alfaariss.oa.api.user.IUser;
 import com.alfaariss.oa.engine.core.Engine;
 import com.alfaariss.oa.engine.core.session.SessionException;
 import com.alfaariss.oa.engine.core.session.factory.ISessionFactory;
@@ -59,11 +64,13 @@ public class JGroupsSessionFactory extends AbstractStorageFactory implements
 	public void start() throws OAException 
 	{
 		// this._configManager and this._eConfig are initialized at this point:
-		ClusterConfiguration oClusterConfiguration = new ClusterConfiguration(_configurationManager);
-		_oCluster = oClusterConfiguration.getClusterFromConfigById(_eConfig, EL_CONFIG_CLUSTERID);
-
+		if (_oCluster == null) {
+			ClusterConfiguration oClusterConfiguration = new ClusterConfiguration(_configurationManager);
+			_oCluster = oClusterConfiguration.getClusterFromConfigById(_eConfig, EL_CONFIG_CLUSTERID);
+		}
+		
 		JChannel jChannel = (JChannel) _oCluster.getChannel();
-		_mSessions = new ReplicatedHashMap<>( jChannel );
+		_mSessions = new ReplicatedHashMap<String, JGroupsSession>( jChannel );
 		try {
 			// start gets the shared state in local hashmap, it is blocking,
 			// the timeout is not applied to the time needed to get the remote state
@@ -76,6 +83,20 @@ public class JGroupsSessionFactory extends AbstractStorageFactory implements
 		// TODO: This should move to superclass instead:
 		if(_tCleaner != null)
 			_tCleaner.start();
+	}
+	
+	public void startForTesting(IConfigurationManager configurationManager, Element clusterElement,
+			ICluster clusterConfig, SecureRandom secureRandom, long expiration)
+			throws OAException
+	{
+		_configurationManager = configurationManager;
+		_eConfig = clusterElement;
+		_oCluster = clusterConfig;
+		_random = secureRandom;
+		_lMax = 100000;
+		_lExpiration = expiration;
+		start();
+		_mSessions.setBlockingUpdates(true); // otherwise unit tests usually fail
 	}
 	
 	@Override
@@ -99,9 +120,29 @@ public class JGroupsSessionFactory extends AbstractStorageFactory implements
 	@Override
 	public void removeExpired() throws PersistenceException 
 	{
-		// TODO Martin.
-	}
+        long lNow = System.currentTimeMillis();
 
+        for ( Entry<String,JGroupsSession> entry : _mSessions.entrySet() )
+        {
+            JGroupsSession session = entry.getValue();
+
+            if( session.getSessionExpTime().getTime() <= lNow )
+            {
+                String id = session.getId();
+
+                _oLogger.debug("Session Expired: " + id);
+
+                IUser sessionUser = session.getUser();
+                
+                _oEventLogger.info(
+                    new UserEventLogItem(null, id, null, UserEvent.SESSION_EXPIRED,
+                        sessionUser.getID(), sessionUser.getOrganization(), null, null,
+                        this, "clean"));
+
+                _mSessions.remove(entry.getKey());
+            }
+        }		
+	}
 	
 	@Override
 	public boolean exists(Object id) throws PersistenceException 
@@ -213,6 +254,10 @@ public class JGroupsSessionFactory extends AbstractStorageFactory implements
 		}
 		
 		return oSession;
+	}
+
+	public Integer size() {
+		return _mSessions.size();
 	}
 
 }

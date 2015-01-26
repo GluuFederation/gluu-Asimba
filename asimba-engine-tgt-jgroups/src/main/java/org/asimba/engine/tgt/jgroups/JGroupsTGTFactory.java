@@ -172,17 +172,61 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	}
 
 
-
-
 	@Override
-	public void removeExpired() throws PersistenceException {
-		// TODO Martin.
-	}
+    public void removeExpired() throws PersistenceException
+    {
+        long lNow = System.currentTimeMillis();
+
+        for ( Entry<String,JGroupsTGT> entry : _mTGTs.entrySet() )
+        {
+            JGroupsTGT tgt = entry.getValue();
+
+            if( tgt.getTgtExpTime().getTime() <= lNow )
+            {
+                String id = tgt.getId();
+
+                _oLogger.debug("TGT Expired: " + id);
+
+                try
+                {
+                    processEvent(TGTListenerEvent.ON_EXPIRE, tgt);
+                }
+                catch (TGTListenerException e)
+                {//do nothing; just remove and try the next tgt
+                    _oLogger.debug("Could not process events for TGT with id: " + id, e);
+                }
+
+                int iCountR = _oSPAliasStore.remove(id);
+                int iCountF = _oIDPAliasStore.remove(id);
+
+                if (_oLogger.isDebugEnabled() && iCountR + iCountF > 0)
+                {
+                    StringBuffer sbDebug = new StringBuffer("Cleaned '");
+                    sbDebug.append(iCountR);
+                    sbDebug.append("' (requestor based) aliases and '");
+                    sbDebug.append(iCountF);
+                    sbDebug.append("' (remote entity based) aliases for TGT with id: ");
+                    sbDebug.append(id);
+                    _oLogger.debug(sbDebug.toString());
+                }
+
+                IUser tgtUser = tgt.getUser();
+                _oEventLogger.info(
+                    new UserEventLogItem(null, id, null, UserEvent.TGT_EXPIRED,
+                        tgtUser.getID(), tgtUser.getOrganization(), null, null,
+                        this, "clean"));
+
+                _mTGTs.remove(entry.getKey());
+            }
+        }
+    }
+	
 
 	@Override
 	public boolean exists(Object id) throws PersistenceException {
 		return _mTGTs.containsKey(id);
 	}
+	
 
 	@Override
 	public void persist(JGroupsTGT oEntity) throws PersistenceException {

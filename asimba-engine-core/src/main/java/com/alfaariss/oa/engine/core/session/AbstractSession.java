@@ -22,6 +22,8 @@
  */
 package com.alfaariss.oa.engine.core.session;
 
+import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
@@ -40,9 +42,13 @@ import com.alfaariss.oa.engine.core.attribute.SessionAttributes;
  * @author Alfa & Ariss
  *
  */
-public abstract class AbstractSession implements ISession 
+public abstract class AbstractSession implements ISession, Serializable
 {   
-    /** session id */
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 2035158024380320256L;
+	/** session id */
     protected String _id;
     /** expire time */
     protected long _lExpireTime;
@@ -333,4 +339,13 @@ public abstract class AbstractSession implements ISession
     {
         _isPassive = passive;
     }
+    
+    /**
+     * @see com.alfaariss.oa.api.tgt.ISession#getSessionExpTime()
+     */
+    public Date getSessionExpTime()
+    {
+		return new Date(_lExpireTime);
+	}
+
 }

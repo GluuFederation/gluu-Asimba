@@ -21,19 +21,10 @@
  */
 package org.asimba.engine.tgt.jgroups;
 
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.IsNot.not;
-import static org.junit.Assert.assertThat;
-
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Scanner;
@@ -42,18 +33,22 @@ import java.util.Set;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.nt.NTEventLogAppender;
-import org.asimba.engine.cluster.JGroupCluster;
 import org.jgroups.JChannel;
 import org.jgroups.blocks.ReplicatedHashMap;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
-import static org.mockito.Mockito.*;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.IsNot.not;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
+import static org.mockito.Mockito.*;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -62,11 +57,12 @@ import org.mockito.stubbing.Answer;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
-import com.alfaariss.oa.api.persistence.PersistenceException;
 import com.alfaariss.oa.api.tgt.ITGT;
 import com.alfaariss.oa.api.user.IUser;
+import org.asimba.engine.cluster.JGroupCluster;
 import com.alfaariss.oa.engine.core.configuration.ConfigurationManager;
 import com.alfaariss.oa.engine.core.tgt.factory.ITGTAliasStore;
+
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class JGroupsTGTFactoryTest {
@@ -117,10 +113,6 @@ public class JGroupsTGTFactoryTest {
 		for (int i = 0; i < AvailableNodeNames.length; ++i) {
 			Factories[i] = null;
 		}
-		
-		boolean b = _oLogger.isDebugEnabled();
-		b = _oLogger.isErrorEnabled();
-		b = _oLogger.isInfoEnabled();
 	}
 
 	
@@ -167,7 +159,7 @@ public class JGroupsTGTFactoryTest {
 	 */
 	@Test
 	public void test01_JGroupsTGTSerializable() throws Exception {
-		JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0);
+		JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, EXPIRATION_FOR_TEST);
 		JGroupsTGT oTGT = (JGroupsTGT) oTGTFactory.createTGT(mockedUser);
 		
 		try {
@@ -186,9 +178,9 @@ public class JGroupsTGTFactoryTest {
 	 */
 	@Test
 	public void test02_BasicReplicatedHashMapWithStringStringMap() throws Exception {
-		JChannel channel=new JChannel();
-		channel.connect("HashmapCluster");
-		ReplicatedHashMap<String, String> map = new ReplicatedHashMap<>(channel);
+		JChannel channel = createChannelFromConfig();
+		//channel.connect("HashmapCluster");
+		ReplicatedHashMap<String, String> map = new ReplicatedHashMap<String, String>(channel);
 
 		map.setBlockingUpdates(true);
 		map.put("test", "test");
@@ -206,10 +198,10 @@ public class JGroupsTGTFactoryTest {
 	 */
 	@Test
 	public void test03_BasicReplicatedHashMapWithStringTGTMap() throws Exception {
-		JChannel channel=new JChannel();
-		channel.connect("HashmapCluster");
+		JChannel channel = createChannelFromConfig();
+		//channel.connect("HashmapCluster");
 		ReplicatedHashMap<String, JGroupsTGT> map = new ReplicatedHashMap<>(channel);
-		JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0);
+		JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, EXPIRATION_FOR_TEST);
 		JGroupsTGT oTGT = (JGroupsTGT) oTGTFactory.createTGT(mockedUser);
 		
 		map.setBlockingUpdates(true);
@@ -299,7 +291,33 @@ public class JGroupsTGTFactoryTest {
 		assertThat(restartFactory.size(), equalTo(expectedTGTs + 1));
 	}
 	
-	
+    /**
+     * Test removal of expired TGTs
+     */
+    @Test
+    public void test11_RemoveExpiredTGT() throws Exception {
+        JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0,1000);
+        JGroupsTGT oTGT = (JGroupsTGT) oTGTFactory.createTGT(mockedUser);
+
+        oTGTFactory.persist(oTGT);
+        assertTrue(oTGTFactory.exists(oTGT.getId()));
+
+		final String alias = SOME_ALIAS + "-sp";
+		ITGTAliasStore spStore = oTGTFactory.getAliasStoreSP();
+		oTGTFactory.getAliasStoreSP().putAlias(SOME_TYPE, SOME_REQUESTOR, oTGT.getId(), alias);
+		assertThat(spStore.isAlias(SOME_TYPE, SOME_REQUESTOR, alias), equalTo(true));
+
+		oTGTFactory.removeExpired();
+        assertTrue(oTGTFactory.exists(oTGT.getId()));
+		assertThat(spStore.isAlias(SOME_TYPE, SOME_REQUESTOR, alias), equalTo(true));
+
+        Thread.sleep(1000);
+
+        oTGTFactory.removeExpired();
+        assertFalse(oTGTFactory.exists(oTGT.getId()));
+		assertThat(spStore.isAlias(SOME_TYPE, SOME_REQUESTOR, alias), equalTo(false));
+    }
+    
 	private void testNTGTFactories(int nNodes, int nTGTs) throws Exception {
 		int firstFreeNode = getFirstUnusedNode();
 		if (firstFreeNode + nNodes > AvailableNodeNames.length) {
@@ -346,7 +364,7 @@ public class JGroupsTGTFactoryTest {
 	}
 
 	private void createFactory(int i) throws Exception {
-		Factories[i] = createJGroupsTGTFactory(i);
+		Factories[i] = createJGroupsTGTFactory(i, EXPIRATION_FOR_TEST);
 		SpStores[i] = Factories[i].getAliasStoreSP();
 		IdpStores[i] = Factories[i].getAliasStoreIDP();		
 	}
@@ -364,49 +382,58 @@ public class JGroupsTGTFactoryTest {
 	}
 	
 	private void cleanTheFactory(JGroupsTGTFactory oTGTFactory) throws Exception {
-		int nrOfTGTs = oTGTFactory.size();
 		Set<Entry<String, JGroupsTGT>> entries = oTGTFactory.entrySet();
 		for (Entry<String, JGroupsTGT> entry: entries) {
 			oTGTFactory.clean(entry.getValue());
 		}
 	}
 	
-	private JGroupsTGTFactory createJGroupsTGTFactory(int n) throws Exception
+	private JGroupsTGTFactory createJGroupsTGTFactory(int n, long expiration) throws Exception
 	{
 		String id = AvailableNodeNames[n];
 		System.setProperty(JGroupCluster.PROP_ASIMBA_NODE_ID, id);
-		
+
+		IConfigurationManager oConfigManager = readConfigElementFromResource(FILENAME_CONFIG);
+
+		Element eClusterElement = oConfigManager.getSection(
+				null, "cluster", "id=test");
+		assertThat(eClusterElement, not(equalTo(null)));
+
+		Element eAliasClusterElement = oConfigManager.getSection(
+				null, "alias-cluster", "id=test-alias");
+		assertThat(eAliasClusterElement, not(equalTo(null)));
+
+		JGroupCluster oCluster = new JGroupCluster();
+		oCluster.start(oConfigManager, eClusterElement);
+		JChannel jChannel = (JChannel) oCluster.getChannel();
+		jChannel.connect("Something");
+		assertThat(jChannel, not(equalTo(null)));
+		_oLogger.info("JCluster address:" + jChannel.getAddressAsString());
+		JGroupCluster oAliasCluster = new JGroupCluster();
+		oAliasCluster.start(oConfigManager, eAliasClusterElement);
+
+		JGroupsTGTFactory oTGTFactory = Factories[n] = new JGroupsTGTFactory();
+		oTGTFactory.startForTesting(oConfigManager, eClusterElement, oCluster, oAliasCluster,
+				mockedSecureRandom, expiration != 0 ? expiration : EXPIRATION_FOR_TEST);
+
+		return oTGTFactory;
+	}
+	
+	private JChannel createChannelFromConfig() throws Exception{
 		IConfigurationManager oConfigManager = readConfigElementFromResource(FILENAME_CONFIG);
 
 		Element eClusterElement = oConfigManager.getSection(
                 null, "cluster", "id=test");            
 		assertThat(eClusterElement, not(equalTo(null)));
 		
-		Element eAliasClusterElement = oConfigManager.getSection(
-                null, "alias-cluster", "id=test-alias");            
-		assertThat(eAliasClusterElement, not(equalTo(null)));
+		JGroupCluster cluster = new JGroupCluster();
+		cluster.start(oConfigManager, eClusterElement);
+		JChannel jChannel = (JChannel) cluster.getChannel();
 		
-		JGroupCluster oCluster = new JGroupCluster();
-		oCluster.start(oConfigManager, eClusterElement);
-		JChannel jChannel = (JChannel) oCluster.getChannel();
-		jChannel.connect("Something");
-		assertThat(jChannel, not(equalTo(null)));
-		//assertThat(jChannel.getAddressAsString().endsWith("7800"), equalTo(true));
-		_oLogger.info("JCluster address:" + jChannel.getAddressAsString());
-		JGroupCluster oAliasCluster = new JGroupCluster();
-		oAliasCluster.start(oConfigManager, eAliasClusterElement);
-		
-		/*Element eFactoryElement = oConfigManager.getSection(
-                null, "tgtfactory", "id=test");            
-		assertThat(eClusterElement, not(equalTo(null)));*/
-		
-		JGroupsTGTFactory oTGTFactory = Factories[n] = new JGroupsTGTFactory();
-		oTGTFactory.startForTesting(oConfigManager, eClusterElement, oCluster, oAliasCluster,
-										mockedSecureRandom, EXPIRATION_FOR_TEST);
-
-		return oTGTFactory;
+		return jChannel;
 	}
-
+	
+	
 	private IConfigurationManager readConfigElementFromResource(String filename) throws Exception
 	{
 		
