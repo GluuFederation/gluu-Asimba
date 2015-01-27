@@ -938,11 +938,12 @@ public class WebBrowserSSO extends AbstractSAML2Profile
             {
             	String requestMode = configurationManager.getParam(eAuthentication, "request_mode");
             	if (requestMode != null) {
-            		if (! (REQ_AUTHNCONTEXT_FILTER.equalsIgnoreCase(requestMode)) ||
-            				(REQ_AUTHNCONTEXT_PASSTHROUGH.equalsIgnoreCase(requestMode))) {
+            		if (! (REQ_AUTHNCONTEXT_FILTER.equalsIgnoreCase(requestMode) ||
+            				REQ_AUTHNCONTEXT_PASSTHROUGH.equalsIgnoreCase(requestMode)) ) {
             			_logger.error("Invalid value configured for optional authentication@request_mode: "+requestMode+
             					"; allowed: '"+REQ_AUTHNCONTEXT_FILTER+"' or '"+REQ_AUTHNCONTEXT_PASSTHROUGH+"'");
-            				
+            			
+            			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
             		}
             		_requestedAuthnContextMode = requestMode;
             	}
