@@ -87,7 +87,11 @@
 		<groupId>joda-time</groupId>
 		<artifactId>joda-time</artifactId>
 		<version>1.6.2</version>
-	</dependency>    
+	</dependency>
+	<dependency>
+		<groupId>org.apache.commons</groupId>
+		<artifactId>commons-lang3</artifactId>
+	</dependency>
     
   </dependencies>
 </project>

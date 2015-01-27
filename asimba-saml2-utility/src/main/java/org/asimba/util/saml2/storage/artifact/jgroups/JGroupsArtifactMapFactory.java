@@ -36,6 +36,7 @@ import org.opensaml.xml.io.MarshallingException;
 
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
+import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.persistence.PersistenceException;
 import com.alfaariss.oa.util.saml2.storage.artifact.ArtifactMapEntry;
 import com.alfaariss.oa.util.storage.factory.AbstractStorageFactory;
@@ -54,10 +55,12 @@ public class JGroupsArtifactMapFactory extends AbstractStorageFactory implements
 	@Override
 	public void start() throws OAException 
 	{
-		// this._configManager and this._eConfig are initialized at this point:
-		ClusterConfiguration oClusterConfiguration = new ClusterConfiguration(_configurationManager);
-		_oCluster = oClusterConfiguration.getClusterFromConfigById(_eConfig, EL_CONFIG_CLUSTERID);
-
+		if (_oCluster ==  null) {
+			// this._configManager and this._eConfig are initialized at this point:
+			ClusterConfiguration oClusterConfiguration = new ClusterConfiguration(_configurationManager);
+			_oCluster = oClusterConfiguration.getClusterFromConfigById(_eConfig, EL_CONFIG_CLUSTERID);
+		}
+		
 		JChannel jChannel = (JChannel) _oCluster.getChannel();
 		_mArtifacts = new ReplicatedHashMap<>( jChannel );
 		try {
@@ -75,6 +78,15 @@ public class JGroupsArtifactMapFactory extends AbstractStorageFactory implements
 	}
 
 
+	public void startForTesting(IConfigurationManager configMgr, ICluster clusterConfig) throws OAException 
+	{
+		_configurationManager = configMgr;
+		_oCluster = clusterConfig;
+		start();
+		_mArtifacts.setBlockingUpdates(true);
+	}
+
+	
 	@Override
 	public void removeExpired() throws PersistenceException {
 		// TODO Open.
@@ -113,5 +125,7 @@ public class JGroupsArtifactMapFactory extends AbstractStorageFactory implements
 	}
 	
 	
-
+	public int size() {
+		return _mArtifacts.size();
+	}
 }

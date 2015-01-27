@@ -22,11 +22,20 @@
  */
 package com.alfaariss.oa.util.saml2.storage.artifact;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.io.StringWriter;
 
+import org.asimba.utility.xml.XMLUtils;
 import org.joda.time.DateTime;
+import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
+import org.opensaml.xml.io.Marshaller;
+import org.opensaml.xml.io.MarshallingException;
+import org.opensaml.xml.io.Unmarshaller;
+import org.opensaml.xml.util.XMLHelper;
+import org.w3c.dom.Document;
 
 /**
  * Base class for OA ArtifactMapEntries.
@@ -139,4 +148,72 @@ public class ArtifactMapEntry
         // The abstract storage factory handles expiration and cleanup        
     }
 
+    
+    private void writeObject(java.io.ObjectOutputStream out) throws IOException
+    {
+    	out.writeObject(_artifact);
+    	out.writeObject(_issuer);
+    	out.writeObject(_relyingParty);
+    	out.writeObject(_expirationTime);
+
+    	if (_message != null) {
+    		try 
+    		{
+    			Marshaller marshaller = Configuration.getMarshallerFactory().getMarshaller(_message);
+    			StringWriter writer = new StringWriter();
+    			XMLHelper.writeNode(marshaller.marshall(_message), writer);
+    			out.writeObject(writer.toString());
+    		} 
+    		catch (MarshallingException e) 
+    		{
+    			throw new IOException(e);
+    		}
+    	}
+    }
+
+	private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException
+	{
+		_artifact = (String)in.readObject();
+		_issuer = (String)in.readObject();
+		_relyingParty = (String)in.readObject();
+		_expirationTime = (DateTime)in.readObject();
+		
+		try
+		{
+			boolean namespaceAware = true;
+			Document document = XMLUtils.getDocumentFromString((String)in.readObject(), namespaceAware);
+			Unmarshaller unmarshaller = Configuration.getUnmarshallerFactory().getUnmarshaller(document.getDocumentElement());
+			_message = (SAMLObject)unmarshaller.unmarshall(document.getDocumentElement());
+		}
+		catch(Exception e)
+		{
+			// Nothing to read
+		}
+	}
+	
+	@Override
+	public boolean equals(Object obj) 
+	{
+		if ( obj instanceof ArtifactMapEntry )
+		{
+			ArtifactMapEntry other = (ArtifactMapEntry)obj;
+			
+			return ( _artifact.equals( other.getArtifact() ) &&
+			     _issuer.equals( other.getIssuerId() ) &&
+			     _relyingParty.equals( other.getRelyingPartyId() ) &&
+			     _expirationTime.equals( other.getExpirationTime() ) &&
+			     _message.equals( other.getSamlMessage() ));
+		}
+		
+		return false;
+	}
+	
+	@Override
+	public String toString() {
+		return "artifact: " + _artifact + 
+				", issuer: " + _issuer + 
+				", relyingParty: " + _relyingParty + 
+				", expirationTime: " + _expirationTime +
+				", message " + _message;
+	}
 }
