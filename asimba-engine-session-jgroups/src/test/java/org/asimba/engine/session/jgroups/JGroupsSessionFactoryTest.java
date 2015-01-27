@@ -146,12 +146,42 @@ public class JGroupsSessionFactoryTest {
 		}
 	}
 
+	
 	@Test
 	public void test02_OneNodeOneSession() throws Exception
 	{
 		testNSessionFactories(1, 1);
 	}
 	
+	
+	@Test
+	public void test03_TwoNodeOneSession() throws Exception
+	{
+		testNSessionFactories(2, 1);
+	}
+	
+	
+	@Test
+	public void test04_FiveNodeOneSession() throws Exception
+	{
+		testNSessionFactories(5, 1);
+	}
+	
+	
+	@Test
+	public void test05_TwoNodeManySessions() throws Exception
+	{
+		testNSessionFactories(2, 500);
+	}
+	
+
+	@Test
+	public void test06_FiveNodeManySessions() throws Exception
+	{
+		testNSessionFactories(5, 500);
+	}
+	
+
     /**
      * Test removal of expired TGTs
      */
