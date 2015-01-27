@@ -87,7 +87,6 @@ public abstract class AbstractSession implements ISession, Serializable
      */
     public String getId()
     {
-        assert _id != null : "Session id not set";
         return _id;
     }
 
