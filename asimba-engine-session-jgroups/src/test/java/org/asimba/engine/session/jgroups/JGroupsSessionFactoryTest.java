@@ -40,7 +40,7 @@ import java.util.Scanner;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.asimba.engine.cluster.JGroupCluster;
+import org.asimba.engine.cluster.JGroupsCluster;
 import org.asimba.engine.session.jgroups.JGroupsSession;
 import org.asimba.engine.session.jgroups.JGroupsSessionFactory;
 import org.jgroups.JChannel;
@@ -251,7 +251,7 @@ public class JGroupsSessionFactoryTest {
 
 	private JGroupsSessionFactory createJGroupsSessionFactory(int n, long expiration) throws Exception {
 		String id = AvailableNodeNames[n];
-		System.setProperty(JGroupCluster.PROP_ASIMBA_NODE_ID, id);
+		System.setProperty(JGroupsCluster.PROP_ASIMBA_NODE_ID, id);
 
 		IConfigurationManager oConfigManager = readConfigElementFromResource(FILENAME_CONFIG);
 
@@ -259,7 +259,7 @@ public class JGroupsSessionFactoryTest {
 				null, "cluster", "id=test");            
 		assertThat(eClusterConfig, not(equalTo(null)));
 
-		JGroupCluster oCluster = new JGroupCluster();
+		JGroupsCluster oCluster = new JGroupsCluster();
 		oCluster.start(oConfigManager, eClusterConfig);
 		JChannel jChannel = (JChannel) oCluster.getChannel();
 		assertThat(jChannel, not(equalTo(null)));

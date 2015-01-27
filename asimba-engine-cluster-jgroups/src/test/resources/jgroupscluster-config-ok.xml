@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- XML fragment that provides a valid JGroupCluster configuration -->
+<!-- XML fragment that provides a valid JGroupsCluster configuration -->
 <root>
-  <cluster class="org.asimba.engine.cluster.JGroupCluster" id="test">
+  <cluster class="org.asimba.engine.cluster.JGroupsCluster" id="test">
     <cluster_name>test-cluster</cluster_name>
     <config_location>tcp.xml</config_location>
     <node id="one">

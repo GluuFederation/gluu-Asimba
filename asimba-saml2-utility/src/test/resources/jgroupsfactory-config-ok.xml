@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- XML fragment that provides a valid JGroupCluster configuration -->
+<!-- XML fragment that provides a valid JGroupsCluster configuration -->
 <root>
 	<tgtfactory class="org.asimba.engine.tgt.jgroups.JGroupsTGTFactory" id="test">
 		<expire>300</expire>	<!-- 300 is short = 5 minutes; development value! -->
 	    <interval>20</interval>
 	    <max>5000</max>
 	</tgtfactory>
-	<cluster class="org.asimba.engine.cluster.JGroupCluster" id="test">
+	<cluster class="org.asimba.engine.cluster.JGroupsCluster" id="test">
 		<cluster_id>test-cluster-id</cluster_id>
 		<cluster_name>test-cluster-name</cluster_name>
 		<config_location>tcp-asimba.xml</config_location>
@@ -46,7 +46,7 @@
 			</options>
 		</node>
 	</cluster>
-	<alias-cluster class="org.asimba.engine.cluster.JGroupCluster"
+	<alias-cluster class="org.asimba.engine.cluster.JGroupsCluster"
 		id="test-alias">
 		<alias-cluster_id>test-alias-cluster-id</alias-cluster_id>
 		<cluster_name>test-alias-cluster-name</cluster_name>

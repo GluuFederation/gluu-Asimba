@@ -38,10 +38,10 @@ import org.w3c.dom.Element;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.engine.core.configuration.ConfigurationManager;
 
-public class JGroupClusterTest {
-	private static final Log _oLogger = LogFactory.getLog(JGroupClusterTest.class);
+public class JGroupsClusterTest {
+	private static final Log _oLogger = LogFactory.getLog(JGroupsClusterTest.class);
 	
-	private static final String FILENAME_CONFIG_OK = "jgroupcluster-config-ok.xml";
+	private static final String FILENAME_CONFIG_OK = "jgroupscluster-config-ok.xml";
 	
 	@Test
 	public void testSetupOk() throws Exception
@@ -53,15 +53,15 @@ public class JGroupClusterTest {
 		
 		assertThat(eClusterElement, not(equalTo(null)));
 		
-		JGroupsCluster oJGroupCluster = new JGroupsCluster();
-		oJGroupCluster.start(oConfigManager, eClusterElement);
+		JGroupsCluster oJGroupsCluster = new JGroupsCluster();
+		oJGroupsCluster.start(oConfigManager, eClusterElement);
 		
-		assertThat(oJGroupCluster.getID(), equalTo("test"));
+		assertThat(oJGroupsCluster.getID(), equalTo("test"));
 		
 		// node="one", of node="two"
 		System.setProperty(JGroupsCluster.PROP_ASIMBA_NODE_ID, "one");
 		
-		JChannel jChannel = (JChannel) oJGroupCluster.getChannel();
+		JChannel jChannel = (JChannel) oJGroupsCluster.getChannel();
 		assertThat(jChannel, not(equalTo(null)));
 		assertThat(jChannel.getClusterName(), equalTo("test-cluster"));
 		
@@ -72,7 +72,7 @@ public class JGroupClusterTest {
 	private IConfigurationManager readConfigElementFromResource(String filename) throws Exception
 	{
 		
-		InputStream oIS = JGroupClusterTest.class.getClassLoader().getResourceAsStream(filename);
+		InputStream oIS = JGroupsClusterTest.class.getClassLoader().getResourceAsStream(filename);
 		String sConfig;
 		
 		try (Scanner s = new Scanner(oIS, "UTF-8")) {

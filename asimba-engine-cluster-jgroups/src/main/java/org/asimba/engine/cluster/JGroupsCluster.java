@@ -42,7 +42,7 @@ import com.alfaariss.oa.api.configuration.IConfigurationManager;
 /**
  * Configurable through:<br/>
  * <br/>
- * &lt;cluster class="org.asimba.engine.cluster.JGroupCluster" @id&gt;<br/>
+ * &lt;cluster class="org.asimba.engine.cluster.JGroupsCluster" @id&gt;<br/>
  *   &lt;config_location&gt; ... &lt;config_location&gt;<br/>
  *   &lt;cluster_name&gt; ... &lt;cluster_name&gt;<br/>
  *   &lt;node @id&gt;<br/>
@@ -106,7 +106,7 @@ public class JGroupsCluster implements ICluster, IComponent {
 	@Override
 	public void start(IConfigurationManager oConfigurationManager, Element eConfig) throws OAException 
 	{
-		_oLogger.info("Starting JGroupCluster");
+		_oLogger.info("Starting JGroupsCluster");
 		_oConfigManager = oConfigurationManager;
 
 		_jChannel = null;
@@ -154,7 +154,7 @@ public class JGroupsCluster implements ICluster, IComponent {
 			elNode = _oConfigManager.getNextSection(elNode);
 		}
 
-		_oLogger.info("JGroupCluster '"+_sID+"' started");
+		_oLogger.info("JGroupsCluster '"+_sID+"' started");
 	}
 
 	@Override
@@ -165,7 +165,7 @@ public class JGroupsCluster implements ICluster, IComponent {
 
 	@Override
 	public void stop() {
-		_oLogger.info("JGroupCluster "+_sID+" stopped.");
+		_oLogger.info("JGroupsCluster "+_sID+" stopped.");
 	}
 
 	@Override
@@ -200,7 +200,7 @@ public class JGroupsCluster implements ICluster, IComponent {
 	}
 
 	/**
-	 * Return the JChannel instance configured for this JGroupCluster<br/>
+	 * Return the JChannel instance configured for this JGroupsCluster<br/>
 	 * Note: the JChannel is connected to upon first instantiation
 	 */
 	@Override
@@ -218,7 +218,7 @@ public class JGroupsCluster implements ICluster, IComponent {
 					Map<String, String> mOptions = _mCustomOptions.get(sNodeId);
 					
 					_oLogger.info("System property "+PROP_ASIMBA_NODE_ID+" specified; applying"
-							+ "custom properties JGroupCluster '"+_sID+"', node '" + sNodeId + "'");
+							+ "custom properties JGroupsCluster '"+_sID+"', node '" + sNodeId + "'");
 
 					for (Entry<String, String> prop: mOptions.entrySet()) {
 						System.setProperty(prop.getKey(), prop.getValue());
@@ -226,7 +226,7 @@ public class JGroupsCluster implements ICluster, IComponent {
 							
 				} else {
 					_oLogger.info("No "+PROP_ASIMBA_NODE_ID+" system property specified, so no "
-							+ "custom properties applied for JGroupCluster '"+_sID+"'");
+							+ "custom properties applied for JGroupsCluster '"+_sID+"'");
 				}
 
 				_jChannel = new JChannel(_sConfigLocation);
