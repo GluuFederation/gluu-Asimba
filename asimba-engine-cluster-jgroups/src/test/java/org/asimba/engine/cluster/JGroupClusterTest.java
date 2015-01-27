@@ -53,13 +53,13 @@ public class JGroupClusterTest {
 		
 		assertThat(eClusterElement, not(equalTo(null)));
 		
-		JGroupCluster oJGroupCluster = new JGroupCluster();
+		JGroupsCluster oJGroupCluster = new JGroupsCluster();
 		oJGroupCluster.start(oConfigManager, eClusterElement);
 		
 		assertThat(oJGroupCluster.getID(), equalTo("test"));
 		
 		// node="one", of node="two"
-		System.setProperty(JGroupCluster.PROP_ASIMBA_NODE_ID, "one");
+		System.setProperty(JGroupsCluster.PROP_ASIMBA_NODE_ID, "one");
 		
 		JChannel jChannel = (JChannel) oJGroupCluster.getChannel();
 		assertThat(jChannel, not(equalTo(null)));

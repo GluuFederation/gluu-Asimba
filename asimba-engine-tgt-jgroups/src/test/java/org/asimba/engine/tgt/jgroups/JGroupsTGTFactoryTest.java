@@ -59,7 +59,7 @@ import org.w3c.dom.Element;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.tgt.ITGT;
 import com.alfaariss.oa.api.user.IUser;
-import org.asimba.engine.cluster.JGroupCluster;
+import org.asimba.engine.cluster.JGroupsCluster;
 import com.alfaariss.oa.engine.core.configuration.ConfigurationManager;
 import com.alfaariss.oa.engine.core.tgt.factory.ITGTAliasStore;
 
@@ -391,7 +391,7 @@ public class JGroupsTGTFactoryTest {
 	private JGroupsTGTFactory createJGroupsTGTFactory(int n, long expiration) throws Exception
 	{
 		String id = AvailableNodeNames[n];
-		System.setProperty(JGroupCluster.PROP_ASIMBA_NODE_ID, id);
+		System.setProperty(JGroupsCluster.PROP_ASIMBA_NODE_ID, id);
 
 		IConfigurationManager oConfigManager = readConfigElementFromResource(FILENAME_CONFIG);
 
@@ -403,13 +403,13 @@ public class JGroupsTGTFactoryTest {
 				null, "alias-cluster", "id=test-alias");
 		assertThat(eAliasClusterElement, not(equalTo(null)));
 
-		JGroupCluster oCluster = new JGroupCluster();
+		JGroupsCluster oCluster = new JGroupsCluster();
 		oCluster.start(oConfigManager, eClusterElement);
 		JChannel jChannel = (JChannel) oCluster.getChannel();
 		jChannel.connect("Something");
 		assertThat(jChannel, not(equalTo(null)));
 		_oLogger.info("JCluster address:" + jChannel.getAddressAsString());
-		JGroupCluster oAliasCluster = new JGroupCluster();
+		JGroupsCluster oAliasCluster = new JGroupsCluster();
 		oAliasCluster.start(oConfigManager, eAliasClusterElement);
 
 		JGroupsTGTFactory oTGTFactory = Factories[n] = new JGroupsTGTFactory();
@@ -426,7 +426,7 @@ public class JGroupsTGTFactoryTest {
                 null, "cluster", "id=test");            
 		assertThat(eClusterElement, not(equalTo(null)));
 		
-		JGroupCluster cluster = new JGroupCluster();
+		JGroupsCluster cluster = new JGroupsCluster();
 		cluster.start(oConfigManager, eClusterElement);
 		JChannel jChannel = (JChannel) cluster.getChannel();
 		

@@ -1,3 +1,24 @@
+/*
+ * Asimba Server
+ * 
+ * Copyright (C) 2015 Asimba
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see www.gnu.org/licenses
+ * 
+ * Asimba - Serious Open Source SSO - More information on www.asimba.org
+ * 
+ */
 package org.asimba.engine.cluster;
 
 import java.util.Arrays;
@@ -36,7 +57,7 @@ import com.alfaariss.oa.api.configuration.IConfigurationManager;
  * @author mdobrinic
  *
  */
-public class JGroupCluster implements ICluster, IComponent {
+public class JGroupsCluster implements ICluster, IComponent {
 
 	/** Configuration elements */
 	public static final String ATTR_ID = "id";
@@ -53,7 +74,7 @@ public class JGroupCluster implements ICluster, IComponent {
 	public static final String PROP_ASIMBA_NODE_ID = "asimba.node.id";
 
 	/** Local logger instance */
-	private static Log _oLogger = LogFactory.getLog(JGroupCluster.class);
+	private static Log _oLogger = LogFactory.getLog(JGroupsCluster.class);
 
 	/** Local reference to configmanager for reloading configuration */
 	private IConfigurationManager _oConfigManager;
@@ -189,6 +210,8 @@ public class JGroupCluster implements ICluster, IComponent {
 			String sNodeId = System.getProperty(PROP_ASIMBA_NODE_ID);
 			// sNodeId == null when property not set
 
+			
+			
 			try {
 				if (sNodeId != null) {
 					// Apply custom options:
