@@ -23,7 +23,6 @@ package org.asimba.engine.session.jgroups;
 
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNot.not;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -59,7 +58,6 @@ import org.w3c.dom.Element;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.user.IUser;
 import com.alfaariss.oa.engine.core.configuration.ConfigurationManager;
-import com.alfaariss.oa.engine.core.tgt.factory.ITGTAliasStore;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class JGroupsSessionFactoryTest {
@@ -77,8 +75,6 @@ public class JGroupsSessionFactoryTest {
 	
 	private static final long EXPIRATION_FOR_TEST = 500000;
 
-	// current implementation of setNextFillBytes supports up to 255 unique values :(
-	private static final long MAX_FILLBYTES_VALUE = 255;
 	private static long nextBytesFillValue = 0;
 	
 	// nodenames in AvailableNodeNames must also be configured in FILENAME_CONFIG
