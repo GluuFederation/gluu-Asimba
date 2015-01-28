@@ -37,7 +37,8 @@
 		<Call name="setInitParameter">
 			<Arg>configuration.handler.filename</Arg>
 			<Arg>
-				<SystemProperty name="asimba.dir"/>/src/main/webapp/WEB-INF/conf/asimba-wa.xml
+				<!-- <SystemProperty name="asimba.dir"/>/src/main/webapp/WEB-INF/conf/asimba-wa.xml -->
+				<SystemProperty name="asimba.dir"/>/src/main/webapp/WEB-INF/conf/asimba-wa-cluster.xml
 			</Arg>
 		</Call>
 	</Get>
