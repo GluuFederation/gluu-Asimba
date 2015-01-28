@@ -26,6 +26,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asimba.engine.core.cluster.ICluster;
@@ -206,11 +210,21 @@ public class JGroupsCluster implements ICluster, IComponent {
 	@Override
 	public Object getChannel() {
 		if (_jChannel == null) {
-			// Initialize the channel, based on configuration
-			String sNodeId = System.getProperty(PROP_ASIMBA_NODE_ID);
-			// sNodeId == null when property not set
-
+			String sNodeId = null;
 			
+			// initialize channel from initialcontext
+			try {
+				InitialContext ic = new InitialContext();
+				sNodeId = (String)ic.lookup("java:comp/env/"+PROP_ASIMBA_NODE_ID);
+				_oLogger.debug("Trying to read the node id from initial context");
+			} catch (NamingException e) {
+				_oLogger.warn("Getting initialcontext failed! "+ e.getMessage());
+			}
+			
+			if (StringUtils.isEmpty(sNodeId) ) {
+				// Initialize the channel, based on configuration
+				sNodeId = System.getProperty(PROP_ASIMBA_NODE_ID);
+			}
 			
 			try {
 				if (sNodeId != null) {
