@@ -34,7 +34,9 @@
 			</activation>
 			<properties>
 				<skip.integration.tests>false</skip.integration.tests>
-				<integrationtest.groups.skip>org.asimba.wa.integrationtest.dev.DevTests</integrationtest.groups.skip>
+				<integrationtest.groups.skip>org.asimba.wa.integrationtest.dev.DevTests, 
+ 				org.asimba.wa.integrationtest.clustered.ClusteredTests</integrationtest.groups.skip>
+				<asimba.wa.file>asimba-wa.xml</asimba.wa.file>
 			</properties>
 		</profile>
 		<profile>
@@ -48,8 +50,26 @@
 			</activation>
 			<properties>
 				<skip.integration.tests>false</skip.integration.tests>
-				<integrationtest.groups.skip>org.asimba.wa.integrationtest.EmptyTestCategory</integrationtest.groups.skip>
+				<integrationtest.groups.skip>org.asimba.wa.integrationtest.EmptyTestCategory,
+                org.asimba.wa.integrationtest.clustered.ClusteredTests</integrationtest.groups.skip>
+                <asimba.wa.file>asimba-wa.xml</asimba.wa.file>
 			</properties>
+		</profile>
+		<profile>
+		    <!--  clustered profile is activated when -Pclustered is specified in Maven -->
+		    <id>clustered</id>
+		    <activation>
+		        <property>
+		            <name>testType</name>
+		            <value>cluster</value>  
+		        </property>
+		    </activation>
+            <properties>
+                <skip.integration.tests>false</skip.integration.tests>
+                <integrationtest.groups.skip>org.asimba.wa.integrationtest.dev.DevTests</integrationtest.groups.skip>
+                <asimba.wa.file>asimba-wa-cluster.xml</asimba.wa.file>
+                <jetty.cluster.xml>${basedir}/src/jetty/jetty-cluster.xml</jetty.cluster.xml>                
+            </properties>
 		</profile>
 	</profiles>
 
@@ -358,6 +378,10 @@
 							<value>${basedir}</value>
 						</systemProperty>
 						<systemProperty>
+                            <name>asimba.cluster.version</name>
+                            <value>${asimba.version}</value>
+                        </systemProperty>
+						<systemProperty>
 							<!-- overrule default asimba.properties filename -->
 							<name>asimba.properties.file</name>
 							<value>${basedir}/src/main/webapp/WEB-INF/asimba-wa.properties</value>
@@ -366,11 +390,15 @@
 	       					<name>asimba.node.id</name>
     						<value>one</value>
 						</systemProperty>
+						<systemProperty>
+						    <name>jetty.asimba.file</name>
+						    <value>${asimba.wa.file}</value>
+						</systemProperty>
 					</systemProperties>
 					<scanIntervalSeconds>10</scanIntervalSeconds>
 					<stopPort>8910</stopPort>
 					<stopKey>stop</stopKey>
-					<jettyXml>${basedir}/src/jetty/jetty-cluster.xml</jettyXml>
+					<jettyXml>${jetty.cluster.xml}</jettyXml>
 					<webAppConfig>
 						<contextPath>/asimba-wa</contextPath>
 						<jettyEnvXml>${basedir}/src/jetty/jetty-env-integrationtest.xml</jettyEnvXml>												

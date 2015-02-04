@@ -61,6 +61,81 @@
 			<resource-ref>jdbc/oaSystem</resource-ref>
 		</system>
 	</storagefactory>
+    
+    <clusterstoragefactory class="org.asimba.engine.core.cluster.impl.ClusterConfigurationFactory">
+           <cluster class="org.asimba.engine.cluster.JGroupsCluster" id="sessions">
+            <cluster_name>session-cluster</cluster_name>
+            <config_location>tcp-asimba.xml</config_location>
+            <node id="one">
+                <options>
+                    <option name="jgroups.bind_addr" value="127.0.0.1" />
+                    <option name="jgroups.tcp.bind_port" value="10501" />
+                    <option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[10501],127.0.0.1[10502]" />
+                </options>
+            </node>
+            <node id="two">
+                 <options>
+                    <option name="jgroups.bind_addr" value="127.0.0.1" />
+                    <option name="jgroups.tcp.bind_port" value="10502" />
+                    <option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[10501],127.0.0.1[10502]" />
+                </options>
+            </node>
+        </cluster>
+        <cluster class="org.asimba.engine.cluster.JGroupsCluster" id="tgts">
+            <cluster_name>tgt-cluster</cluster_name>
+            <config_location>tcp-asimba.xml</config_location>
+            <node id="one">
+                <options>
+                    <option name="jgroups.bind_addr" value="127.0.0.1" />
+                    <option name="jgroups.tcp.bind_port" value="10511" />
+                    <option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[10511],127.0.0.1[10512]" />
+                </options>
+            </node>
+            <node id="two">
+                <options>
+                    <option name="jgroups.bind_addr" value="127.0.0.1" />
+                    <option name="jgroups.tcp.bind_port" value="10512" />
+                    <option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[10511],127.0.0.1[10512]" />
+                </options>
+            </node>
+        </cluster>
+        <cluster class="org.asimba.engine.cluster.JGroupsCluster" id="aliases">
+            <cluster_name>alias-cluster</cluster_name>
+            <config_location>tcp-asimba.xml</config_location>
+            <node id="one">
+                <options>
+                    <option name="jgroups.bind_addr" value="127.0.0.1" />
+                    <option name="jgroups.tcp.bind_port" value="10521" />
+                    <option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[10521],127.0.0.1[10522]" />
+                </options>
+            </node>
+            <node id="two">
+                <options>
+                    <option name="jgroups.bind_addr" value="127.0.0.1" />
+                    <option name="jgroups.tcp.bind_port" value="10522" />
+                    <option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[10521],127.0.0.1[10522]" />
+                </options>
+            </node>
+        </cluster>
+        <cluster class="org.asimba.engine.cluster.JGroupsCluster" id="artifacts">
+            <cluster_name>artifact-cluster</cluster_name>
+            <config_location>tcp-asimba.xml</config_location>
+            <node id="one">
+                <options>
+                    <option name="jgroups.bind_addr" value="127.0.0.1" />
+                    <option name="jgroups.tcp.bind_port" value="10531" />
+                    <option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[10531],127.0.0.1[10532]" />
+                </options>
+            </node>
+            <node id="two">
+                 <options>
+                    <option name="jgroups.bind_addr" value="127.0.0.1" />
+                    <option name="jgroups.tcp.bind_port" value="10532" />
+                    <option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[10531],127.0.0.1[10532]" />
+                </options>
+            </node>
+        </cluster>
+    </clusterstoragefactory>
 
 
 	<!-- Configure sessionFactory implementation and behavior -->
@@ -77,11 +152,9 @@
 
 	<!-- Option 2: Use jGroups -->
 	<!-- Configure jGroups cluster to be used as sessionFactory -->
-
-
 	<sessionfactory
 		class="org.asimba.engine.session.jgroups.JGroupsSessionFactory">
-		<expire>600</expire>
+		<expire>60</expire>
 		<interval>20</interval>
 		<max>10000</max>
 		<cluster_id>sessions</cluster_id>
@@ -111,67 +184,11 @@
 
 	<!-- Option 2: Use jGroups -->
 	<!-- Configure jGroups cluster to be used as tgtFactory -->
-	<clusterstoragefactory class="org.asimba.engine.core.cluster.impl.ClusterConfigurationFactory">
-		<cluster class="org.asimba.engine.cluster.JGroupsCluster" id="tgts">
-			<cluster_name>tgt-cluster</cluster_name>
-			<config_location>tcp-asimba.xml</config_location>
-			<node id="one">
-				<options>
-					<option name="jgroups.bind_addr" value="127.0.0.1" />
-					<option name="jgroups.tcp.bind_port" value="10511" />
-					<option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[10511],127.0.0.1[10512]" />
-				</options>
-			</node>
-			<node id="two">
-				<options>
-					<option name="jgroups.bind_addr" value="127.0.0.1" />
-					<option name="jgroups.tcp.bind_port" value="10512" />
-					<option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[10511],127.0.0.1[10512]" />
-				</options>
-			</node>
-		</cluster>
-		<cluster class="org.asimba.engine.cluster.JGroupsCluster" id="aliases">
-			<cluster_name>alias-cluster</cluster_name>
-			<config_location>tcp-asimba.xml</config_location>
-			<node id="one">
-				<options>
-					<option name="jgroups.bind_addr" value="127.0.0.1" />
-					<option name="jgroups.tcp.bind_port" value="10521" />
-					<option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[10521],127.0.0.1[10522]" />
-				</options>
-			</node>
-			<node id="two">
-				<options>
-					<option name="jgroups.bind_addr" value="127.0.0.1" />
-					<option name="jgroups.tcp.bind_port" value="10522" />
-					<option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[10521],127.0.0.1[10522]" />
-				</options>
-			</node>
-		</cluster>
-		<cluster class="org.asimba.engine.cluster.JGroupsCluster" id="sessions">
-			<cluster_name>session-cluster</cluster_name>
-			<config_location>tcp-asimba.xml</config_location>
-			<node id="one">
-				<options>
-					<option name="jgroups.bind_addr" value="127.0.0.1" />
-					<option name="jgroups.tcp.bind_port" value="10501" />
-					<option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[10501],127.0.0.1[10502]" />
-				</options>
-			</node>
-			<node id="two">
-			     <options>
-				    <option name="jgroups.bind_addr" value="127.0.0.1" />
-				    <option name="jgroups.tcp.bind_port" value="10502" />
-				    <option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[10501],127.0.0.1[10502]" />
-				</options>
-			</node>
-		</cluster>
-	</clusterstoragefactory>
 
 	<!-- Configure TGT implementation and behavior for jGroups cluster. Use 
 		test settings for expiration and limits -->
 	<tgtfactory class="org.asimba.engine.tgt.jgroups.JGroupsTGTFactory">
-		<expire>600</expire>
+		<expire>60</expire>
 		<interval>20</interval>
 		<max>10000</max>
 		<cluster_id>tgts</cluster_id>
@@ -419,9 +436,10 @@
 				<profile id="artifact"
 					class="com.alfaariss.oa.profile.saml2.profile.artifactresolution.ArtifactResolutionService">
 					<artifactfactory
-						class="com.alfaariss.oa.util.saml2.storage.artifact.jdbc.JDBCArtifactMapFactory">
+						class="org.asimba.util.saml2.storage.artifact.jgroups.JGroupsArtifactMapFactory">
 						<expire>60</expire>
 						<interval>60</interval>
+						<cluster_id>artifacts</cluster_id>
 					</artifactfactory>
 				</profile> <!-- artifact -->
 

@@ -6,17 +6,16 @@ Integration Tests that test a typical configuration of this distribution.
 
 The aismba-wa src/main directory specifies the context of the running Asimba 
 server instance, that is tested from the tests that are implemented in the 
-src/test directory.  
+src/test directory. 
 
 This means that src/main/webapp/WEB-INF/conf/asimba-wa.xml is used to
 configure asimba-wa. Configuring Asimba also means initializing the
 database with a schema and load it with configuration data from 
-src/main/resources/sql
+src/main/resources/sql. 
 
 The asimba-wa.properties file that specifies which configurationprovider to use, 
 is configured in the init-property 'asimba.properties.file' that is set in the
 startup-options of Jetty in Maven's pom.xml.
-
 
 * Running the tests
 There is a Maven default profile, that ensures that all the tests are run except for dev-specific 
@@ -30,7 +29,11 @@ Default startup (excludes Dev-tests)
 Startup that includes the dev-tests
 	$ mvn -PdevIntegrationTests clean verify 
 
-
+* Running the tests on 2 clustered Asimba servers
+There is a special Maven cluster profile to run testcases on 2 local Asimba servers configured to use shared memory clustering with jGroups. Both sessions, TGT and SAML artifacts are configured to use 
+the shared memory clustering.
+	$ mvn clean verify -Pclustered
+	
 * Debug the running Jetty instance
 Set Maven environment variable to include JVM debug settings, like:
 	$ export MAVEN_OPTS=-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n
@@ -38,7 +41,13 @@ Set Maven environment variable to include JVM debug settings, like:
 Now create a "Remote Java Application" as Debug Configuration, that attaches to the process on localhost port 8000.
 It might be necessary to add source lookup locations. 
 
-
+* Manual starting the configuration can be done as well:
+	$ mvn inmemdb:run 
+and either 
+	$ mvn jetty:start (build war and deploy)
+or
+	$ mvn jetty:run (deploy existing war)
+Once the database and server are running, individual testcases can be run from the IDE
 
 	Extended information
 ==================================================
