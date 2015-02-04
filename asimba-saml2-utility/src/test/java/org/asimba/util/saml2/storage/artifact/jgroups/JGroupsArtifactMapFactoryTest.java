@@ -5,7 +5,6 @@ import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertThat;
 
 import java.io.InputStream;
-import java.io.Serializable;
 import java.util.Properties;
 import java.util.Scanner;
 
@@ -14,17 +13,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asimba.engine.cluster.JGroupsCluster;
 import org.jgroups.JChannel;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opensaml.DefaultBootstrap;
-import org.opensaml.common.SAMLObject;
-import org.opensaml.common.SAMLObjectHelper;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
 import org.opensaml.saml1.core.impl.NameIdentifierBuilder;
 import org.opensaml.xml.ConfigurationException;
 import org.w3c.dom.Element;
-
-import static org.junit.Assert.assertEquals;
 
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.engine.core.configuration.ConfigurationManager;
@@ -44,25 +40,30 @@ public class JGroupsArtifactMapFactoryTest {
 	public void before() throws ConfigurationException {
 		DefaultBootstrap.bootstrap();
 	}
+	
+	
+	@After
+	public void after() throws Exception {
+		for (int i = 0; i < AvailableNodeNames.length; ++i) {
+			if (Factories[i] != null) {
+				Factories[i].stop();
+				Factories[i] = null;
+			}
+		}		
+	}
+		
 
 	@Test
 	public void test01_JGroupsSessionSerializable() throws Exception {
 		ArtifactMapEntry ae = new ArtifactMapEntry();
-		byte[] aes = null;
-		ArtifactMapEntry aed = null;
 		
 		try {
-			aes = SerializationUtils.serialize(ae);
+			SerializationUtils.serialize(ae);
 		}
 		catch (Exception e) {
 			_oLogger.error("Object of class ArtifactMapEntry cannot be serialized", e);
 			throw e;
-			//assertThat("Serialization of ArtifactMapEntry failed", true, equalTo(false)); // or the universe implodes
 		}
-		
-		//aed = SerializationUtils.deserialize(aes);
-		//System.out.println(aes.toString() + " + " + aed);
-		//assertEquals(ae, aed);
 	}
 
 
@@ -72,9 +73,29 @@ public class JGroupsArtifactMapFactoryTest {
 	}
 	
 	
-	//@Test
-	public void test03_TwoNodeManyEntries() throws Exception {
+	@Test
+	public void test03_TwoNodesManyEntries() throws Exception {
 		testNArtifactMapFactories(2, 100);
+	}
+	
+	
+	@Test
+	public void test04_RunTwoNodesAndAddOne() throws Exception {
+		final int nEntries = 100;
+		final int expectEntries = nEntries * 2;
+		testNArtifactMapFactories(2, nEntries);
+		assertThat(Factories[0].size(), equalTo(expectEntries));
+		assertThat(Factories[1].size(), equalTo(expectEntries));
+		assertThat(Factories[2], equalTo(null));
+		createJGroupsArtifactMapFactory(2);
+		JGroupsArtifactMapFactory addedFactory = Factories[2];
+		assertThat(addedFactory, not(equalTo(null)));
+		assertThat(addedFactory.size(), equalTo(expectEntries));
+		String id = "justSomeIDString";
+		addedFactory.put(id, id, id, new NameIdentifierBuilder().buildObject());
+		assertThat(addedFactory.size(), equalTo(expectEntries + 1));
+		assertThat(Factories[0].size(), equalTo(expectEntries + 1));
+		assertThat(Factories[1].size(), equalTo(expectEntries + 1));
 	}
 	
 	
@@ -92,7 +113,7 @@ public class JGroupsArtifactMapFactoryTest {
 		int persisted = 0;
 		for (int i = 0; i < nNodes; ++i) {
 			for (int j = 0; j < nEntries; ++j) {
-				String id = (new Integer(j)).toString();
+				String id = (new Integer(i)).toString() + "." + (new Integer(j)).toString();
 				Factories[i].put(id, id, id, new NameIdentifierBuilder().buildObject());
 				for (int k = 0; k < nNodes; ++k) {
 					SAMLArtifactMapEntry rSAMLObject = Factories[i].get(id);
@@ -142,7 +163,7 @@ public class JGroupsArtifactMapFactoryTest {
 		oSessionFactory.startForTesting(oConfigManager, oCluster);
 
 		return oSessionFactory;
-}
+	}
 	
 	
 	private IConfigurationManager readConfigElementFromResource(String filename) throws Exception
