@@ -177,12 +177,34 @@ public class JGroupsSessionFactoryTest {
 		testNSessionFactories(5, 500);
 	}
 	
+	
+	@Test
+	public void test07_RunTwoNodesAndAddOne() throws Exception {
+		final int nTGTs = 100;
+		final int expectedTGTs = nTGTs * 2;
+		testNSessionFactories(2, nTGTs);
+		assertThat(Factories[0].size(), equalTo(expectedTGTs));
+		assertThat(Factories[1].size(), equalTo(expectedTGTs));
+		assertThat(Factories[2], equalTo(null));
+		createFactory(2);
+		JGroupsSessionFactory addedFactory = Factories[2];
+		assertThat(addedFactory, not(equalTo(null)));
+		assertThat(addedFactory.size(), equalTo(expectedTGTs));
+		JGroupsSession newTGT = (JGroupsSession) addedFactory.createSession(REQUESTOR_ID);
+		addedFactory.persist(newTGT);
+		assertThat(addedFactory.size(), equalTo(expectedTGTs + 1));
+		assertThat(Factories[0].size(), equalTo(expectedTGTs + 1));
+		assertThat(Factories[1].size(), equalTo(expectedTGTs + 1));
+	}
+	
+	
+
 
     /**
      * Test removal of expired TGTs
      */
     @Test
-    public void test03_RemoveExpiredTGT() throws Exception {
+    public void test08_RemoveExpiredTGT() throws Exception {
         JGroupsSessionFactory sessionFactory = createJGroupsSessionFactory(0,1000);
         JGroupsSession session = (JGroupsSession) sessionFactory.createSession(REQUESTOR_ID);
 
