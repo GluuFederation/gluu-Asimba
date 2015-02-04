@@ -35,7 +35,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jgroups.JChannel;
 import org.jgroups.blocks.ReplicatedHashMap;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -47,8 +46,8 @@ import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
-
 import static org.mockito.Mockito.*;
+
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -59,7 +58,9 @@ import org.w3c.dom.Element;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.tgt.ITGT;
 import com.alfaariss.oa.api.user.IUser;
+
 import org.asimba.engine.cluster.JGroupsCluster;
+
 import com.alfaariss.oa.engine.core.configuration.ConfigurationManager;
 import com.alfaariss.oa.engine.core.tgt.factory.ITGTAliasStore;
 
@@ -254,6 +255,17 @@ public class JGroupsTGTFactoryTest {
 	}
 	
 	
+	/**
+	 * keep this test switched off under normal circumstances, it is more a performance test
+	 * @throws Exception
+	 */
+	//@Test
+	public void test08b_TestHowManyItWillDo() throws Exception {
+		testNTGTFactories(2, (int)75000);  // TODO: increase and analyze
+		_oLogger.info("Total number of unique TGTs: " + Factories[0].size());
+	}
+	
+	
 	@Test
 	public void test09_RunTwoNodesAndAddOne() throws Exception {
 		final int nTGTs = 100;
@@ -334,33 +346,42 @@ public class JGroupsTGTFactoryTest {
 			createFactory(i);
 		}
 
+		RetrieveRepeater repeater = new RetrieveRepeater(10, 10);
+		
 		int persisted = 0;
 		for (int i = 0; i < nNodes; ++i) {
 			for (int j = 0; j < nTGTs; ++j) {
 				JGroupsTGT tgt = (JGroupsTGT) Factories[i].createTGT(mockedUser);
 				Factories[i].persist(tgt);
 				for (int k = 0; k < nNodes; ++k) {
-					JGroupsTGT rTGT = Factories[i].retrieve(tgt.getId());
-					assertThat("Assertion failed at: " + k, rTGT, not(equalTo(null)));
+					JGroupsTGT rTGT = repeater.retrieve(Factories[k], tgt.getId());
+					assertThat("Assertion failed at (i,j,k): " + i + "," + j + "," + k, rTGT, not(equalTo(null)));
 					assertThat(rTGT.getId(), equalTo(tgt.getId()));
 				}
-				++persisted;
+				if (++persisted % 10000 == 0) {
+					_oLogger.info("Persisted: " + persisted + "/" + (nNodes * nTGTs));
+				};
 				String alias = SOME_ALIAS + "-sp-" + j;
 				SpStores[i].putAlias(SOME_TYPE, SOME_REQUESTOR, tgt.getId(), alias);
 				assertThat(SpStores[i].getAlias(SOME_TYPE, SOME_REQUESTOR, tgt.getId()), equalTo(alias));
 				for (int l = 0; l < nNodes; ++l) {
-					assertThat("Fails for node " + l, SpStores[l].getAlias(SOME_TYPE, SOME_REQUESTOR, tgt.getId()), equalTo(alias));
+					String rAlias = repeater.getAlias(SpStores[l], SOME_TYPE, SOME_REQUESTOR, tgt.getId());
+					assertThat("Fails for node (i,j,l): " + i + "," + j + "," + l, rAlias, equalTo(alias));
 				}
 				alias = SOME_ALIAS + "-idp-" + j;
 				IdpStores[i].putAlias(SOME_TYPE, SOME_REQUESTOR, tgt.getId(), alias);
+				assertThat("Fails for node (i,j): " + i + "," + j, IdpStores[i].getAlias(SOME_TYPE, SOME_REQUESTOR, tgt.getId()), equalTo(alias));
 				for (int l = 0; l < nNodes; ++l) {
-					assertThat(IdpStores[l].getAlias(SOME_TYPE, SOME_REQUESTOR, tgt.getId()), equalTo(alias));
+					String rAlias = repeater.getAlias(IdpStores[l], SOME_TYPE, SOME_REQUESTOR, tgt.getId());
+					assertThat("Fails for node (i,j,l): " + i + "," + j + "," + l, rAlias, equalTo(alias));
 				}
 			}
 		}
 		for (int i = 0; i < nNodes; ++i) {
 			assertThat(Factories[i].size(), equalTo(persisted));
 		}
+		
+		repeater.logReport(_oLogger);
 	}
 
 	private void createFactory(int i) throws Exception {
@@ -458,4 +479,71 @@ public class JGroupsTGTFactoryTest {
 		return oConfigManager;
 	}
 	
+	private interface Store {
+		public Object get() throws Exception;
+	}
+	
+	private class RetrieveRepeater {
+		private int repeats;
+		private int sleep;
+		private int invocations;
+		private int[] repetitions;
+		private int failures;
+		
+		public RetrieveRepeater(int repeats, int sleep) {
+			this.repeats = repeats;
+			this.sleep = sleep;
+			this.invocations = 0;
+			this.failures = 0;
+			this.repetitions = new int[repeats];
+		}
+		
+		public String getAlias(final ITGTAliasStore store, final String type, final String entityId, final String tgtId) throws Exception {
+			return (String) repeat(new Store() {
+				public Object get() throws Exception {
+					return store.getAlias(type, entityId, tgtId);
+				}
+			});
+		}
+		
+		public JGroupsTGT retrieve(final JGroupsTGTFactory factory, final String key) throws Exception {
+			return (JGroupsTGT) repeat(new Store() {
+				public Object get() throws Exception {
+					return factory.retrieve(key);
+				}
+			});
+		}
+		
+		private Object repeat(Store store) throws Exception{
+			int cycle = 0;
+			Object result;
+			
+			invocations++;
+			while ((result = store.get()) == null && cycle < this.repeats) {
+				Thread.sleep(cycle * this.sleep);
+				++cycle;
+			}
+			this.repetitions[cycle] += 1;
+			
+			if (result == null) {
+				++failures;
+			}
+			
+			return result;
+		}
+		
+		public void logReport(Log logger) {
+			logger.info("");
+			logger.info(RetrieveRepeater.class.toString());
+			logger.info("Invocations: " + invocations);
+			logger.info("Successes per cycle (0 means direct succes):");
+			for (int i = 0; i < repetitions.length; ++i) {
+				logger.info("  " + i + " after " + (i * sleep) + " msecs: " + repetitions[i]);
+			}
+			logger.info("Failures: " + failures);
+			logger.info("");
+		}
+		
+	}
+
 }
