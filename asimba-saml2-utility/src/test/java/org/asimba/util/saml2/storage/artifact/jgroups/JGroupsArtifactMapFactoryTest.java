@@ -2,7 +2,9 @@ package org.asimba.util.saml2.storage.artifact.jgroups;
 
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNot.not;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import java.io.InputStream;
 import java.util.Properties;
@@ -18,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opensaml.DefaultBootstrap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
+import org.opensaml.saml1.core.NameIdentifier;
 import org.opensaml.saml1.core.impl.NameIdentifierBuilder;
 import org.opensaml.xml.ConfigurationException;
 import org.w3c.dom.Element;
@@ -31,6 +34,8 @@ public class JGroupsArtifactMapFactoryTest {
 	private static final Log _oLogger = LogFactory.getLog(JGroupsArtifactMapFactoryTest.class);
 	
 	private static final String FILENAME_CONFIG = "jgroupsfactory-config-ok.xml";
+
+	private static final long EXPIRATION_FOR_TEST = 500000;
 
 	String[] AvailableNodeNames = {"one", "two", "three", "four", "five"};
 	JGroupsArtifactMapFactory[] Factories = new JGroupsArtifactMapFactory[AvailableNodeNames.length];
@@ -87,7 +92,7 @@ public class JGroupsArtifactMapFactoryTest {
 		assertThat(Factories[0].size(), equalTo(expectEntries));
 		assertThat(Factories[1].size(), equalTo(expectEntries));
 		assertThat(Factories[2], equalTo(null));
-		createJGroupsArtifactMapFactory(2);
+		createJGroupsArtifactMapFactory(2, EXPIRATION_FOR_TEST);
 		JGroupsArtifactMapFactory addedFactory = Factories[2];
 		assertThat(addedFactory, not(equalTo(null)));
 		assertThat(addedFactory.size(), equalTo(expectEntries));
@@ -99,6 +104,29 @@ public class JGroupsArtifactMapFactoryTest {
 	}
 	
 	
+    /**
+     * Test removal of expired Artifacts
+     */
+    @Test
+    public void test05_RemoveExpiredArtifacts() throws Exception {
+    	final String SOME_ID = "SomeId";
+        JGroupsArtifactMapFactory artifactFactory = createJGroupsArtifactMapFactory(0,1000);
+        NameIdentifier entry = new NameIdentifierBuilder().buildObject();
+
+        artifactFactory.put(SOME_ID, SOME_ID, SOME_ID, entry);
+        assertTrue(artifactFactory.contains(SOME_ID));
+
+		artifactFactory.removeExpired();
+
+        Thread.sleep(1000);
+
+        artifactFactory.removeExpired();
+        assertFalse(artifactFactory.contains(SOME_ID));
+    }
+	
+
+	
+	
 	private void testNArtifactMapFactories(int nNodes, int nEntries) throws Exception {
 		int firstFreeNode = getFirstUnusedNode();
 		if (firstFreeNode + nNodes > AvailableNodeNames.length) {
@@ -107,7 +135,7 @@ public class JGroupsArtifactMapFactoryTest {
 		}
 		
 		for (int i = firstFreeNode; i < nNodes; ++i) {
-			createJGroupsArtifactMapFactory(i);
+			createJGroupsArtifactMapFactory(i, EXPIRATION_FOR_TEST);
 		}
 
 		int persisted = 0;
@@ -142,7 +170,7 @@ public class JGroupsArtifactMapFactoryTest {
 	}
 	
 
-	private JGroupsArtifactMapFactory createJGroupsArtifactMapFactory(int n) throws Exception
+	private JGroupsArtifactMapFactory createJGroupsArtifactMapFactory(int n, long expiration) throws Exception
 	{
 		String id = AvailableNodeNames[n];
 		System.setProperty(JGroupsCluster.PROP_ASIMBA_NODE_ID, id);
@@ -160,7 +188,8 @@ public class JGroupsArtifactMapFactoryTest {
 		_oLogger.info("JCluster address:" + jChannel.getAddressAsString());
 
 		JGroupsArtifactMapFactory oSessionFactory = Factories[n] = new JGroupsArtifactMapFactory();
-		oSessionFactory.startForTesting(oConfigManager, oCluster);
+		oSessionFactory.startForTesting(oConfigManager, oCluster,
+				( expiration == 0 ) ? EXPIRATION_FOR_TEST : expiration);
 
 		return oSessionFactory;
 	}

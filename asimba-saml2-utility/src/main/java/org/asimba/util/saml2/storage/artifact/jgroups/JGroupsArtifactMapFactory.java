@@ -21,7 +21,7 @@
  */
 package org.asimba.util.saml2.storage.artifact.jgroups;
 
-import java.util.Enumeration;
+import java.util.Map.Entry;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,7 +31,6 @@ import org.jgroups.JChannel;
 import org.jgroups.blocks.ReplicatedHashMap;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
-import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
 import org.opensaml.xml.io.MarshallingException;
 
 import com.alfaariss.oa.OAException;
@@ -78,19 +77,37 @@ public class JGroupsArtifactMapFactory extends AbstractStorageFactory implements
 	}
 
 
-	public void startForTesting(IConfigurationManager configMgr, ICluster clusterConfig) throws OAException 
+	public void startForTesting(IConfigurationManager configMgr, ICluster clusterConfig, long expiration)
+			throws OAException 
 	{
 		_configurationManager = configMgr;
 		_oCluster = clusterConfig;
+		_lExpiration = expiration;
 		start();
 		_mArtifacts.setBlockingUpdates(true);
 	}
 
 	
 	@Override
-	public void removeExpired() throws PersistenceException {
-		// TODO Open.
+	public void removeExpired() throws PersistenceException 
+	{
+        long lNow = System.currentTimeMillis();
+
+        for ( Entry<String,SAMLArtifactMapEntry> entry : _mArtifacts.entrySet() )
+        {
+        	SAMLArtifactMapEntry session = entry.getValue();
+
+            if( session.getExpirationTime().getMillis() <= lNow )
+            {
+                String id = session.getIssuerId();
+
+                _oLogger.debug("Session Expired: " + id);
+
+                _mArtifacts.remove(entry.getKey());
+            }
+        }		
 	}
+	
 
 	
 	@Override
