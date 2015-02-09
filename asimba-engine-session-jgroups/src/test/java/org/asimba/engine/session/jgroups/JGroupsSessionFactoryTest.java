@@ -25,6 +25,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
@@ -197,8 +198,6 @@ public class JGroupsSessionFactoryTest {
 		assertThat(Factories[1].size(), equalTo(expectedTGTs + 1));
 	}
 	
-	
-
 
     /**
      * Test removal of expired TGTs
@@ -217,8 +216,10 @@ public class JGroupsSessionFactoryTest {
         Thread.sleep(1000);
 
         sessionFactory.removeExpired();
+        assertFalse(sessionFactory.exists(session.getId()));
     }
-	
+
+    
 	private void testNSessionFactories(int nNodes, int nSessions) throws Exception {
 		int firstFreeNode = getFirstUnusedNode();
 		if (firstFreeNode + nNodes > AvailableNodeNames.length) {
