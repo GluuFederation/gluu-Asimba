@@ -242,7 +242,7 @@ public class DefaultPersistentFormatHandler implements INameIDFormatHandler {
 				_sSalt = sSalt;
 			}
 			
-			_oLogger.info("Opaque set to "+_bUseOpaque+"; salt configured as: "+(_sSalt==null?"not configured":_sSalt));
+			_oLogger.debug("Opaque set to "+_bUseOpaque+"; salt configured as: "+(_sSalt==null?"not configured":_sSalt));
 			
 		} else {
 			_oLogger.info("No opaque-setting configured; disabling opaque");
