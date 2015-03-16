@@ -73,7 +73,7 @@ public class JGroupsTGTFactoryTest {
 	
 	private static final long EXPIRATION_FOR_TEST = 500000;
     private static final boolean USE_BLOCKING_UPDATES = true;
-    private static final long BLOCKING_TIMEOUT = 50;
+    private static final long BLOCKING_TIMEOUT = 5000;
 	
 	// current implementation of setNextFillBytes supports up to 255 unique values :(
 	private static final long MAX_FILLBYTES_VALUE = 255;
