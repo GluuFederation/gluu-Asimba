@@ -105,7 +105,7 @@ public class JGroupsSessionFactory extends AbstractStorageFactory implements
         String sStateTimeout = _configurationManager.getParam(_eConfig, EL_CONFIG_STATE_TIMEOUT);
         if (sStateTimeout != null) {
             try {
-                lStateTimeout = new Long(sBlockingTimeout);
+                lStateTimeout = new Long(sStateTimeout);
             }
             catch (java.lang.NumberFormatException e) {
                 _oLogger.error("Invalid value in config for <" + EL_CONFIG_STATE_TIMEOUT + ">, using default.");
