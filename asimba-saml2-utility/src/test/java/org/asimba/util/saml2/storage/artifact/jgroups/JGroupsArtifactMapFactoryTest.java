@@ -28,12 +28,16 @@ import org.w3c.dom.Element;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.engine.core.configuration.ConfigurationManager;
 import com.alfaariss.oa.util.saml2.storage.artifact.ArtifactMapEntry;
+import static org.hamcrest.core.IsEqual.equalTo;
+import org.jgroups.blocks.ReplicatedHashMap;
+import static org.junit.Assert.assertThat;
 
 public class JGroupsArtifactMapFactoryTest {
 
 	private static final Log _oLogger = LogFactory.getLog(JGroupsArtifactMapFactoryTest.class);
 	
 	private static final String FILENAME_CONFIG = "jgroupsfactory-config-ok.xml";
+	private static final String FILENAME_CONFIG_NONBLOCKING = "jgroupsfactory-config-nonblocking.xml";
 
 	private static final long EXPIRATION_FOR_TEST = 500000;
 
@@ -59,7 +63,7 @@ public class JGroupsArtifactMapFactoryTest {
 		
 
 	@Test
-	public void test01_JGroupsSessionSerializable() throws Exception {
+	public void test01_ArtifactMapEntrySerializable() throws Exception {
 		ArtifactMapEntry ae = new ArtifactMapEntry();
 		
 		try {
@@ -72,6 +76,24 @@ public class JGroupsArtifactMapFactoryTest {
 	}
 
 
+    @Test
+    public void test01a_ArtifactMapDefaultConfiguration() throws Exception {
+        JGroupsArtifactMapFactory artifactFactory = createJGroupsArtifactMapFactory(0,1000, FILENAME_CONFIG);
+        assertThat(artifactFactory.isBlockingUpdates(), equalTo(true));
+        // confirm that the timeout is equal to the default timeout of a ReplicatedHashMap
+        assertThat(artifactFactory.getTimeout(), equalTo((new ReplicatedHashMap<String, String>(new JChannel()).getTimeout())));
+    }
+    
+    
+    @Test
+    public void test01b_ArtifactMapNonBlockingConfiguration() throws Exception {
+        JGroupsArtifactMapFactory artifactFactory = createJGroupsArtifactMapFactory(0,1000, FILENAME_CONFIG_NONBLOCKING);
+        assertThat(artifactFactory.isBlockingUpdates(), equalTo(false));
+        // confirm that the timeout is equal to the default timeout of a ReplicatedHashMap
+        assertThat(artifactFactory.getTimeout(), equalTo(100l));
+    }
+    
+    
 	@Test
 	public void test02_OneNodeOneEntry() throws Exception {
 		testNArtifactMapFactories(1, 1);
@@ -92,7 +114,7 @@ public class JGroupsArtifactMapFactoryTest {
 		assertThat(Factories[0].size(), equalTo(expectEntries));
 		assertThat(Factories[1].size(), equalTo(expectEntries));
 		assertThat(Factories[2], equalTo(null));
-		createJGroupsArtifactMapFactory(2, EXPIRATION_FOR_TEST);
+		createJGroupsArtifactMapFactory(2, EXPIRATION_FOR_TEST, FILENAME_CONFIG);
 		JGroupsArtifactMapFactory addedFactory = Factories[2];
 		assertThat(addedFactory, not(equalTo(null)));
 		assertThat(addedFactory.size(), equalTo(expectEntries));
@@ -110,7 +132,7 @@ public class JGroupsArtifactMapFactoryTest {
     @Test
     public void test05_RemoveExpiredArtifacts() throws Exception {
     	final String SOME_ID = "SomeId";
-        JGroupsArtifactMapFactory artifactFactory = createJGroupsArtifactMapFactory(0,1000);
+        JGroupsArtifactMapFactory artifactFactory = createJGroupsArtifactMapFactory(0,1000, FILENAME_CONFIG);
         NameIdentifier entry = new NameIdentifierBuilder().buildObject();
 
         artifactFactory.put(SOME_ID, SOME_ID, SOME_ID, entry);
@@ -135,7 +157,7 @@ public class JGroupsArtifactMapFactoryTest {
 		}
 		
 		for (int i = firstFreeNode; i < nNodes; ++i) {
-			createJGroupsArtifactMapFactory(i, EXPIRATION_FOR_TEST);
+			createJGroupsArtifactMapFactory(i, EXPIRATION_FOR_TEST, FILENAME_CONFIG);
 		}
 
 		int persisted = 0;
@@ -170,12 +192,12 @@ public class JGroupsArtifactMapFactoryTest {
 	}
 	
 
-	private JGroupsArtifactMapFactory createJGroupsArtifactMapFactory(int n, long expiration) throws Exception
+	private JGroupsArtifactMapFactory createJGroupsArtifactMapFactory(int n, long expiration, String configFile) throws Exception
 	{
 		String id = AvailableNodeNames[n];
 		System.setProperty(JGroupsCluster.PROP_ASIMBA_NODE_ID, id);
 
-		IConfigurationManager oConfigManager = readConfigElementFromResource(FILENAME_CONFIG);
+		IConfigurationManager oConfigManager = readConfigElementFromResource(configFile);
 
 		Element eClusterConfig = oConfigManager.getSection(
 				null, "cluster", "id=test");            
@@ -188,8 +210,8 @@ public class JGroupsArtifactMapFactoryTest {
 		_oLogger.info("JCluster address:" + jChannel.getAddressAsString());
 
 		JGroupsArtifactMapFactory oSessionFactory = Factories[n] = new JGroupsArtifactMapFactory();
-		oSessionFactory.startForTesting(oConfigManager, oCluster,
-				( expiration == 0 ) ? EXPIRATION_FOR_TEST : expiration, true);
+		oSessionFactory.startForTesting(oConfigManager, eClusterConfig,  oCluster,
+				( expiration == 0 ) ? EXPIRATION_FOR_TEST : expiration);
 
 		return oSessionFactory;
 	}
