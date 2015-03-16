@@ -72,12 +72,15 @@ public class JGroupsTGTFactoryTest {
 	private static final String FILENAME_CONFIG = "jgroupsfactory-config-ok.xml";
 	
 	private static final long EXPIRATION_FOR_TEST = 500000;
+    private static final boolean USE_BLOCKING_UPDATES = true;
+    private static final long BLOCKING_TIMEOUT = 50;
 	
 	// current implementation of setNextFillBytes supports up to 255 unique values :(
 	private static final long MAX_FILLBYTES_VALUE = 255;
 	private static long nextBytesFillValue = 0;
 	
-	private static final String SOME_TYPE = "someType";
+	private static final String IDP_TYPE = "IDP";
+	private static final String SP_TYPE = "SP";
 	private static final String SOME_REQUESTOR = "someRequestor";
 	private static final String SOME_ALIAS = "someAlias";
 
@@ -119,7 +122,7 @@ public class JGroupsTGTFactoryTest {
 	
 	public void setNextBytesAnswer(byte[] bytes, long value) {
 	    byte[] id = BigInteger.valueOf(value).toByteArray();
-		System.arraycopy(id, 0, bytes, 0, id.length);
+		System.arraycopy(id, 0, bytes, 0, (id.length < 30) ? id.length: 30);
 	}
 	
 	
@@ -127,7 +130,8 @@ public class JGroupsTGTFactoryTest {
 	public void after() throws Exception {
 		for (int i = 0; i < AvailableNodeNames.length; ++i) {
 			if (Factories[i] != null) {
-				cleanTheFactory(Factories[i]);
+                //_oLogger.debug("Cleaning factory " + i);
+				//cleanTheFactory(Factories[i]);
 				Factories[i].stop();
 				Factories[i] = null;
 				SpStores[i] = null;
@@ -160,7 +164,7 @@ public class JGroupsTGTFactoryTest {
 	 */
 	@Test
 	public void test01_JGroupsTGTSerializable() throws Exception {
-		JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, EXPIRATION_FOR_TEST);
+		JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, EXPIRATION_FOR_TEST, USE_BLOCKING_UPDATES, BLOCKING_TIMEOUT);
 		JGroupsTGT oTGT = (JGroupsTGT) oTGTFactory.createTGT(mockedUser);
 		
 		try {
@@ -202,7 +206,7 @@ public class JGroupsTGTFactoryTest {
 		JChannel channel = createChannelFromConfig();
 		//channel.connect("HashmapCluster");
 		ReplicatedHashMap<String, JGroupsTGT> map = new ReplicatedHashMap<>(channel);
-		JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, EXPIRATION_FOR_TEST);
+		JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, EXPIRATION_FOR_TEST, USE_BLOCKING_UPDATES, BLOCKING_TIMEOUT);
 		JGroupsTGT oTGT = (JGroupsTGT) oTGTFactory.createTGT(mockedUser);
 		
 		map.setBlockingUpdates(true);
@@ -220,6 +224,7 @@ public class JGroupsTGTFactoryTest {
 	
 	@Test
 	public void test04_OneNodeOneTGT() throws Exception {
+        _oLogger.debug("test04_OneNodeOneTGT");
 		testNTGTFactories(1, 1);
 	}
 	
@@ -261,8 +266,10 @@ public class JGroupsTGTFactoryTest {
 	 */
 	//@Test
 	public void test08b_TestHowManyItWillDo() throws Exception {
+        reportMemory();
 		testNTGTFactories(2, (int)75000);  // TODO: increase and analyze
-		_oLogger.info("Total number of unique TGTs: " + Factories[0].size());
+		_oLogger.debug("Total number of unique TGTs: " + Factories[0].size());
+        reportMemory();
 	}
 	
 	
@@ -308,7 +315,7 @@ public class JGroupsTGTFactoryTest {
      */
     @Test
     public void test11_RemoveExpiredTGT() throws Exception {
-        JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0,1000);
+        JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, 1000, USE_BLOCKING_UPDATES, BLOCKING_TIMEOUT);
         JGroupsTGT oTGT = (JGroupsTGT) oTGTFactory.createTGT(mockedUser);
 
         oTGTFactory.persist(oTGT);
@@ -316,18 +323,22 @@ public class JGroupsTGTFactoryTest {
 
 		final String alias = SOME_ALIAS + "-sp";
 		ITGTAliasStore spStore = oTGTFactory.getAliasStoreSP();
-		oTGTFactory.getAliasStoreSP().putAlias(SOME_TYPE, SOME_REQUESTOR, oTGT.getId(), alias);
-		assertThat(spStore.isAlias(SOME_TYPE, SOME_REQUESTOR, alias), equalTo(true));
+		oTGTFactory.getAliasStoreSP().putAlias(SP_TYPE, SOME_REQUESTOR, oTGT.getId(), alias);
+		assertThat(spStore.isAlias(SP_TYPE, SOME_REQUESTOR, alias), equalTo(true));
 
 		oTGTFactory.removeExpired();
         assertTrue(oTGTFactory.exists(oTGT.getId()));
-		assertThat(spStore.isAlias(SOME_TYPE, SOME_REQUESTOR, alias), equalTo(true));
+		assertThat(spStore.isAlias(SP_TYPE, SOME_REQUESTOR, alias), equalTo(true));
 
         Thread.sleep(1000);
 
         oTGTFactory.removeExpired();
+        
+        if (!oTGTFactory.isBlockingUpdates()) {
+            Thread.sleep(1000);
+        }
         assertFalse(oTGTFactory.exists(oTGT.getId()));
-		assertThat(spStore.isAlias(SOME_TYPE, SOME_REQUESTOR, alias), equalTo(false));
+		assertThat(spStore.isAlias(SP_TYPE, SOME_REQUESTOR, alias), equalTo(false));
     }
     
 	private void testNTGTFactories(int nNodes, int nTGTs) throws Exception {
@@ -346,46 +357,79 @@ public class JGroupsTGTFactoryTest {
 			createFactory(i);
 		}
 
-		RetrieveRepeater repeater = new RetrieveRepeater(10, 10);
+		RetrieveRepeater slowRepeater = new RetrieveRepeater(10, 1000);
+		RetrieveRepeater quickRepeater = new RetrieveRepeater(10, 10);
 		
 		int persisted = 0;
 		for (int i = 0; i < nNodes; ++i) {
 			for (int j = 0; j < nTGTs; ++j) {
 				JGroupsTGT tgt = (JGroupsTGT) Factories[i].createTGT(mockedUser);
 				Factories[i].persist(tgt);
+                String requestor = i + "-" + SOME_REQUESTOR;
 				for (int k = 0; k < nNodes; ++k) {
-					JGroupsTGT rTGT = repeater.retrieve(Factories[k], tgt.getId());
+					//JGroupsTGT rTGT = Factories[k].retrieve(tgt.getId());
+                    JGroupsTGT rTGT = quickRepeater.retrieve(Factories[k], tgt.getId());
+                    if (rTGT == null) {
+                        _oLogger.debug("No luck retrieving tgt '" + tgt.getId() + "', will wait for max 10 seconds");
+                        rTGT = slowRepeater.retrieve(Factories[k], tgt.getId());
+                    }
+                    if (rTGT == null) {
+                        _oLogger.error("=========== start of Factory dump due to upcoming error ==========");
+                        Factories[i].stop();
+                        _oLogger.error("=========== end of Factory dump due to upcoming error ==========");
+                    }
 					assertThat("Assertion failed at (i,j,k): " + i + "," + j + "," + k, rTGT, not(equalTo(null)));
 					assertThat(rTGT.getId(), equalTo(tgt.getId()));
 				}
 				if (++persisted % 10000 == 0) {
-					_oLogger.info("Persisted: " + persisted + "/" + (nNodes * nTGTs));
+					_oLogger.info("Persisted: " + persisted + "/" + (nNodes * nTGTs) + " (TGTs: " + Factories[0].size() + ")");
 				};
 				String alias = SOME_ALIAS + "-sp-" + j;
-				SpStores[i].putAlias(SOME_TYPE, SOME_REQUESTOR, tgt.getId(), alias);
-				assertThat(SpStores[i].getAlias(SOME_TYPE, SOME_REQUESTOR, tgt.getId()), equalTo(alias));
+				SpStores[i].putAlias(SP_TYPE, requestor, tgt.getId(), alias);
+				assertThat(SpStores[i].getAlias(SP_TYPE, requestor, tgt.getId()), equalTo(alias));
 				for (int l = 0; l < nNodes; ++l) {
-					String rAlias = repeater.getAlias(SpStores[l], SOME_TYPE, SOME_REQUESTOR, tgt.getId());
+                    String rAlias = SpStores[l].getAlias(SP_TYPE, requestor, tgt.getId()); 
+                    //String rAlias = quickRepeater.getAlias(SpStores[l], SP_TYPE, requestor, tgt.getId());
+                    if (rAlias == null) {
+                        _oLogger.debug("No luck getting alias '" + SP_TYPE + "-" + requestor + "-" + tgt.getId() + "', will wait for max 10 seconds");
+                        rAlias = slowRepeater.getAlias(SpStores[l], SP_TYPE, requestor, tgt.getId());
+                    }
+                    if (rAlias == null) {
+                        _oLogger.error("=========== start of Factory dump due to upcoming error ==========");
+                        Factories[i].stop();
+                        _oLogger.error("=========== end of Factory dump due to upcoming error ==========");
+                    }
 					assertThat("Fails for node (i,j,l): " + i + "," + j + "," + l, rAlias, equalTo(alias));
 				}
 				alias = SOME_ALIAS + "-idp-" + j;
-				IdpStores[i].putAlias(SOME_TYPE, SOME_REQUESTOR, tgt.getId(), alias);
-				assertThat("Fails for node (i,j): " + i + "," + j, IdpStores[i].getAlias(SOME_TYPE, SOME_REQUESTOR, tgt.getId()), equalTo(alias));
+				IdpStores[i].putAlias(IDP_TYPE, requestor, tgt.getId(), alias);
+				assertThat("Fails for node (i,j): " + i + "," + j, IdpStores[i].getAlias(IDP_TYPE, requestor, tgt.getId()), equalTo(alias));
 				for (int l = 0; l < nNodes; ++l) {
-					String rAlias = repeater.getAlias(IdpStores[l], SOME_TYPE, SOME_REQUESTOR, tgt.getId());
+					String rAlias = IdpStores[l].getAlias(IDP_TYPE, requestor, tgt.getId());
+                    //String rAlias = quickRepeater.getAlias(IdpStores[l], IDP_TYPE, requestor, tgt.getId());
+                    if (rAlias == null) {
+                        _oLogger.debug("No luck getting alias '" + IDP_TYPE + "-" + requestor + "-" + tgt.getId() + "', will wait for max 10 seconds");
+                        rAlias = slowRepeater.getAlias(IdpStores[l], IDP_TYPE, requestor, tgt.getId());
+                    }
+                    if (rAlias == null) {
+                        _oLogger.error("=========== start of Factory dump due to upcoming error ==========");
+                        Factories[i].stop();
+                        _oLogger.error("=========== end of Factory dump due to upcoming error ==========");
+                    }
 					assertThat("Fails for node (i,j,l): " + i + "," + j + "," + l, rAlias, equalTo(alias));
 				}
 			}
 		}
 		for (int i = 0; i < nNodes; ++i) {
 			assertThat(Factories[i].size(), equalTo(persisted));
-		}
+ 		}
 		
-		repeater.logReport(_oLogger);
+		//quickRepeater.logReport(_oLogger);
+		//slowRepeater.logReport(_oLogger);
 	}
 
 	private void createFactory(int i) throws Exception {
-		Factories[i] = createJGroupsTGTFactory(i, EXPIRATION_FOR_TEST);
+		Factories[i] = createJGroupsTGTFactory(i, EXPIRATION_FOR_TEST, USE_BLOCKING_UPDATES, BLOCKING_TIMEOUT);
 		SpStores[i] = Factories[i].getAliasStoreSP();
 		IdpStores[i] = Factories[i].getAliasStoreIDP();		
 	}
@@ -409,7 +453,7 @@ public class JGroupsTGTFactoryTest {
 		}
 	}
 	
-	private JGroupsTGTFactory createJGroupsTGTFactory(int n, long expiration) throws Exception
+	private JGroupsTGTFactory createJGroupsTGTFactory(int n, long expiration, boolean blockingUpdates, long timeout) throws Exception
 	{
 		String id = AvailableNodeNames[n];
 		System.setProperty(JGroupsCluster.PROP_ASIMBA_NODE_ID, id);
@@ -435,7 +479,7 @@ public class JGroupsTGTFactoryTest {
 
 		JGroupsTGTFactory oTGTFactory = Factories[n] = new JGroupsTGTFactory();
 		oTGTFactory.startForTesting(oConfigManager, eClusterElement, oCluster, oAliasCluster,
-				mockedSecureRandom, expiration != 0 ? expiration : EXPIRATION_FOR_TEST);
+				mockedSecureRandom, expiration != 0 ? expiration : EXPIRATION_FOR_TEST, blockingUpdates, timeout);
 
 		return oTGTFactory;
 	}
@@ -479,24 +523,42 @@ public class JGroupsTGTFactoryTest {
 		return oConfigManager;
 	}
 	
+    private void reportMemory() {
+        final int MegaBytes = 10241024;
+        long freeMemory = Runtime.getRuntime().freeMemory() / MegaBytes;
+        long totalMemory = Runtime.getRuntime().totalMemory() / MegaBytes;
+        long maxMemory = Runtime.getRuntime().maxMemory() / MegaBytes;
+
+        _oLogger.debug("Used Memory in JVM: " + (maxMemory - freeMemory));
+        _oLogger.debug("freeMemory in JVM: " + freeMemory);
+        _oLogger.debug("totalMemory in JVM shows current size of java heap : "
+                                   + totalMemory);
+        _oLogger.debug("maxMemory in JVM: " + maxMemory);
+
+    }
+    
 	private interface Store {
 		public Object get() throws Exception;
 	}
 	
 	private class RetrieveRepeater {
+        public final static int TYPE_TGT = 1;
+        public final static int TYPE_IDP = 2;
+        public final static int TYPE_SP = 3;
 		private int repeats;
 		private int sleep;
 		private int invocations;
 		private int[] repetitions;
 		private int failures;
-		
+        private int[] invocationsPerType = new int[4];
+ 		
 		public RetrieveRepeater(int repeats, int sleep) {
 			this.repeats = repeats;
 			this.sleep = sleep;
 			this.invocations = 0;
 			this.failures = 0;
 			this.repetitions = new int[repeats];
-		}
+ 		}
 		
 		public String getAlias(final ITGTAliasStore store, final String type, final String entityId, final String tgtId) throws Exception {
 			return (String) repeat(new Store() {
@@ -514,7 +576,10 @@ public class JGroupsTGTFactoryTest {
 			});
 		}
 		
-		private Object repeat(Store store) throws Exception{
+		private Object repeat(Store store) throws Exception {
+            if (repeats <= 0) {
+                return store.get();
+            }
 			int cycle = 0;
 			Object result;
 			
@@ -527,6 +592,7 @@ public class JGroupsTGTFactoryTest {
 			
 			if (result == null) {
 				++failures;
+                _oLogger.debug("failure for type: ");
 			}
 			
 			return result;
@@ -543,7 +609,5 @@ public class JGroupsTGTFactoryTest {
 			logger.info("Failures: " + failures);
 			logger.info("");
 		}
-		
 	}
-
 }

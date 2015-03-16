@@ -33,6 +33,8 @@ import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.persistence.PersistenceException;
 import com.alfaariss.oa.engine.core.tgt.factory.ITGTAliasStore;
+import org.asimba.utility.storage.jgroups.HashMapStore;
+import org.asimba.utility.storage.jgroups.RetrieveRepeater;
 
 /**
  * Manages a map of aliases, using a key like:<br/>
@@ -45,6 +47,7 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 
 	private static final Log _oLogger = LogFactory.getLog(JGroupsTGTAliasStore.class);
 	
+    private RetrieveRepeater<JGroupsTGT> _oRepeater = new RetrieveRepeater<JGroupsTGT>(50, 25);
 	private static final String INDEX_SEPARATOR = " ";
 	private static final int IDX_PREFIX = 0;
 	private static final int IDX_TYPE = 1;
@@ -95,7 +98,7 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 	 * @param sAlias required, must be non null, non empty value
 	 */
 	@Override
-	public void putAlias(String sType, String sEntityID, String sTGTID, String sAlias) throws OAException 
+	public void putAlias(String sType, String sEntityID, final String sTGTID, String sAlias) throws OAException 
 	{
 		if (StringUtils.isEmpty(sType) ||
 				StringUtils.isEmpty(sAlias) || 
@@ -106,7 +109,12 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 		String sKey = getMapKey(sType, sEntityID, sAlias);
 		_oAliasMap.put(sKey, sTGTID);
 		
-		JGroupsTGT oJGroupsTGT = _oTGTFactory.retrieve(sTGTID);
+		//JGroupsTGT oJGroupsTGT = _oTGTFactory.retrieve(sTGTID);
+		JGroupsTGT oJGroupsTGT = _oRepeater.get(new HashMapStore<JGroupsTGT>() {
+            public JGroupsTGT get() throws OAException {
+                return _oTGTFactory.retrieve(sTGTID);
+            }
+        });
 		oJGroupsTGT.registerAlias(sKey);
 		_oTGTFactory.persist(oJGroupsTGT);
 	}
@@ -134,7 +142,7 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 				return aKeyElements[IDX_ALIAS];
 			}
 		}
-		
+        
 		return null;
 	}
 
@@ -207,6 +215,10 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 	public void stop() {
 		_oAliasMap.stop();
 	}
+    
+    public int size() {
+        return _oAliasMap.size();
+    }
 	
 	
 	/**

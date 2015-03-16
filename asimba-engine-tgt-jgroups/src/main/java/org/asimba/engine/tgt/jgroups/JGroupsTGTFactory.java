@@ -157,7 +157,8 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	 */
 	public void startForTesting(IConfigurationManager oConfigurationManager,
 						Element eConfig, ICluster oCluster, ICluster oAliasCluster,
-						SecureRandom secureRandom, long expiration)
+						SecureRandom secureRandom, long expiration, boolean blockingUpdates,
+                        long timeout)
 			throws OAException
 	{
 		_configurationManager = oConfigurationManager;
@@ -167,11 +168,33 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 		_random = secureRandom;
 		_lExpiration = expiration;
 		start();
-		_mTGTs.setBlockingUpdates(true);
-		_mAliasMap.setBlockingUpdates(true);
+		this.setBlockingUpdates(blockingUpdates);
+        this.setTimout(timeout);
 	}
 
+    
+    public boolean isBlockingUpdates() {
+        return _mTGTs.isBlockingUpdates() && _mAliasMap.isBlockingUpdates();
+    }
+    
+    
+    public void setBlockingUpdates(boolean b) {
+		_mTGTs.setBlockingUpdates(b);
+		_mAliasMap.setBlockingUpdates(b);        
+    }
+    
+    
+    public long getTimeout() {
+        return _mTGTs.getTimeout();
+    }
 
+    
+    public void setTimout(long timeout) {
+        _mTGTs.setTimeout(timeout);
+        _mAliasMap.setTimeout(timeout);
+    }
+    
+    
 	@Override
     public void removeExpired() throws PersistenceException
     {
@@ -230,7 +253,7 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 
 	@Override
 	public void persist(JGroupsTGT oEntity) throws PersistenceException {
-		TGTListenerEvent performedEvent = performPersist(oEntity, true);
+        TGTListenerEvent performedEvent = performPersist(oEntity, true);
 
 		StringBuffer sbDebug = new StringBuffer("Performed '");
 		sbDebug.append(performedEvent);
@@ -586,7 +609,7 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	public int size() {
 		return _mTGTs.size();
 	}
-
+    
 
 	public Set<Entry<String, JGroupsTGT>> entrySet() {
 		return _mTGTs.entrySet();
