@@ -134,11 +134,9 @@ public class JGroupsSessionFactory extends AbstractStorageFactory implements
 
                 IUser sessionUser = session.getUser();
                 
-                _oEventLogger.info(
-                    new UserEventLogItem(null, id, null, UserEvent.SESSION_EXPIRED,
-                        sessionUser.getID(), sessionUser.getOrganization(), null, null,
-                        this, "clean"));
-
+                _oLogger.info(new UserEventLogItem(session, null, 
+                    UserEvent.SESSION_EXPIRED, this, "clean"));
+                
                 _mSessions.remove(entry.getKey());
             }
         }		
