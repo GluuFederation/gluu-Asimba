@@ -70,6 +70,7 @@ public class JGroupsTGTFactoryTest {
 	private static final Log _oLogger = LogFactory.getLog(JGroupsTGTFactoryTest.class);
 
 	private static final String FILENAME_CONFIG = "jgroupsfactory-config-ok.xml";
+	private static final String FILENAME_CONFIG_NONBLOCKING = "jgroupsfactory-config-nonblocking.xml";
 	
 	private static final long EXPIRATION_FOR_TEST = 500000;
     private static final boolean USE_BLOCKING_UPDATES = true;
@@ -164,7 +165,7 @@ public class JGroupsTGTFactoryTest {
 	 */
 	@Test
 	public void test01_JGroupsTGTSerializable() throws Exception {
-		JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, EXPIRATION_FOR_TEST, USE_BLOCKING_UPDATES, BLOCKING_TIMEOUT);
+		JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, EXPIRATION_FOR_TEST, FILENAME_CONFIG);
 		JGroupsTGT oTGT = (JGroupsTGT) oTGTFactory.createTGT(mockedUser);
 		
 		try {
@@ -177,6 +178,24 @@ public class JGroupsTGTFactoryTest {
 	}
 	
 	
+	@Test
+	public void test01a_JGroupsTGTDefaultConfiguration() throws Exception {
+		JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, EXPIRATION_FOR_TEST, FILENAME_CONFIG);
+        
+        assertThat(oTGTFactory.isBlockingUpdates(), equalTo(true));
+        assertThat(oTGTFactory.getTimeout(), equalTo(new ReplicatedHashMap<String, String>(new JChannel()).getTimeout()));
+    }
+    
+    
+	@Test
+	public void test01a_JGroupsTGTNonBlockingConfiguration() throws Exception {
+		JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, EXPIRATION_FOR_TEST, FILENAME_CONFIG_NONBLOCKING);
+        
+        assertThat(oTGTFactory.isBlockingUpdates(), equalTo(false));
+        assertThat(oTGTFactory.getTimeout(), equalTo(100l));
+    }
+    
+    
 	/**
 	 * Isolates basic problems with using a very simple ReplicatedHasMap
 	 * @throws Exception
@@ -206,7 +225,7 @@ public class JGroupsTGTFactoryTest {
 		JChannel channel = createChannelFromConfig();
 		//channel.connect("HashmapCluster");
 		ReplicatedHashMap<String, JGroupsTGT> map = new ReplicatedHashMap<>(channel);
-		JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, EXPIRATION_FOR_TEST, USE_BLOCKING_UPDATES, BLOCKING_TIMEOUT);
+		JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, EXPIRATION_FOR_TEST, FILENAME_CONFIG);
 		JGroupsTGT oTGT = (JGroupsTGT) oTGTFactory.createTGT(mockedUser);
 		
 		map.setBlockingUpdates(true);
@@ -315,7 +334,7 @@ public class JGroupsTGTFactoryTest {
      */
     @Test
     public void test11_RemoveExpiredTGT() throws Exception {
-        JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, 1000, USE_BLOCKING_UPDATES, BLOCKING_TIMEOUT);
+        JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, 1000, FILENAME_CONFIG);
         JGroupsTGT oTGT = (JGroupsTGT) oTGTFactory.createTGT(mockedUser);
 
         oTGTFactory.persist(oTGT);
@@ -429,7 +448,7 @@ public class JGroupsTGTFactoryTest {
 	}
 
 	private void createFactory(int i) throws Exception {
-		Factories[i] = createJGroupsTGTFactory(i, EXPIRATION_FOR_TEST, USE_BLOCKING_UPDATES, BLOCKING_TIMEOUT);
+		Factories[i] = createJGroupsTGTFactory(i, EXPIRATION_FOR_TEST, FILENAME_CONFIG);
 		SpStores[i] = Factories[i].getAliasStoreSP();
 		IdpStores[i] = Factories[i].getAliasStoreIDP();		
 	}
@@ -453,12 +472,12 @@ public class JGroupsTGTFactoryTest {
 		}
 	}
 	
-	private JGroupsTGTFactory createJGroupsTGTFactory(int n, long expiration, boolean blockingUpdates, long timeout) throws Exception
+	private JGroupsTGTFactory createJGroupsTGTFactory(int n, long expiration, String configFile) throws Exception
 	{
 		String id = AvailableNodeNames[n];
 		System.setProperty(JGroupsCluster.PROP_ASIMBA_NODE_ID, id);
 
-		IConfigurationManager oConfigManager = readConfigElementFromResource(FILENAME_CONFIG);
+		IConfigurationManager oConfigManager = readConfigElementFromResource(configFile);
 
 		Element eClusterElement = oConfigManager.getSection(
 				null, "cluster", "id=test");
@@ -479,7 +498,7 @@ public class JGroupsTGTFactoryTest {
 
 		JGroupsTGTFactory oTGTFactory = Factories[n] = new JGroupsTGTFactory();
 		oTGTFactory.startForTesting(oConfigManager, eClusterElement, oCluster, oAliasCluster,
-				mockedSecureRandom, expiration != 0 ? expiration : EXPIRATION_FOR_TEST, blockingUpdates, timeout);
+				mockedSecureRandom, expiration != 0 ? expiration : EXPIRATION_FOR_TEST);
 
 		return oTGTFactory;
 	}

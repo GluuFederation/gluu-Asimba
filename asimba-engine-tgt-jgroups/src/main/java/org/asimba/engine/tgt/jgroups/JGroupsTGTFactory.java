@@ -62,6 +62,10 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 {
 	public static final String EL_CONFIG_CLUSTERID = "cluster_id";
 	public static final String EL_CONFIG_ALIAS_CLUSTERID = "alias_cluster_id";
+    public static final String EL_CONFIG_BLOCKING_MODE = "blocking_mode";
+    public static final String EL_CONFIG_BLOCKING_TIMEOUT = "blocking_timeout";
+    public static final String EL_CONFIG_STATE_TIMEOUT = "state_timeout";
+    public static final long STATE_TIMEOUT_DEFAULT = 100000;
 
 	private static Log _oLogger = LogFactory.getLog(JGroupsTGTFactory.class);
 	private static Log _oEventLogger = LogFactory.getLog(Engine.EVENT_LOGGER);
@@ -101,11 +105,24 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 		}
 
 		_jChannel = (JChannel) _oCluster.getChannel();
-		_mTGTs = new ReplicatedHashMap<String, JGroupsTGT>( _jChannel );
-		try {
+		_mTGTs = new ReplicatedHashMap<>( _jChannel );
+
+        Long lStateTimeout = STATE_TIMEOUT_DEFAULT;
+        String sStateTimeout = _configurationManager.getParam(_eConfig, EL_CONFIG_STATE_TIMEOUT);
+        if (sStateTimeout != null) {
+            try {
+                lStateTimeout = new Long(sStateTimeout);
+            }
+            catch (java.lang.NumberFormatException e) {
+                _oLogger.error("Invalid value in config for <" + EL_CONFIG_STATE_TIMEOUT + ">, using default.");
+            }
+        }
+    
+
+        try {
 			// start gets the shared state in local hashmap, it is blocking,
 			// the timeout is not applied to the time needed to get the remote state
-			_mTGTs.start(100000);
+			_mTGTs.start(lStateTimeout);
 		} catch (Exception e) {
 			_oLogger.error("Could not start Replicated HashMap: "+e.getMessage(), e);
 			throw new OAException(SystemErrors.ERROR_INTERNAL);
@@ -117,14 +134,43 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 		}
 		
 		_jAliasChannel = (JChannel) _oAliasCluster.getChannel();
-		_mAliasMap = new ReplicatedHashMap<String, String>( _jAliasChannel );
+		_mAliasMap = new ReplicatedHashMap<>( _jAliasChannel );
 		try {
-			_mAliasMap.start(100000);
+			_mAliasMap.start(lStateTimeout);
 		} catch (Exception e) {
 			_oLogger.error("Could not start Replicated HashMap: "+e.getMessage(), e);
 			throw new OAException(SystemErrors.ERROR_INTERNAL);
 		}
 
+        String sBlockingMode = _configurationManager.getParam(_eConfig, EL_CONFIG_BLOCKING_MODE);
+        if (sBlockingMode != null) {
+            if (sBlockingMode.equalsIgnoreCase("true") || sBlockingMode.equalsIgnoreCase("false")) {
+                Boolean bBlockingMode = Boolean.valueOf(sBlockingMode);
+                _mTGTs.setBlockingUpdates(bBlockingMode);
+            }
+            else {
+                _oLogger.error("Invalid value in config for <" + EL_CONFIG_BLOCKING_MODE + ">, using default.");
+                _mTGTs.setBlockingUpdates(true);
+                _mAliasMap.setBlockingUpdates(true);
+            }
+        }
+        else {
+            _mTGTs.setBlockingUpdates(true);
+            _mAliasMap.setBlockingUpdates(true);
+        }
+        
+        String sBlockingTimeout = _configurationManager.getParam(_eConfig, EL_CONFIG_BLOCKING_TIMEOUT);
+        if (sBlockingTimeout != null) {
+            try {
+                Long lBlockingTimeout = new Long(sBlockingTimeout);
+                _mTGTs.setTimeout(lBlockingTimeout);
+                _mAliasMap.setTimeout(lBlockingTimeout);
+            }
+            catch (java.lang.NumberFormatException e) {
+                _oLogger.error("Invalid value in config for <" + EL_CONFIG_BLOCKING_TIMEOUT + ">, using default.");
+            }
+        }
+        
 		_oSPAliasStore = new JGroupsTGTAliasStore("sp", _mAliasMap, this);
 		_oIDPAliasStore = new JGroupsTGTAliasStore("idp", _mAliasMap, this);
 
@@ -157,8 +203,7 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	 */
 	public void startForTesting(IConfigurationManager oConfigurationManager,
 						Element eConfig, ICluster oCluster, ICluster oAliasCluster,
-						SecureRandom secureRandom, long expiration, boolean blockingUpdates,
-                        long timeout)
+						SecureRandom secureRandom, long expiration)
 			throws OAException
 	{
 		_configurationManager = oConfigurationManager;
@@ -168,8 +213,6 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 		_random = secureRandom;
 		_lExpiration = expiration;
 		start();
-		this.setBlockingUpdates(blockingUpdates);
-        this.setTimout(timeout);
 	}
 
     
