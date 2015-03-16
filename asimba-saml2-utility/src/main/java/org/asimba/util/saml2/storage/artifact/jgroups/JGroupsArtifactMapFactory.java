@@ -77,14 +77,14 @@ public class JGroupsArtifactMapFactory extends AbstractStorageFactory implements
 	}
 
 
-	public void startForTesting(IConfigurationManager configMgr, ICluster clusterConfig, long expiration)
+	public void startForTesting(IConfigurationManager configMgr, ICluster clusterConfig, long expiration, boolean blockingUpdates)
 			throws OAException 
 	{
 		_configurationManager = configMgr;
 		_oCluster = clusterConfig;
 		_lExpiration = expiration;
 		start();
-		_mArtifacts.setBlockingUpdates(true);
+		_mArtifacts.setBlockingUpdates(blockingUpdates);
 	}
 
 	

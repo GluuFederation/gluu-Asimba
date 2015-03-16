@@ -189,7 +189,7 @@ public class JGroupsArtifactMapFactoryTest {
 
 		JGroupsArtifactMapFactory oSessionFactory = Factories[n] = new JGroupsArtifactMapFactory();
 		oSessionFactory.startForTesting(oConfigManager, oCluster,
-				( expiration == 0 ) ? EXPIRATION_FOR_TEST : expiration);
+				( expiration == 0 ) ? EXPIRATION_FOR_TEST : expiration, true);
 
 		return oSessionFactory;
 	}
