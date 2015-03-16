@@ -21,27 +21,27 @@
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-api</artifactId>
-    	<version>1.3.1-SNAPSHOT</version>
+    	<version>${default.asimba.version}</version>
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-engine-core</artifactId>
-    	<version>1.3.1-SNAPSHOT</version>
+    	<version>${default.asimba.version}</version>
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-utility</artifactId>
-    	<version>1.3.1-SNAPSHOT</version>
+    	<version>${default.asimba.version}</version>
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-engine-sso</artifactId>
-    	<version>1.3.1-SNAPSHOT</version>
+    	<version>${default.asimba.version}</version>
     </dependency>
     <dependency>
     	<groupId>org.asimba</groupId>
     	<artifactId>asimba-sso-web</artifactId>
-    	<version>1.3.1-SNAPSHOT</version>
+    	<version>${default.asimba.version}</version>
     </dependency>
     <!-- and for using JSP/JSTL features -->
     <dependency>

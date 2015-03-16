@@ -24,17 +24,17 @@
 		<dependency>
 			<groupId>org.asimba</groupId>
 			<artifactId>asimba-api</artifactId>
-			<version>1.3.1-SNAPSHOT</version>
+			<version>${default.asimba.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.asimba</groupId>
 			<artifactId>asimba-engine-core</artifactId>
-			<version>1.3.1-SNAPSHOT</version>
+			<version>${default.asimba.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.asimba</groupId>
 			<artifactId>asimba-engine-cluster-jgroups</artifactId>
-			<version>1.3.1-SNAPSHOT</version>
+			<version>${default.asimba.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
