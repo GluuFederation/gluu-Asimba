@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- XML fragment that provides a valid JGroupsCluster configuration -->
+<root>
+	<cluster class="org.asimba.engine.cluster.JGroupsCluster" id="test">
+		<cluster_id>test-cluster-id</cluster_id>
+		<cluster_name>test-cluster-name</cluster_name>
+		<config_location>tcp-asimba.xml</config_location>
+                <blocking_mode>false</blocking_mode>
+                <blocking_timeout>100</blocking_timeout>
+                <state_timeout>500</state_timeout>
+		<node id="one">
+			<options>
+				<option name="jgroups.bind_addr" value="127.0.0.1" />
+				<option name="jgroups.tcp.bind_port" value="7800" />
+				<option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[7800],127.0.0.1[7801],127.0.0.1[7802],127.0.0.1[7803],127.0.0.1[7804]" />
+			</options>
+		</node>
+		<node id="two">
+			<options>
+				<option name="jgroups.bind_addr" value="127.0.0.1" />
+				<option name="jgroups.tcp.bind_port" value="7801" />
+				<option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[7800],127.0.0.1[7801],127.0.0.1[7802],127.0.0.1[7803],127.0.0.1[7804]" />
+			</options>
+		</node>
+		<node id="three">
+			<options>
+				<option name="jgroups.bind_addr" value="127.0.0.1" />
+				<option name="jgroups.tcp.bind_port" value="7802" />
+				<option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[7800],127.0.0.1[7801],127.0.0.1[7802],127.0.0.1[7803],127.0.0.1[7804]" />
+			</options>
+		</node>
+		<node id="four">
+			<options>
+				<option name="jgroups.bind_addr" value="127.0.0.1" />
+				<option name="jgroups.tcp.bind_port" value="7803" />
+				<option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[7800],127.0.0.1[7801],127.0.0.1[7802],127.0.0.1[7803],127.0.0.1[7804]" />
+			</options>
+		</node>
+		<node id="five">
+			<options>
+				<option name="jgroups.bind_addr" value="127.0.0.1" />
+				<option name="jgroups.tcp.bind_port" value="7804" />
+				<option name="jgroups.tcpping.initial_hosts" value="127.0.0.1[7800],127.0.0.1[7801],127.0.0.1[7802],127.0.0.1[7803],127.0.0.1[7804]" />
+			</options>
+		</node>
+	</cluster>
+</root>

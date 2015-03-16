@@ -51,9 +51,13 @@ public class JGroupsSessionFactory extends AbstractStorageFactory implements
 		ISessionFactory<JGroupsSession> 
 {
 	public static final String EL_CONFIG_CLUSTERID = "cluster_id";
+    public static final String EL_CONFIG_BLOCKING_MODE = "blocking_mode";
+    public static final String EL_CONFIG_BLOCKING_TIMEOUT = "blocking_timeout";
+    public static final String EL_CONFIG_STATE_TIMEOUT = "state_timeout";
+    public static final long STATE_TIMEOUT_DEFAULT = 100000;
 	
-	private static Log _oLogger = LogFactory.getLog(JGroupsSessionFactory.class);
-	private static Log _oEventLogger = LogFactory.getLog(Engine.EVENT_LOGGER);
+	private static final Log _oLogger = LogFactory.getLog(JGroupsSessionFactory.class);
+	private static final Log _oEventLogger = LogFactory.getLog(Engine.EVENT_LOGGER);
 
 	private ReplicatedHashMap<String, JGroupsSession> _mSessions;
 	
@@ -70,11 +74,48 @@ public class JGroupsSessionFactory extends AbstractStorageFactory implements
 		}
 		
 		JChannel jChannel = (JChannel) _oCluster.getChannel();
-		_mSessions = new ReplicatedHashMap<String, JGroupsSession>( jChannel );
+		_mSessions = new ReplicatedHashMap<>( jChannel );
+
+        String sBlockingMode = _configurationManager.getParam(_eConfig, EL_CONFIG_BLOCKING_MODE);
+        if (sBlockingMode != null) {
+            if (sBlockingMode.equalsIgnoreCase("true") || sBlockingMode.equalsIgnoreCase("false")) {
+                Boolean bBlockingMode = Boolean.valueOf(sBlockingMode);
+                _mSessions.setBlockingUpdates(bBlockingMode);
+            }
+            else{
+                _oLogger.error("Invalid value in config for <" + EL_CONFIG_BLOCKING_MODE + ">, using default.");
+            }
+        }
+        else {
+            _mSessions.setBlockingUpdates(true);
+        }
+        
+        String sBlockingTimeout = _configurationManager.getParam(_eConfig, EL_CONFIG_BLOCKING_TIMEOUT);
+        if (sBlockingTimeout != null) {
+            try {
+                Long lBlockingTimeout = new Long(sBlockingTimeout);
+                _mSessions.setTimeout(lBlockingTimeout);
+            }
+            catch (java.lang.NumberFormatException e) {
+                _oLogger.error("Invalid value in config for <" + EL_CONFIG_BLOCKING_TIMEOUT + ">, using default.");
+            }
+        }
+        
+        Long lStateTimeout = STATE_TIMEOUT_DEFAULT;
+        String sStateTimeout = _configurationManager.getParam(_eConfig, EL_CONFIG_STATE_TIMEOUT);
+        if (sStateTimeout != null) {
+            try {
+                lStateTimeout = new Long(sBlockingTimeout);
+            }
+            catch (java.lang.NumberFormatException e) {
+                _oLogger.error("Invalid value in config for <" + EL_CONFIG_STATE_TIMEOUT + ">, using default.");
+            }
+        }
+        
 		try {
 			// start gets the shared state in local hashmap, it is blocking,
 			// the timeout is not applied to the time needed to get the remote state
-			_mSessions.start(100000);
+			_mSessions.start(lStateTimeout);
 		} catch (Exception e) {
 			_oLogger.error("Could not start Replicated HashMap: "+e.getMessage(), e);
 			throw new OAException(SystemErrors.ERROR_INTERNAL);
@@ -96,7 +137,6 @@ public class JGroupsSessionFactory extends AbstractStorageFactory implements
 		_lMax = 100000;
 		_lExpiration = expiration;
 		start();
-		_mSessions.setBlockingUpdates(true); // otherwise unit tests usually fail
 	}
 	
 	@Override
@@ -257,5 +297,12 @@ public class JGroupsSessionFactory extends AbstractStorageFactory implements
 	public Integer size() {
 		return _mSessions.size();
 	}
+    
+    public long getTimeout() {
+        return _mSessions.getTimeout();
+    }
 
+    public boolean isBlockingUpdates() {
+        return _mSessions.isBlockingUpdates();
+    }
 }

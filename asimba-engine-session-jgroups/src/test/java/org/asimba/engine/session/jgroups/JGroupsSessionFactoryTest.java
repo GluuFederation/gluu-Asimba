@@ -59,12 +59,14 @@ import org.w3c.dom.Element;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.user.IUser;
 import com.alfaariss.oa.engine.core.configuration.ConfigurationManager;
+import org.jgroups.blocks.ReplicatedHashMap;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class JGroupsSessionFactoryTest {
 	private static final Log _oLogger = LogFactory.getLog(JGroupsSessionFactoryTest.class);
 
-	private static final String FILENAME_CONFIG = "jgroupssessionfactory-config.xml";
+	private static final String FILENAME_CONFIG_DEFAULT = "jgroupssessionfactory-config.xml";
+	private static final String FILENAME_CONFIG_NONBLOCKING = "jgroupssessionfactory-config-nonblocking.xml";
 	
 	private static final String REQUESTOR_ID = "MYREQID";
 	
@@ -131,7 +133,7 @@ public class JGroupsSessionFactoryTest {
 	 */
 	@Test
 	public void test01_JGroupsSessionSerializable() throws Exception {
-		JGroupsSessionFactory oSessionFactory = createJGroupsSessionFactory(0, EXPIRATION_FOR_TEST);
+		JGroupsSessionFactory oSessionFactory = createJGroupsSessionFactory(0, EXPIRATION_FOR_TEST, FILENAME_CONFIG_DEFAULT);
 		JGroupsSession oSession = (JGroupsSession) oSessionFactory.createSession(REQUESTOR_ID);
 		
 		try {
@@ -144,6 +146,26 @@ public class JGroupsSessionFactoryTest {
 	}
 
 	
+	@Test
+	public void test01a_JGroupsSessionFactoryDefaultConfiguration() throws Exception {
+		JGroupsSessionFactory oSessionFactory = createJGroupsSessionFactory(0, EXPIRATION_FOR_TEST, FILENAME_CONFIG_DEFAULT);
+        assertThat(oSessionFactory.isBlockingUpdates(), equalTo(true));
+        // confirm that the timeout is equal to the default timeout of a ReplicatedHashMap
+        assertThat(oSessionFactory.getTimeout(), equalTo((new ReplicatedHashMap<String, String>(new JChannel()).getTimeout())));
+    }
+    
+    
+	@Test
+	public void test01b_JGroupsSessionFactoryNonBlockingConfiguration() throws Exception {
+		JGroupsSessionFactory oSessionFactory = createJGroupsSessionFactory(0, EXPIRATION_FOR_TEST, FILENAME_CONFIG_NONBLOCKING);
+        assertThat(oSessionFactory.isBlockingUpdates(), equalTo(false));
+        // confirm that the timeout is equal to the setting from the config file, even though it is meaningless in nonblocking mode
+        assertThat(oSessionFactory.getTimeout(), equalTo(100l));
+        // the value used here should not be equal to the default, that would invalidate this test case
+        assertThat(100l, not(equalTo((new ReplicatedHashMap<String, String>(new JChannel()).getTimeout()))));
+    }
+    
+    
 	@Test
 	public void test02_OneNodeOneSession() throws Exception
 	{
@@ -204,7 +226,7 @@ public class JGroupsSessionFactoryTest {
      */
     @Test
     public void test08_RemoveExpiredTGT() throws Exception {
-        JGroupsSessionFactory sessionFactory = createJGroupsSessionFactory(0,1000);
+        JGroupsSessionFactory sessionFactory = createJGroupsSessionFactory(0,1000, FILENAME_CONFIG_DEFAULT);
         JGroupsSession session = (JGroupsSession) sessionFactory.createSession(REQUESTOR_ID);
 
         session.setUser(mockedUser);
@@ -251,7 +273,7 @@ public class JGroupsSessionFactoryTest {
 
 	
 	private void createFactory(int i) throws Exception {
-		Factories[i] = createJGroupsSessionFactory(i, EXPIRATION_FOR_TEST);
+		Factories[i] = createJGroupsSessionFactory(i, EXPIRATION_FOR_TEST, FILENAME_CONFIG_DEFAULT);
 	}
 
 	
@@ -268,11 +290,11 @@ public class JGroupsSessionFactoryTest {
 	}
 	
 
-	private JGroupsSessionFactory createJGroupsSessionFactory(int n, long expiration) throws Exception {
+	private JGroupsSessionFactory createJGroupsSessionFactory(int n, long expiration, String configFile) throws Exception {
 		String id = AvailableNodeNames[n];
 		System.setProperty(JGroupsCluster.PROP_ASIMBA_NODE_ID, id);
 
-		IConfigurationManager oConfigManager = readConfigElementFromResource(FILENAME_CONFIG);
+		IConfigurationManager oConfigManager = readConfigElementFromResource(configFile);
 
 		Element eClusterConfig = oConfigManager.getSection(
 				null, "cluster", "id=test");            
