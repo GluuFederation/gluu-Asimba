@@ -8,6 +8,7 @@ package org.asimba.utility.storage.jgroups;
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  *
@@ -19,6 +20,10 @@ public class RetrieveRepeater <T> {
     private long invocations;
     private long[] repetitions;
     private long failures;
+    private boolean logFailures = false;
+    private String logLabel = RetrieveRepeater.class.getName();
+    private static final Log log = LogFactory.getLog(RetrieveRepeater.class);
+
 
     public RetrieveRepeater(int repeats, long sleep) {
         this.repeats = repeats;
@@ -54,15 +59,26 @@ public class RetrieveRepeater <T> {
             Thread.sleep(cycle * this.sleep);
             this.repetitions[cycle] += 1;
             ++cycle;
+            if (logFailures) {
+                log.debug(logLabel + ": retrieving value failed, cycle: " + cycle);
+            }
         }
 
         if (result == null) {
             ++failures;
+            if (logFailures) {
+                log.debug(logLabel + ": retrieving value failed, max cycles reached");
+            }
         }
 
         return result;
     }
 
+    public void setFailureLogging(boolean doLog, String label) {
+        this.logFailures = doLog;
+        this.logLabel = label;
+    }
+    
     public void logReport(Log logger) {
         logger.info("");
         logger.info(RetrieveRepeater.class.toString());
@@ -77,5 +93,9 @@ public class RetrieveRepeater <T> {
     
     public long[] getRepetitions() {
         return repetitions;
+    }
+    
+    public boolean isFailureLogging() {
+        return this.logFailures;
     }
 }

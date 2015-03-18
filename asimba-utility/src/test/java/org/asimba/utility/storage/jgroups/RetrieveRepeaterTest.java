@@ -27,6 +27,7 @@ public class RetrieveRepeaterTest {
         final long SLEEP = 5;
 
         RetrieveRepeater<String> rr = new RetrieveRepeater<>(REPEATS, SLEEP);
+        rr.setFailureLogging(true, RetrieveRepeaterTest.class.getName());
         checkCycles(rr, -1);
         String result = rr.get(new HashMapStore<String>() {
             @Override
@@ -44,6 +45,7 @@ public class RetrieveRepeaterTest {
         final long SLEEP = 5;
 
         RetrieveRepeater<String> rr = new RetrieveRepeater<>(REPEATS, SLEEP);
+        rr.setFailureLogging(true, RetrieveRepeaterTest.class.getName());
         checkCycles(rr, -1);
         String result = rr.get(new HashMapStore<String>() {
             @Override
@@ -79,6 +81,7 @@ public class RetrieveRepeaterTest {
         final int DELAY = 7;
 
         RetrieveRepeater<String> rr = new RetrieveRepeater<>(REPEATS, SLEEP);
+        rr.setFailureLogging(true, RetrieveRepeaterTest.class.getName());
         checkCycles(rr, -1);
         
         long start = System.currentTimeMillis();
