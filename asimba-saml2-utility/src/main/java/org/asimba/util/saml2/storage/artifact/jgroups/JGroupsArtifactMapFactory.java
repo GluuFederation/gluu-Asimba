@@ -50,7 +50,7 @@ public class JGroupsArtifactMapFactory extends AbstractStorageFactory implements
     public static final long STATE_TIMEOUT_DEFAULT = 100000;
 
 	
-	private static Log _oLogger = LogFactory.getLog(JGroupsArtifactMapFactory.class);
+	private static final Log _oLogger = LogFactory.getLog(JGroupsArtifactMapFactory.class);
 
 	private ReplicatedHashMap<String, SAMLArtifactMapEntry> _mArtifacts;
 

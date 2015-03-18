@@ -1,9 +1,7 @@
 package org.asimba.util.saml2.storage.artifact.jgroups;
 
-import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.io.InputStream;
@@ -128,6 +126,7 @@ public class JGroupsArtifactMapFactoryTest {
 	
     /**
      * Test removal of expired Artifacts
+     * @throws java.lang.Exception
      */
     @Test
     public void test05_RemoveExpiredArtifacts() throws Exception {
