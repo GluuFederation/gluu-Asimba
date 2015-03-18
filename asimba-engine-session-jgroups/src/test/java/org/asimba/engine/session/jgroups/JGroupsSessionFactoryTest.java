@@ -41,8 +41,6 @@ import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asimba.engine.cluster.JGroupsCluster;
-import org.asimba.engine.session.jgroups.JGroupsSession;
-import org.asimba.engine.session.jgroups.JGroupsSessionFactory;
 import org.jgroups.JChannel;
 import org.junit.After;
 import org.junit.Before;
@@ -93,6 +91,7 @@ public class JGroupsSessionFactoryTest {
 		mockedUser = Mockito.mock(IUser.class, withSettings().serializable());
 
 		doAnswer(new Answer<Void>() {
+            @Override
 			public Void answer(InvocationOnMock invocation) {
 				byte[] bytes = (byte[]) invocation.getArguments()[0];
 				setNextBytesAnswer(bytes, ++nextBytesFillValue);
@@ -223,6 +222,7 @@ public class JGroupsSessionFactoryTest {
 
     /**
      * Test removal of expired TGTs
+     * @throws java.lang.Exception
      */
     @Test
     public void test08_RemoveExpiredTGT() throws Exception {

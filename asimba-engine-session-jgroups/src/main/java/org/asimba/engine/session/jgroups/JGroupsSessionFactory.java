@@ -46,6 +46,7 @@ import com.alfaariss.oa.engine.core.session.factory.ISessionFactory;
 import com.alfaariss.oa.util.ModifiedBase64;
 import com.alfaariss.oa.util.logging.UserEventLogItem;
 import com.alfaariss.oa.util.storage.factory.AbstractStorageFactory;
+import java.util.Arrays;
 
 public class JGroupsSessionFactory extends AbstractStorageFactory implements
 		ISessionFactory<JGroupsSession> 
@@ -185,7 +186,7 @@ public class JGroupsSessionFactory extends AbstractStorageFactory implements
 	@Override
 	public boolean exists(Object id) throws PersistenceException 
 	{
-		return _mSessions.containsKey(id);
+		return _mSessions.containsKey((String)id);
 	}
 
 	
@@ -206,7 +207,7 @@ public class JGroupsSessionFactory extends AbstractStorageFactory implements
 				}
 				catch (UnsupportedEncodingException e)
 				{
-					_oLogger.error("Could not create session id for byte[]: " + baId, e);
+					_oLogger.error("Could not create session id for byte[]: " + Arrays.toString(baId), e);
 					throw new PersistenceException(SystemErrors.ERROR_INTERNAL);
 				}
 				iAllowedIdGenAttempts--;
@@ -286,7 +287,8 @@ public class JGroupsSessionFactory extends AbstractStorageFactory implements
 	@Override
 	public JGroupsSession retrieve(Object oSessionId) throws PersistenceException 
 	{
-		JGroupsSession oSession = _mSessions.get(oSessionId);
+		JGroupsSession oSession;
+        oSession = _mSessions.get((String)oSessionId);
 		if (oSession != null) {
 			oSession.resuscitate(this);
 		}
