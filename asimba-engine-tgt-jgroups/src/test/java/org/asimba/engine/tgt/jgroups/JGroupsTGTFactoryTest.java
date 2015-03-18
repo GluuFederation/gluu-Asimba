@@ -73,8 +73,6 @@ public class JGroupsTGTFactoryTest {
 	private static final String FILENAME_CONFIG_NONBLOCKING = "jgroupsfactory-config-nonblocking.xml";
 	
 	private static final long EXPIRATION_FOR_TEST = 500000;
-    private static final boolean USE_BLOCKING_UPDATES = true;
-    private static final long BLOCKING_TIMEOUT = 5000;
 	
 	// current implementation of setNextFillBytes supports up to 255 unique values :(
 	private static final long MAX_FILLBYTES_VALUE = 255;
@@ -105,6 +103,7 @@ public class JGroupsTGTFactoryTest {
 		mockedUser = Mockito.mock(IUser.class, withSettings().serializable());
 		
 		doAnswer(new Answer<Void>() {
+            @Override
 			public Void answer(InvocationOnMock invocation) {
 				byte[] bytes = (byte[]) invocation.getArguments()[0];
 				setNextBytesAnswer(bytes, ++nextBytesFillValue);
@@ -184,15 +183,25 @@ public class JGroupsTGTFactoryTest {
         
         assertThat(oTGTFactory.isBlockingUpdates(), equalTo(true));
         assertThat(oTGTFactory.getTimeout(), equalTo(new ReplicatedHashMap<String, String>(new JChannel()).getTimeout()));
+        assertThat(oTGTFactory.getAliasMapRetries(), equalTo(JGroupsTGTFactory.ALIASMAP_RETRIES_DEFAULT));
+        assertThat(oTGTFactory.getAliasMapTimeout(), equalTo(JGroupsTGTFactory.ALIASMAP_TIMEOUT_DEFAULT));
+        assertThat(oTGTFactory.isAliasMapFailureLogging(), equalTo(JGroupsTGTFactory.ALIASMAP_LOGGING_DEFAULT));
     }
     
     
 	@Test
-	public void test01a_JGroupsTGTNonBlockingConfiguration() throws Exception {
+	public void test01b_JGroupsTGTNonBlockingConfiguration() throws Exception {
 		JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, EXPIRATION_FOR_TEST, FILENAME_CONFIG_NONBLOCKING);
         
         assertThat(oTGTFactory.isBlockingUpdates(), equalTo(false));
         assertThat(oTGTFactory.getTimeout(), equalTo(100l));
+        assertThat(oTGTFactory.getAliasMapRetries(), equalTo(20));
+        assertThat(oTGTFactory.getAliasMapTimeout(), equalTo(15l));
+        assertThat(oTGTFactory.isAliasMapFailureLogging(), equalTo(true));
+        // make sure we do not happen to test for the defaults
+        assertThat(oTGTFactory.getAliasMapRetries(), not(equalTo(JGroupsTGTFactory.ALIASMAP_RETRIES_DEFAULT)));
+        assertThat(oTGTFactory.getAliasMapTimeout(), not(equalTo(JGroupsTGTFactory.ALIASMAP_TIMEOUT_DEFAULT)));
+        assertThat(oTGTFactory.isAliasMapFailureLogging(), not(equalTo(JGroupsTGTFactory.ALIASMAP_LOGGING_DEFAULT)));
     }
     
     
@@ -202,17 +211,18 @@ public class JGroupsTGTFactoryTest {
 	 */
 	@Test
 	public void test02_BasicReplicatedHashMapWithStringStringMap() throws Exception {
-		JChannel channel = createChannelFromConfig();
-		//channel.connect("HashmapCluster");
-		ReplicatedHashMap<String, String> map = new ReplicatedHashMap<String, String>(channel);
-
-		map.setBlockingUpdates(true);
-		map.put("test", "test");
-		assertThat(map.get("test"), not(equalTo(null)));
-		assertThat(map.size(), equalTo(1));
-		map.clear();
-		map.stop();
-		channel.close();
+        //channel.connect("HashmapCluster");
+        try (JChannel channel = createChannelFromConfig()) {
+            //channel.connect("HashmapCluster");
+            ReplicatedHashMap<String, String> map = new ReplicatedHashMap<>(channel);
+            
+            map.setBlockingUpdates(true);
+            map.put("test", "test");
+            assertThat(map.get("test"), not(equalTo(null)));
+            assertThat(map.size(), equalTo(1));
+            map.clear();
+            map.stop();
+        }
 	}
 	
 
@@ -222,22 +232,22 @@ public class JGroupsTGTFactoryTest {
 	 */
 	@Test
 	public void test03_BasicReplicatedHashMapWithStringTGTMap() throws Exception {
-		JChannel channel = createChannelFromConfig();
-		//channel.connect("HashmapCluster");
-		ReplicatedHashMap<String, JGroupsTGT> map = new ReplicatedHashMap<>(channel);
-		JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, EXPIRATION_FOR_TEST, FILENAME_CONFIG);
-		JGroupsTGT oTGT = (JGroupsTGT) oTGTFactory.createTGT(mockedUser);
-		
-		map.setBlockingUpdates(true);
-		map.put("test", oTGT);
-		JGroupsTGT retrievedTGT = map.get("test");
-		retrievedTGT = map.get("test");
-		assertThat(retrievedTGT, not(equalTo(null)));
-
-		assertThat(map.size(), equalTo(1));
-		map.clear();
-		map.stop();
-		channel.close();
+        //channel.connect("HashmapCluster");
+        try (JChannel channel = createChannelFromConfig()) {
+            //channel.connect("HashmapCluster");
+            ReplicatedHashMap<String, JGroupsTGT> map = new ReplicatedHashMap<>(channel);
+            JGroupsTGTFactory oTGTFactory = createJGroupsTGTFactory(0, EXPIRATION_FOR_TEST, FILENAME_CONFIG);
+            JGroupsTGT oTGT = (JGroupsTGT) oTGTFactory.createTGT(mockedUser);
+            
+            map.setBlockingUpdates(true);
+            map.put("test", oTGT);
+            JGroupsTGT retrievedTGT = map.get("test");
+            assertThat(retrievedTGT, not(equalTo(null)));
+            
+            assertThat(map.size(), equalTo(1));
+            map.clear();
+            map.stop();
+        }
 	}
 	
 	
@@ -331,6 +341,7 @@ public class JGroupsTGTFactoryTest {
 	
     /**
      * Test removal of expired TGTs
+     * @throws java.lang.Exception
      */
     @Test
     public void test11_RemoveExpiredTGT() throws Exception {
@@ -397,12 +408,14 @@ public class JGroupsTGTFactoryTest {
                         Factories[i].stop();
                         _oLogger.error("=========== end of Factory dump due to upcoming error ==========");
                     }
-					assertThat("Assertion failed at (i,j,k): " + i + "," + j + "," + k, rTGT, not(equalTo(null)));
-					assertThat(rTGT.getId(), equalTo(tgt.getId()));
+                    else {
+                        assertThat("Assertion failed at (i,j,k): " + i + "," + j + "," + k, rTGT, not(equalTo(null)));
+                        assertThat(rTGT.getId(), equalTo(tgt.getId()));
+                    }
 				}
 				if (++persisted % 10000 == 0) {
 					_oLogger.info("Persisted: " + persisted + "/" + (nNodes * nTGTs) + " (TGTs: " + Factories[0].size() + ")");
-				};
+				}
 				String alias = SOME_ALIAS + "-sp-" + j;
 				SpStores[i].putAlias(SP_TYPE, requestor, tgt.getId(), alias);
 				assertThat(SpStores[i].getAlias(SP_TYPE, requestor, tgt.getId()), equalTo(alias));
@@ -499,6 +512,7 @@ public class JGroupsTGTFactoryTest {
 		JGroupsTGTFactory oTGTFactory = Factories[n] = new JGroupsTGTFactory();
 		oTGTFactory.startForTesting(oConfigManager, eClusterElement, oCluster, oAliasCluster,
 				mockedSecureRandom, expiration != 0 ? expiration : EXPIRATION_FOR_TEST);
+        //oTGTFactory.setAliasMapFailureLogging(true, JGroupsTGTAliasStoreTest.class.getName());
 
 		return oTGTFactory;
 	}
@@ -564,12 +578,11 @@ public class JGroupsTGTFactoryTest {
         public final static int TYPE_TGT = 1;
         public final static int TYPE_IDP = 2;
         public final static int TYPE_SP = 3;
-		private int repeats;
-		private int sleep;
+		private final int repeats;
+		private final int sleep;
 		private int invocations;
-		private int[] repetitions;
+		private final int[] repetitions;
 		private int failures;
-        private int[] invocationsPerType = new int[4];
  		
 		public RetrieveRepeater(int repeats, int sleep) {
 			this.repeats = repeats;
@@ -581,6 +594,7 @@ public class JGroupsTGTFactoryTest {
 		
 		public String getAlias(final ITGTAliasStore store, final String type, final String entityId, final String tgtId) throws Exception {
 			return (String) repeat(new Store() {
+                @Override
 				public Object get() throws Exception {
 					return store.getAlias(type, entityId, tgtId);
 				}
@@ -589,6 +603,7 @@ public class JGroupsTGTFactoryTest {
 		
 		public JGroupsTGT retrieve(final JGroupsTGTFactory factory, final String key) throws Exception {
 			return (JGroupsTGT) repeat(new Store() {
+                @Override
 				public Object get() throws Exception {
 					return factory.retrieve(key);
 				}

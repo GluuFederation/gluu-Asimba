@@ -47,19 +47,17 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 
 	private static final Log _oLogger = LogFactory.getLog(JGroupsTGTAliasStore.class);
 	
-    private RetrieveRepeater<JGroupsTGT> _oRepeater = new RetrieveRepeater<JGroupsTGT>(50, 25);
+    private final RetrieveRepeater<JGroupsTGT> _oRepeater;
 	private static final String INDEX_SEPARATOR = " ";
 	private static final int IDX_PREFIX = 0;
-	private static final int IDX_TYPE = 1;
+	private static final int IDX_TYPE = 1; // not used
 	private static final int IDX_ENTITYID = 2;
 	private static final int IDX_ALIAS = 3;
 	
-	private String _sPrefix;
-	private ReplicatedHashMap<String, String> _oAliasMap;
+	private final String _sPrefix;
+	private final ReplicatedHashMap<String, String> _oAliasMap;
 	
-	
-	
-	private JGroupsTGTFactory _oTGTFactory;
+	private final JGroupsTGTFactory _oTGTFactory;
 	
 	/**
 	 * Create a new JGroupsTGTAliasStore instance, that uses a specified
@@ -67,6 +65,8 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 	 * 'sp' or 'idp'.
 	 * 
 	 * @param sPrefix string that must not include character ...
+     * @param oAliasMap
+     * @param oTGTFactory
 	 * 
 	 */
 	public JGroupsTGTAliasStore(String sPrefix, ReplicatedHashMap<String, String> oAliasMap,
@@ -75,6 +75,7 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 		_sPrefix = sPrefix;
 		_oAliasMap = oAliasMap;
 		_oTGTFactory = oTGTFactory;
+        _oRepeater = new RetrieveRepeater<>(oTGTFactory.getAliasMapRetries(), oTGTFactory.getAliasMapTimeout());
 	}
 	
 
@@ -94,8 +95,8 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 	 * Add new alias to Store<br/>
 	 * 
 	 * @param sType required, must be non null, non empty value
-	 * @param sEntityId required, must be non null, non empty value
 	 * @param sAlias required, must be non null, non empty value
+     * @throws com.alfaariss.oa.OAException
 	 */
 	@Override
 	public void putAlias(String sType, String sEntityID, final String sTGTID, String sAlias) throws OAException 
@@ -111,6 +112,7 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 		
 		//JGroupsTGT oJGroupsTGT = _oTGTFactory.retrieve(sTGTID);
 		JGroupsTGT oJGroupsTGT = _oRepeater.get(new HashMapStore<JGroupsTGT>() {
+            @Override
             public JGroupsTGT get() throws OAException {
                 return _oTGTFactory.retrieve(sTGTID);
             }
@@ -193,7 +195,7 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 		while (iterAlias.hasNext()) {
 			String sKey = iterAlias.next();
 			
-			boolean bEntityIdMatches = false;
+			boolean bEntityIdMatches;
 			String[] aKeyElements = sKey.split(INDEX_SEPARATOR);
 			// This always has 4 elements:
 			bEntityIdMatches = (aKeyElements[IDX_ENTITYID].equals(sEntityID));
@@ -227,7 +229,7 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 	 * @return
 	 */
 	public int remove(String sTGTID) {
-		JGroupsTGT oTGT = null;
+		JGroupsTGT oTGT;
 	
 		try {
 			oTGT = _oTGTFactory.retrieve(sTGTID);
@@ -245,7 +247,7 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 		while (iterAlias.hasNext()) {
 			String sKey = iterAlias.next();
 			
-			boolean bPrefixMatches = false;
+			boolean bPrefixMatches;
 			String[] aKeyElements = sKey.split(INDEX_SEPARATOR);
 			// This always has 4 elements:
 			bPrefixMatches = (aKeyElements[IDX_PREFIX].equals(_sPrefix));
@@ -262,4 +264,15 @@ public class JGroupsTGTAliasStore implements ITGTAliasStore {
 		return iDeletedAliasesCount;
 	}
 	
+    public long[] getRepetitions() {
+        return _oRepeater.getRepetitions();
+    }
+    
+    public void setFailureLogging(boolean doLog, String label) {
+        _oRepeater.setFailureLogging(doLog, label);
+    }
+    
+    public boolean isFailureLogging() {
+        return _oRepeater.isFailureLogging();
+    }
 }

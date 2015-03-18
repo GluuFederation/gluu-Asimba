@@ -40,6 +40,7 @@ import org.w3c.dom.Element;
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.UserEvent;
+import com.alfaariss.oa.api.configuration.ConfigurationException;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.persistence.IEntity;
 import com.alfaariss.oa.api.persistence.IEntityManager;
@@ -57,6 +58,14 @@ import com.alfaariss.oa.engine.core.tgt.factory.ITGTFactory;
 import com.alfaariss.oa.util.ModifiedBase64;
 import com.alfaariss.oa.util.logging.UserEventLogItem;
 import com.alfaariss.oa.util.storage.factory.AbstractStorageFactory;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.apache.commons.lang3.BooleanUtils;
 
 public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFactory<JGroupsTGT>
 {
@@ -65,10 +74,18 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
     public static final String EL_CONFIG_BLOCKING_MODE = "blocking_mode";
     public static final String EL_CONFIG_BLOCKING_TIMEOUT = "blocking_timeout";
     public static final String EL_CONFIG_STATE_TIMEOUT = "state_timeout";
-    public static final long STATE_TIMEOUT_DEFAULT = 100000;
+    public static final String EL_CONFIG_ALIASMAP_RETRIES = "aliasmap_retries";
+    public static final String EL_CONFIG_ALIASMAP_TIMEOUT = "aliasmap_timeout";
+    public static final String EL_CONFIG_ALIASMAP_LOGGING = "aliasmap_logging";
+    public static final Boolean BLOCKING_MODE_DEFAULT = true;
+    public static final Long BLOCKING_TIMEOUT_DEFAULT = 5000l;
+    public static final Long STATE_TIMEOUT_DEFAULT = 100000l;
+    public static final Integer ALIASMAP_RETRIES_DEFAULT = 0;
+    public static final Long ALIASMAP_TIMEOUT_DEFAULT = 10l;
+    public static final Boolean ALIASMAP_LOGGING_DEFAULT = false;
 
-	private static Log _oLogger = LogFactory.getLog(JGroupsTGTFactory.class);
-	private static Log _oEventLogger = LogFactory.getLog(Engine.EVENT_LOGGER);
+	private static final Log _oLogger = LogFactory.getLog(JGroupsTGTFactory.class);
+	private static final Log _oEventLogger = LogFactory.getLog(Engine.EVENT_LOGGER);
 	
 	private ReplicatedHashMap<String, JGroupsTGT> _mTGTs;
 	private ReplicatedHashMap<String, String> _mAliasMap;
@@ -83,8 +100,13 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	private JGroupsTGTAliasStore _oIDPAliasStore;
 
 	private List<ITGTListener> _lListeners;
+    
 
+    private int _iAliasMapRetries;
 
+    private long _lAliasMapTimeout;
+    
+    
 	public JGroupsTGTFactory() {
         super();
     }
@@ -92,11 +114,12 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	/**
 	 * Start component instantiates the replicated hashmap, as well as 
 	 * start managing the cleaner thread (should be moved to base class)
+     * @throws com.alfaariss.oa.OAException
 	 */
 	@Override
 	public void start() throws OAException 
 	{
-        _lListeners = new Vector<ITGTListener>();
+        _lListeners = new Vector<>();
 
 		// this._configManager and this._eConfig are initialized at this point:
 		ClusterConfiguration oClusterConfiguration = new ClusterConfiguration(_configurationManager);
@@ -107,18 +130,13 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 		_jChannel = (JChannel) _oCluster.getChannel();
 		_mTGTs = new ReplicatedHashMap<>( _jChannel );
 
-        Long lStateTimeout = STATE_TIMEOUT_DEFAULT;
-        String sStateTimeout = _configurationManager.getParam(_eConfig, EL_CONFIG_STATE_TIMEOUT);
-        if (sStateTimeout != null) {
-            try {
-                lStateTimeout = new Long(sStateTimeout);
-            }
-            catch (java.lang.NumberFormatException e) {
-                _oLogger.error("Invalid value in config for <" + EL_CONFIG_STATE_TIMEOUT + ">, using default.");
-            }
-        }
-    
-
+        _iAliasMapRetries = (new ConfigParser<Integer>()).parse(EL_CONFIG_ALIASMAP_RETRIES, _eConfig, ALIASMAP_RETRIES_DEFAULT);
+        _lAliasMapTimeout = (new ConfigParser<Long>()).parse(EL_CONFIG_ALIASMAP_TIMEOUT, _eConfig, ALIASMAP_TIMEOUT_DEFAULT);
+        Long lStateTimeout = (new ConfigParser<Long>()).parse(EL_CONFIG_STATE_TIMEOUT, _eConfig, STATE_TIMEOUT_DEFAULT);
+        Boolean bBlockingMode = (new ConfigParser<Boolean>().parse(EL_CONFIG_BLOCKING_MODE, _eConfig, BLOCKING_MODE_DEFAULT));
+        Long lBlockingTimeout = (new ConfigParser<Long>().parse(EL_CONFIG_BLOCKING_TIMEOUT, _eConfig, BLOCKING_TIMEOUT_DEFAULT));        
+        Boolean bAliasMapLogging = (new ConfigParser<Boolean>().parse(EL_CONFIG_ALIASMAP_LOGGING, _eConfig, ALIASMAP_LOGGING_DEFAULT));
+        
         try {
 			// start gets the shared state in local hashmap, it is blocking,
 			// the timeout is not applied to the time needed to get the remote state
@@ -142,38 +160,17 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 			throw new OAException(SystemErrors.ERROR_INTERNAL);
 		}
 
-        String sBlockingMode = _configurationManager.getParam(_eConfig, EL_CONFIG_BLOCKING_MODE);
-        if (sBlockingMode != null) {
-            if (sBlockingMode.equalsIgnoreCase("true") || sBlockingMode.equalsIgnoreCase("false")) {
-                Boolean bBlockingMode = Boolean.valueOf(sBlockingMode);
-                _mTGTs.setBlockingUpdates(bBlockingMode);
-            }
-            else {
-                _oLogger.error("Invalid value in config for <" + EL_CONFIG_BLOCKING_MODE + ">, using default.");
-                _mTGTs.setBlockingUpdates(true);
-                _mAliasMap.setBlockingUpdates(true);
-            }
-        }
-        else {
-            _mTGTs.setBlockingUpdates(true);
-            _mAliasMap.setBlockingUpdates(true);
-        }
-        
-        String sBlockingTimeout = _configurationManager.getParam(_eConfig, EL_CONFIG_BLOCKING_TIMEOUT);
-        if (sBlockingTimeout != null) {
-            try {
-                Long lBlockingTimeout = new Long(sBlockingTimeout);
-                _mTGTs.setTimeout(lBlockingTimeout);
-                _mAliasMap.setTimeout(lBlockingTimeout);
-            }
-            catch (java.lang.NumberFormatException e) {
-                _oLogger.error("Invalid value in config for <" + EL_CONFIG_BLOCKING_TIMEOUT + ">, using default.");
-            }
-        }
+        _mTGTs.setBlockingUpdates(bBlockingMode);
+        _mAliasMap.setBlockingUpdates(bBlockingMode);
+     
+        _mTGTs.setTimeout(lBlockingTimeout);
+        _mAliasMap.setTimeout(lBlockingTimeout);
         
 		_oSPAliasStore = new JGroupsTGTAliasStore("sp", _mAliasMap, this);
 		_oIDPAliasStore = new JGroupsTGTAliasStore("idp", _mAliasMap, this);
 
+        _oSPAliasStore.setFailureLogging(bAliasMapLogging, JGroupsTGTFactory.class.getName());
+        _oIDPAliasStore.setFailureLogging(bAliasMapLogging, JGroupsTGTFactory.class.getName());
 
 		// TODO: This should move to superclass instead:
 		if(_tCleaner != null)
@@ -199,6 +196,8 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	 * @param eConfig
 	 * @param oCluster
 	 * @param oAliasCluster
+     * @param secureRandom
+     * @param expiration
 	 * @throws OAException
 	 */
 	public void startForTesting(IConfigurationManager oConfigurationManager,
@@ -267,7 +266,7 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 
                 if (_oLogger.isDebugEnabled() && iCountR + iCountF > 0)
                 {
-                    StringBuffer sbDebug = new StringBuffer("Cleaned '");
+                    StringBuilder sbDebug = new StringBuilder("Cleaned '");
                     sbDebug.append(iCountR);
                     sbDebug.append("' (requestor based) aliases and '");
                     sbDebug.append(iCountF);
@@ -290,7 +289,7 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 
 	@Override
 	public boolean exists(Object id) throws PersistenceException {
-		return _mTGTs.containsKey(id);
+		return _mTGTs.containsKey((String)id);
 	}
 	
 
@@ -298,7 +297,7 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	public void persist(JGroupsTGT oEntity) throws PersistenceException {
         TGTListenerEvent performedEvent = performPersist(oEntity, true);
 
-		StringBuffer sbDebug = new StringBuffer("Performed '");
+		StringBuilder sbDebug = new StringBuilder("Performed '");
 		sbDebug.append(performedEvent);
 		sbDebug.append("' event for TGT with id: ");
 		sbDebug.append(oEntity.getId());
@@ -309,7 +308,7 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 	@Override
 	public void persist(JGroupsTGT[] entities) throws PersistenceException 
 	{
-		List<TGTEventError> listTGTEventErrors = new Vector<TGTEventError>();
+		List<TGTEventError> listTGTEventErrors = new Vector<>();
 		int iErrorCode = -1;
 		//Persist all tgts
 		for(JGroupsTGT tgt : entities)
@@ -405,7 +404,7 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 				}
 				catch (UnsupportedEncodingException e)
 				{
-					_oLogger.error("Could not create tgt id for byte[]: " + baId, e);
+					_oLogger.error("Could not create tgt id for byte[]: " + Arrays.toString(baId), e);
 					throw new PersistenceException(SystemErrors.ERROR_INTERNAL);
 				}
 				iAllowedIdGenAttempts--;
@@ -537,6 +536,7 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 
 	/**
 	 * Return the number of TGT's that are stored in the underlying storage
+     * @throws com.alfaariss.oa.OAException
 	 */
 	@Override
 	public long poll() throws OAException 
@@ -658,33 +658,99 @@ public class JGroupsTGTFactory extends AbstractStorageFactory implements ITGTFac
 		return _mTGTs.entrySet();
 	}
 
+    
+    public int getAliasMapRetries() {
+        return _iAliasMapRetries;
+    }
 
+    
+    public long getAliasMapTimeout() {
+        return _lAliasMapTimeout;
+    }
+
+    
+    public void setAliasMapFailureLogging(boolean doLog, String label) {
+        _oIDPAliasStore.setFailureLogging(doLog, label);
+        _oSPAliasStore.setFailureLogging(doLog, label);
+    }
+    
+    
+    public boolean isAliasMapFailureLogging() {
+        return _oIDPAliasStore.isFailureLogging() && _oSPAliasStore.isFailureLogging();
+    }
+    
+    
 	private void processEvent(TGTListenerEvent event, ITGT tgt) throws TGTListenerException
 	{
-		List<TGTEventError> listErrors = new Vector<TGTEventError>();
-		for (int i = 0; i < _lListeners.size(); i++)
-		{
-			ITGTListener listener = _lListeners.get(i);
-			try
-			{
-				listener.processTGTEvent(event, tgt);
-			}
-			catch (TGTListenerException e)
-			{
-				StringBuffer sbDebug = new StringBuffer("Could not process '");
-				sbDebug.append(event);
-				sbDebug.append("' event for TGT with id '");
-				sbDebug.append(tgt.getId());
-				sbDebug.append("': ");
-				sbDebug.append(e);
-				_oLogger.debug(sbDebug.toString(), e);
-
-				listErrors.addAll(e.getErrors());
-			}
-		} 
+		List<TGTEventError> listErrors = new Vector<>();
+        for (ITGTListener listener : _lListeners) {
+            try
+            {
+                listener.processTGTEvent(event, tgt);
+            }
+            catch (TGTListenerException e)
+            {
+                StringBuilder sbDebug = new StringBuilder("Could not process '");
+                sbDebug.append(event);
+                sbDebug.append("' event for TGT with id '");
+                sbDebug.append(tgt.getId());
+                sbDebug.append("': ");
+                sbDebug.append(e);
+                _oLogger.debug(sbDebug.toString(), e);
+                
+                listErrors.addAll(e.getErrors());
+            }
+        } 
 
 		if (!listErrors.isEmpty())
 			throw new TGTListenerException(listErrors);
 	}
 
+    private class ConfigParser<T> {
+        public T parse(String name, Element configElement, T defaultValue) throws OAException {
+            T value = defaultValue;
+            Class type = defaultValue.getClass();
+            HashSet<Type> supportedTypes = new HashSet<Type>(Arrays.asList(Long.class, Integer.class, Boolean.class));
+            
+            if (!supportedTypes.contains(type)) {
+                _oLogger.error("Internal error: type '" + type + "' is not supported");
+                throw new OAException(SystemErrors.ERROR_INTERNAL);
+            }
+
+            String sParameterValue = null;
+            try {
+                sParameterValue = _configurationManager.getParam(configElement, name);
+            }
+            catch (ConfigurationException ex) {
+                Logger.getLogger(JGroupsTGTFactory.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+            try {
+                Constructor constructor = type.getConstructor(String.class);
+                if (sParameterValue != null) {
+                    if (defaultValue.getClass() == Boolean.class) {
+                        if (!sParameterValue.equalsIgnoreCase("true") && !sParameterValue.equalsIgnoreCase("false")) {
+                            throw new IllegalArgumentException("Bad boolean value: '" + sParameterValue + "'");
+                        }
+                        value = (T) (Boolean) BooleanUtils.toBoolean(sParameterValue);
+                    }
+                    else {
+                        value = (T)constructor.newInstance(sParameterValue);
+                    }
+                }
+            }
+            catch (java.lang.NumberFormatException e) {
+                _oLogger.error("Invalid numeric value '" + sParameterValue + "' in config for <" + name + ">, using default: " + defaultValue);
+            }
+            catch (java.lang.IllegalArgumentException iae) {
+                _oLogger.error("Invalid boolean value '" + sParameterValue + "' in config for <" + name + ">, using default: " + defaultValue);
+            }
+            catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                _oLogger.error("Unexpceted exception '" + e.getClass().getName() + "' while parsing value '" + sParameterValue + "' in config for '" + name + "', using default value");
+            }
+
+            return value;
+        }
+    }
 }
+

@@ -13,6 +13,9 @@
                 <blocking_mode>false</blocking_mode>
                 <blocking_timeout>100</blocking_timeout>
                 <state_timeout>500</state_timeout>
+                <aliasmap_retries>20</aliasmap_retries>
+                <aliasmap_timeout>15</aliasmap_timeout>
+                <aliasmap_logging>true</aliasmap_logging>
 		<node id="one">
 			<options>
 				<option name="jgroups.bind_addr" value="127.0.0.1" />
