@@ -78,7 +78,7 @@ public class JGroupsCluster implements ICluster, IComponent {
 	public static final String PROP_ASIMBA_NODE_ID = "asimba.node.id";
 
 	/** Local logger instance */
-	private static Log _oLogger = LogFactory.getLog(JGroupsCluster.class);
+	private static final Log _oLogger = LogFactory.getLog(JGroupsCluster.class);
 
 	/** Local reference to configmanager for reloading configuration */
 	private IConfigurationManager _oConfigManager;
@@ -136,12 +136,11 @@ public class JGroupsCluster implements ICluster, IComponent {
 		
 		_mCustomOptions = new HashMap<>();
 
-		Element elNode = null;
-		String sNodeId = null;
+		Element elNode;
 
 		elNode = _oConfigManager.getSection(eConfig, EL_NODE);
 		while (elNode != null) {
-			sNodeId = _oConfigManager.getParam(elNode, ATTR_ID);
+			String sNodeId = _oConfigManager.getParam(elNode, ATTR_ID);
 			if (sNodeId == null) {
 				_oLogger.error("No 'id' configured for node");
 				throw new OAException(SystemErrors.ERROR_CONFIG_READ);
