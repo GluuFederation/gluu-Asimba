@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.net.InetAddress;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -41,6 +42,7 @@ import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.IComponent;
 import com.alfaariss.oa.api.configuration.ConfigurationException;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
+import java.net.UnknownHostException;
 
 
 /**
@@ -221,8 +223,17 @@ public class JGroupsCluster implements ICluster, IComponent {
 			}
 			
 			if (StringUtils.isEmpty(sNodeId) ) {
-				// Initialize the channel, based on configuration
-				sNodeId = System.getProperty(PROP_ASIMBA_NODE_ID);
+                // Initialize the channel, based on configuration
+                sNodeId = System.getProperty(PROP_ASIMBA_NODE_ID);
+			}
+			
+			if (StringUtils.isEmpty(sNodeId) ) {
+                try {
+                    // Initialize the channel, based on hostname
+                    sNodeId = getHostName();
+                } catch (UnknownHostException ex) {
+    				_oLogger.error("Getting hostname failed! "+ ex.getMessage());
+                }
 			}
 			
 			try {
@@ -265,6 +276,9 @@ public class JGroupsCluster implements ICluster, IComponent {
 
 			_jChannel = null;
 		}
-	}
-
+	}  
+    
+    public String getHostName() throws UnknownHostException {
+        return InetAddress.getLocalHost().getHostName();
+    }
 }
