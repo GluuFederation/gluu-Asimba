@@ -11,7 +11,7 @@
   <description>Asimba Server Distribution project for packaging application distribution packages</description>
 
   <properties>
-    <asimbaVersion>1.3.0</asimbaVersion>
+    <asimbaVersion>1.3.1-SNAPSHOT</asimbaVersion>
   </properties>
   
   <dependencies>
