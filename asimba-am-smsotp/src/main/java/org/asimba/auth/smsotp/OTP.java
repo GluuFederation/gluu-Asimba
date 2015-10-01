@@ -23,7 +23,9 @@ package org.asimba.auth.smsotp;
 
 import java.io.Serializable;
 
-
+/** 
+ * Оne Time Password.
+ */
 public class OTP 
 	implements Serializable
 {
