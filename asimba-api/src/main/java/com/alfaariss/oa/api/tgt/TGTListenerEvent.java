@@ -23,7 +23,7 @@
 package com.alfaariss.oa.api.tgt;
 
 /**
- * TGT listener events.
+ * TGT ((ticket-granting ticket)) listener events.
  * 
  * @author MHO
  * @author Alfa & Ariss
