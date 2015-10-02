@@ -35,7 +35,7 @@ import com.alfaariss.oa.engine.core.attribute.TGTAttributes;
 import com.alfaariss.oa.engine.core.authentication.AuthenticationProfile;
 
 /**
- * A base TGT implementation.
+ * A base TGT (ticket-granting ticket) implementation.
  * @author EVB
  * @author Alfa & Ariss
  *
