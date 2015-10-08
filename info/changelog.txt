@@ -3,6 +3,290 @@ changelog for asimba-server-baseline
 
 
 
+1.3.0
+
+
+Date: December 16th, 2014
+
+Compile and build for Java 7
+
+Updated to use Java 7 for compiling and building.
+Authentication Context in Session/TGT (2014/04/14)
+
+A general Authentication Context facility has been introduced, to be able to register properties that are specific to the performed authentication method. These properties can later on be used by both IDP profiles as well as other stages of the authentication transaction (i.e. in PostAuthorization).
+
+Initially, the SAML2 Authentication Method has been updated to be set specific AuthenticationContext properties.
+
+Changed in: asimba-api, asimba-engine-core, asimba-engine-sso, asimba-am-remote-saml2
+Support for including AuthenticationContext attributes as User Attributes (sponsored by GLUU)
+
+Created a new (Post)Authorization extension, incorporated in asimba-authorization-web. See org.asimba.custom.postauthz.authncontextattribute.AuthnContextToUserAttributes for more information.
+
+Changed in: asimba-authorization-web
+Wildcards supported in JDBC Whitelist
+
+Changed in: asimba-sso-profile-ssoquery
+Update of OpenSAML library dependency to latest version (2.6.1)
+
+One of the reasons this has been done, was to try and solve a low-level network connection issue [#6].
+Made asimba-wa artifact into reference Asimba server deployment
+
+A lot of effort has been put into creating the asimba-wa component of asimba-server-baseline to be a reference Asimba server. It can be started from Maven, that launches it together with an Apache Derby in-memory database and runs it inside a Jetty Application Server. As such, it is used to build Integration Tests on, which have been added plentiful, and this will be extended. Integration Tests are created for
+
+    Guest and Identifying Authentication Methods (mainly for reference)
+    RemoteSAML Authentication Method (including a mock SAML2 IDP and SAML2 SP)
+    and more.
+
+Fixes in GoogleApps NameID Handler
+
+Made general improvements to logging, and to the way the NameID Handler is configured, avoiding a null reference that caused an Exception.
+
+Changed in: asimba-saml2-utility
+Make remove_expired query configurable (JDBC TGT)
+
+The query was built in, and written for MySQL. When using another database (like PostgreSQL) that query could run for quite some time, eventually leading to TGT's not being removed and causing overload. This was reported in [#7].
+
+Changed in: asimba-engine-jdbc-tgt
+Location of asimba.properties through System Properties
+
+You can now use -Dasimba.properties.file=... to specify the location of an asimba.properties file.
+
+Changed in: asimba-server
+
+
+
+1.2
+
+
+Releasenotes for Asimba 1.2.0
+
+Date: April 8th, 2014
+
+Asimba 1.2.0 is mainly a service release, that fixes some existing issues, but also introduces new functionality for Authentication Profile selection. There are no breaking changes from the previous 1.1.3.1 release. Therefore it is strongly advised to upgrade any existing Asimba 1.1.3.1 to the new 1.2.0 version.
+Release Note Errata
+
+    The 'disable_sso' feature was not mentioned in the original Asimba 1.2.0 releasenotes. Updating an Asimba deployment with a SAML2 IDP JDBC storage requires your database to be updated. See http://sourceforge.net/p/asimba/wiki/asimba-am-remote-saml2/#per-idp-sso-disable for more information.
+
+New features
+
+    The SAML2 IDP profile supports Authentication Profile selection from the AuthnContextClassRef specifier. Asimba used to only report the Authentication Profile that was performed, but can now also responds to an incoming ACCR-specifier. How to configure this is documented in https://sourceforge.net/p/asimba/wiki/asimba-idp-profile-saml2/#saml2-web-browser-sso-autentication-context
+
+Fixes
+
+    Fixed null condition in logger statement (asimba-engine-crypto: CryptoManager)
+    Enforce supported encoding binding for increased Shibboleth IDP interoperability (asimba-am-remote, asimba-saml2-utility)
+    Fixed initialization in SAML2Confederation (asimba-saml2-utility)
+    Fixed issue with MetadataProvider thread management when initial fetch attempt failed (asimba-saml2-utility)
+
+
+
+1.1.3.1
+
+
+2013/10/31: Fix initialization of loggers in Remote ASelect module
+
+
+This is a bugfix. If you use the RemoteASelect Authentication Method, this update is required.
+2013/10/25: Avoid SubjectConfirmation in AuthnRequest to IDP
+
+Reason
+When requesting Forced Authentication, a request to a Remote IDP includes a SubjectConfirmation element in its AuthnRequest. When Microsoft ADFS receives this request, it produces an error and won't process it.
+
+Solution
+An option with a SAML2 IDP is introduced to configurable the AuthnRequest creation behavior. Each IDP can be configured to explicitly avoid including any SubjectConfirmation in its request.
+
+Impact
+Default behavior is to not avoid the SubjectConfirmation element. When using an IDP configuration from asimba.xml, there is no need to change anything, unless you want to use this feature.
+
+When using the JDBC backed IDP store, it is required to update the database to include this IDP property. The following queries are provided, for MySQL and for PostgreSQL database:
+
+PostgreSQL:
+
+ALTER TABLE saml2_orgs
+ADD COLUMN avoid_subjconf boolean NOT NULL DEFAULT false;
+
+MySQL:
+
+ALTER TABLE saml2_orgs
+ADD COLUMN avoid_subjconf TINYINT(1) NOT NULL DEFAULT 0 AFTER nameidformat;
+
+See for more information [asimba-am-remote-saml2].
+
+Changed modules
+
+    asimba-am-remote-saml2
+    asimba-saml2-utility
+
+   
+
+1.1.3
+
+
+2013/10/23: SAML2 Catalog Provider
+
+Reason
+As a result of confederation support, Asimba should also be able to publish its service catalogs.
+
+Solution
+Publishing catalogs is done by the SAML2 Catalog Provider. The implementation is experimental. Please look at the documentation on the Asimba Wiki how to use this feature.
+
+Impact
+When not using a SAML Catalog Provider, there is zero impact.
+
+Changed modules
+
+    asimba-idp-profile-catalog
+    asimba-saml2-utility
+    asimba-utility
+
+2013/10/23: MetadataProvider Management refactoring
+
+Reason
+The first attempt to control OpenSAML MetadataProviders was not optimal. This introduced difficult situations when serializing Requestor instances in case of clustered deployments.
+
+Solution
+Changes were made such that a new internal Manager component is introduced (owned by Engine), that manages MetadataProviderManagers. Different parts of Asimba can manage their own MetadataProviders, and all these managers are controlled by this new Manager.
+
+Impact
+The change affects everything that creates SAML-related entities. The implementation is such, that by default the SAML2 IDP Profile as well as the SAML2 Remote Authentication method are unaffected. A SAML2 Catalog (experimental) must be explicitly configured with a MetadataProviderManager configuration though.
+
+Changed modules
+
+    asimba-am-remote-saml2
+    asimba-idp-profile-saml2
+    asimba-saml2-utility
+
+
+2013/10/23: Chained ID Mapper support
+
+Reason
+Re-use of ID Mappers, and combining them with already configured ID Mappers.
+
+Solution
+A Chained ID Mapper, that takes a number of ID Mappers.
+
+Impact
+When not using a Chained ID Mapper, there is zero impact.
+
+Changed modules
+* asimba-utility
+
+
+2013/10/23: Basic confederation support in Engine
+
+Reason
+When deploying Asimba as a hub that references other federations, Asimba should be able re-use other federation's service catalogs.
+
+Solution
+The concept of a 'confederation' is introduced. A confederation is a remote sources catalog of IDP's or SP's, that can be configured in Asimba. These catalogs are made available like an IDPStorage or a RequestorPools, and are dynamically provided into a running Asimba instance.
+
+Impact
+When not using remote federations, there is zero impact. Otherwise they have to be configured and other components can integrate remotely sourced IDP- and SP-catalogs.
+
+Changed modules
+
+    asimba-engine-core
+    asimba-saml2-utility
+
+2013/10/09: NameId handler for Microsoft Office 365
+
+Reason
+The Microsoft Office 365 SAML Service Provider has some specific requirements for receiving identity attributes.
+
+Solution
+A generic solution is implemented that can assist in providing the appropriate attributes to Microsoft Office 365. The problem analysis is available on the Asimba Wiki, and the implemented NameId handler is part of the Asimba baseline distribution.
+
+Impact
+The NameId handler can be enabled by configuring it. When left alone, it has no impact on a running Asimba deployment.
+
+Changed modules
+
+    asimba-saml2-utility
+
+
+2013/09/05: Support for Shadowed EntityId behavior
+
+Reason
+When connecting different SAML2 hubs together for the purpose of confederating with
+a remote federation, it can be desired to control SAML2 message routing such that our own
+hub is always part of the message path. This is especially the case when our hub is already
+responsible for re-packaging a SAML2 Response and/or Assertion, to rewrite the values for
+subjects and attributes in established Assertions.
+
+Solution
+The actual HTTP URL Path must be evaluated and when extra context is passed, this
+must be used to establish on behalf of which IDP we are acting.
+This solution is is shared between the front-end processing and reporting facility of the
+SAML2 IDP Profile, as well as the IDP selection capability of the Remote SAML2 module.
+
+Impact
+Enabling this behavior is made configurable, but it is optional. Default the behavior is
+disabled, so no changes are required when updating a running installation.
+
+The change implies adding the <idpproxy enableShadowedEntityId="false"/> configuration element inside the WebBrowserSSO profile configuration; like for example:
+
+    ....
+    <profile id="sso/web" class="com.alfaariss.oa.profile.saml2.profile.sso.WebBrowserSSO">
+        <!-- idpproxy configures SAML2 IDP Proxy behavior
+        @enableShadowedEntityId configures the proxy such that we can
+            pretend to be the remote IDP by responding with the remote EntityId as Issuer
+            of the Response as well as the Assertion -->
+            <idpproxy enableShadowedEntityId="false" />
+        ....
+
+(in the asimba/profiles/profile@"saml2"/profiles/profile@"sso/web"-section)
+
+Changed modules
+
+    asimba-idp-profile-saml2
+    asimba-am-remote-saml2
+    asimba-saml2-util
+
+2013/09/03: Update to support multiple SAML2 IDP Profiles with multiple Remote SAML2 AuthMethod configurations
+
+Reason
+SAML2Exchange is the facility that links the SAML2 SP AuthMethod to a SAML2 IDP Profile. Because Asimba can be deployed with multiple SAML2 IDP Profiles, it must also be possible for a SAML2 SP AuthMethod to select to which SAML IDP Profile it wants to link.
+
+Solution
+The SAML2Exchange must facilitate a map instead of a single instance.
+
+Impact
+Needs configuration changes: a RemoteSAML AuthMethod must specify the SAML2 IDP Profile
+that it wants to link to. If this is unspecified, the Asimba Server startup must be aborted.
+
+The SAML2 IDP Profile is referenced by it's Asimba Profile Id (and not its EntityId).
+This way there can still remain multiple endpoints that work on behalf of one (possibly redundant)
+EntityId.
+
+The change implies adding an <idpprofile id="saml2idpprofileid"/> inside the AuthenticationMethod configuration; like for example:
+
+    .....
+    <profiles>
+        <profile id="saml2" class="com.alfaariss.oa.profile.saml2.SAML2Profile">
+            .....
+        </profile>
+    </profiles>
+    .....
+    <websso>
+        <authentication>
+            <methods>
+                <method id="RemoteSAML" 
+                    class="com.alfaariss.oa.authentication.remote.saml2.SAML2AuthenticationMethod"
+                    friendlyname="Remote SAML authentication"
+                    ....>
+
+                    <!-- The SAML2 IDP Profile that services the ResponseEndpoint for the Remote SAML2
+                        AuthenticationMethod, implementing a SAML2 SP  -->
+                    <idpprofile id="saml2" />
+
+                    .....
+                </method>
+            </methods>
+        </authentication>
+    </websso>
+    .....
+
+
 
 1.1.2
 
