@@ -97,8 +97,8 @@
     <module>asimba-am-password</module>
     <module>asimba-am-password-jdbc</module>
     <module>asimba-am-password-jndi</module>
-    <!-- add this later, when maven repository is fixed for jradius -->
-    <module>asimba-am-password-radius</module>
+    <!-- add this later, when maven repository is fixed for jradius
+    <module>asimba-am-password-radius</module> -->
     <module>asimba-am-password-htaccess</module>
     <module>asimba-am-guest</module>
     <module>asimba-am-password-asimbausersxml</module>
