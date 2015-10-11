@@ -53,6 +53,7 @@ import org.opensaml.xml.util.XMLObjectHelper;
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.engine.core.idp.storage.AbstractIDP;
+import org.gluu.asimba.util.ldap.LdapIDPEntry;
 
 /**
  * SAML2 remote organization object.
@@ -149,7 +150,7 @@ public class SAML2IDP extends AbstractIDP
      * @param useNameIDPolicy TRUE if NameIDPolicy element must be send
      * @param forceNameIDFormat The NameIDFormat to be set in the NameIDPolicy 
      * or NULL if resolved from metadata
-     * @param avoidConfirmationData TRUE if ConfirmationData must not be included in
+     * @param avoidSubjectConfirmations TRUE if ConfirmationData must not be included in
      * an AuthnRequest to this IDP
      * @param disableSSOForIDP Configure whether the SSO should be disabled for this IDP
      * @param dLastModified Timestamp when SAML2IDP was last modified, or null when unknown
@@ -167,6 +168,61 @@ public class SAML2IDP extends AbstractIDP
     {
         super(sID, sFriendlyName, dLastModified);
         
+    	init(sID, baSourceID, sFriendlyName, 
+                sMetadataFile, sMetadataURL,
+                iMetadataTimeout, useACSIndex, useAllowCreate,
+                useScoping, useNameIDPolicy, forceNameIDFormat,
+                avoidSubjectConfirmations, disableSSOForIDP,
+                dLastModified, sMPMId);
+    }
+    
+    /**
+     * Creates an organization object from LDAP entry object..
+     */
+    public SAML2IDP(LdapIDPEntry entry) throws OAException {
+        super(entry.getId(), entry.getFriendlyName(), entry.getLastModified());
+        
+        init(entry.getId(), entry.getSourceId().getBytes(), entry.getFriendlyName(),
+                entry.getMetadataFile(), entry.getMetadataUrl(), 
+                entry.getMetadataTimeout(), entry.isAcsIndex(), entry.isAllowCreate(),
+                entry.isScoping(), entry.isNameIdPolicy(), entry.getNameIdFormat(),
+                entry.isAvoidSubjectConfirmations(), entry.isDisableSSO(),
+                entry.getLastModified(), entry.getId()
+            );
+    }
+    
+    /**
+     * Creates an organization object.
+     *
+     * @param sID The id of the organization
+     * @param baSourceID the SourceID of the organization
+     * @param sFriendlyName the organization friendly name
+     * @param sMetadataFile The location of the metadata file or NULL if none 
+     * @param sMetadataURL The url of the metadata or NULL if none
+     * @param iMetadataTimeout The timeout to be used in connecting the the url 
+     * metadata or -1 when default must be used
+     * @param useACSIndex TRUE if ACS should be set as Index
+     * @param useAllowCreate AllowCreate value or NULL if disabled
+     * @param useScoping TRUE if Scoping element must be send
+     * @param useNameIDPolicy TRUE if NameIDPolicy element must be send
+     * @param forceNameIDFormat The NameIDFormat to be set in the NameIDPolicy 
+     * or NULL if resolved from metadata
+     * @param avoidConfirmationData TRUE if ConfirmationData must not be included in
+     * an AuthnRequest to this IDP
+     * @param disableSSOForIDP Configure whether the SSO should be disabled for this IDP
+     * @param dLastModified Timestamp when SAML2IDP was last modified, or null when unknown
+     * @param sMPMId Id of the MetadataProviderManager that manages MetadataProvider for this IDP
+     *   i.e. the name of the IDPStorage
+     * @throws OAException if invalid data supplied
+     */
+    private void init(String sID, byte[] baSourceID, String sFriendlyName,
+        String sMetadataFile, String sMetadataURL, 
+        int iMetadataTimeout, Boolean useACSIndex, Boolean useAllowCreate, 
+        Boolean useScoping, Boolean useNameIDPolicy, String forceNameIDFormat,
+        Boolean avoidSubjectConfirmations, Boolean disableSSOForIDP,
+        Date dLastModified, String sMPMId) 
+        		throws OAException
+    {        
     	_oLogger = LogFactory.getLog(SAML2IDP.class);
     	
         _baSourceID = baSourceID;
