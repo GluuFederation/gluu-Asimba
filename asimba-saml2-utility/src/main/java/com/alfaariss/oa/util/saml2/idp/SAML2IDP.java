@@ -77,10 +77,12 @@ public class SAML2IDP extends AbstractIDP
 
     private static final int HTTP_METADATA_REQUEST_TIMEOUT = 5000;
     
-    /**SourceID is a 20-byte sequence used by the artifact receiver to determine artifact issuer identity and the
+    /**
+     * SourceID is a 20-byte sequence used by the artifact receiver to determine artifact issuer identity and the
      * set of possible resolution endpoints. <br/>
      * The issuer constructs the SourceID component of the artifact by 
-     * taking the SHA-1 hash of the identification URL. The hash value is NOT encoded into hexadecimal. */
+     * taking the SHA-1 hash of the identification URL. The hash value is NOT encoded into hexadecimal. 
+     */
     private byte[] _baSourceID;
     private String _sMetadataFile;
     private String _sMetadataURL;
@@ -186,7 +188,7 @@ public class SAML2IDP extends AbstractIDP
                 entry.getMetadataFile(), entry.getMetadataUrl(), 
                 entry.getMetadataTimeout(), entry.isAcsIndex(), entry.isAllowCreate(),
                 entry.isScoping(), entry.isNameIdPolicy(), entry.getNameIdFormat(),
-                entry.isAvoidSubjectConfirmations(), entry.isDisableSSO(),
+                entry.isAvoidSubjectConfirmations(), entry.isDisableSSOForIDP(),
                 entry.getLastModified(), entry.getId()
             );
     }
