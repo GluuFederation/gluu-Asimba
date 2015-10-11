@@ -38,50 +38,95 @@ import org.xdi.ldap.model.BaseEntry;
 @LdapObjectClass(values = {"top", "oxAsimbaIDPEntry"})
 public class LdapIDPEntry extends BaseEntry {
     
+    /**
+     * The id of the organization.
+     */
     @LdapAttribute(name = "uniqueIdentifier", ignoreDuringUpdate = true)
     private String id;
     
+    /**
+     * the SourceID of the organization.
+     */
     @LdapAttribute
     private String sourceId;
     
+    /**
+     * the organization friendly name.
+     */
     @LdapAttribute
     private String friendlyName;
     
+    /**
+     * The url of the metadata or NULL if none.
+     */
     @LdapAttribute
     private String metadataUrl;
     
+    /**
+     * The timeout to be used in connecting the the url 
+     * metadata or -1 when default must be used.
+     */
     @LdapAttribute
     private int metadataTimeout = -1;
     
+    /**
+     * The location of the metadata file or NULL if none. 
+     */
     @LdapAttribute
     private String metadataFile;
     
     @LdapAttribute
     private boolean enabled = true;
     
+    /**
+     * TRUE if ACS should be set as Index.
+     */
     @LdapAttribute
     private boolean acsIndex = true;
     
+    /**
+     * TRUE if Scoping element must be send.
+     */
     @LdapAttribute
     private boolean scoping = true;
     
+    /**
+     * TRUE if NameIDPolicy element must be send.
+     */
     @LdapAttribute
     private boolean nameIdPolicy = true;
     
+    /**
+     * AllowCreate value or NULL if disabled.
+     */
     @LdapAttribute
     private boolean allowCreate = true;
     
+    /**
+     * The NameIDFormat to be set in the NameIDPolicy 
+     * or NULL if resolved from metadata.
+     */
     @LdapAttribute
     private String nameIdFormat;
     
+    /**
+     * TRUE if ConfirmationData must not be included in
+     * an AuthnRequest to this IDP.
+     */
     @LdapAttribute
-    private boolean avoidSubjConf = false;
+    private boolean avoidSubjectConfirmations = false;
     
+    /**
+     * Configure whether the SSO should be disabled for this IDP.
+     */
     @LdapAttribute
     private boolean disableSSO = false;
     
+    /**
+     * Timestamp when SAML2IDP was last modified, or null when unknown.
+     */
     @LdapAttribute
-    private Date dateLastModified = new Date();
+    private Date lastModified = new Date();
     
     
     
@@ -256,17 +301,17 @@ public class LdapIDPEntry extends BaseEntry {
     }
 
     /**
-     * @return the avoidSubjConf
+     * @return the avoidSubjectConfirmations
      */
-    public boolean isAvoidSubjConf() {
-        return avoidSubjConf;
+    public boolean isAvoidSubjectConfirmations() {
+        return avoidSubjectConfirmations;
     }
 
     /**
-     * @param avoidSubjConf the avoidSubjConf to set
+     * @param avoidSubjConf the avoidSubjectConfirmations to set
      */
-    public void setAvoidSubjConf(boolean avoidSubjConf) {
-        this.avoidSubjConf = avoidSubjConf;
+    public void setAvoidSubjectConfirmations(boolean avoidSubjectConfirmations) {
+        this.avoidSubjectConfirmations = avoidSubjectConfirmations;
     }
 
     /**
@@ -284,17 +329,17 @@ public class LdapIDPEntry extends BaseEntry {
     }
 
     /**
-     * @return the dateLastModified
+     * @return the lastModified
      */
-    public Date getDateLastModified() {
-        return dateLastModified;
+    public Date getLastModified() {
+        return lastModified;
     }
 
     /**
-     * @param dateLastModified the dateLastModified to set
+     * @param lastModified the lastModified to set
      */
-    public void setDateLastModified(Date dateLastModified) {
-        this.dateLastModified = dateLastModified;
+    public void setLastModified(Date lastModified) {
+        this.lastModified = lastModified;
     }
     
     @Override
@@ -304,7 +349,7 @@ public class LdapIDPEntry extends BaseEntry {
             .append(", metadataUrl=").append(metadataUrl).append(", metadataTimeout=").append(metadataTimeout).append(", metadataFile=").append(metadataFile)
             .append(", enabled=").append(enabled).append(", acsIndex=").append(acsIndex).append(", scoping=").append(scoping)
             .append(", nameIdPolicy=").append(nameIdPolicy).append(", allowCreate=").append(allowCreate).append(", nameIdFormat=").append(nameIdFormat)
-            .append(", avoidSubjConf=").append(avoidSubjConf).append(", disableSSO=").append(disableSSO).append(", dateLastModified=").append(dateLastModified)
+            .append(", avoidSubjConf=").append(avoidSubjectConfirmations).append(", disableSSO=").append(disableSSO).append(", dateLastModified=").append(lastModified)
             .append("]");
         return builder.toString();
     }
