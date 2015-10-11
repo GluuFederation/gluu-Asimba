@@ -45,7 +45,10 @@ public class LdapIDPEntry extends BaseEntry {
     private String id;
     
     /**
-     * the SourceID of the organization.
+     * SourceID is a 20-byte sequence used by the artifact receiver to determine artifact issuer identity and the
+     * set of possible resolution endpoints. 
+     * The issuer constructs the SourceID component of the artifact by 
+     * taking the SHA-1 hash of the identification URL. The hash value is NOT encoded into hexadecimal. 
      */
     @LdapAttribute
     private String sourceId;
@@ -109,18 +112,21 @@ public class LdapIDPEntry extends BaseEntry {
     @LdapAttribute
     private String nameIdFormat;
     
-    /**
-     * TRUE if ConfirmationData must not be included in
-     * an AuthnRequest to this IDP.
+    /** 
+     * indicates whether avoid including SubjectConfirmation
+     * in an AuthnRequest to this IDP; used for compatibility with Microsoft ADFS.
+     * Default should be false
      */
     @LdapAttribute
     private boolean avoidSubjectConfirmations = false;
     
     /**
-     * Configure whether the SSO should be disabled for this IDP.
+     * indicates whether SSO should be disabled when authentication
+     * is performed by this IDP.
+     * Default should be false 
      */
     @LdapAttribute
-    private boolean disableSSO = false;
+    private boolean disableSSOForIDP = false;
     
     /**
      * Timestamp when SAML2IDP was last modified, or null when unknown.
@@ -315,17 +321,17 @@ public class LdapIDPEntry extends BaseEntry {
     }
 
     /**
-     * @return the disableSSO
+     * @return the disableSSOForIDP
      */
-    public boolean isDisableSSO() {
-        return disableSSO;
+    public boolean isDisableSSOForIDP() {
+        return disableSSOForIDP;
     }
 
     /**
-     * @param disableSSO the disableSSO to set
+     * @param disableSSOForIDP the disableSSOForIDP to set
      */
-    public void setDisableSSO(boolean disableSSO) {
-        this.disableSSO = disableSSO;
+    public void setDisableSSOForIDP(boolean disableSSOForIDP) {
+        this.disableSSOForIDP = disableSSOForIDP;
     }
 
     /**
@@ -349,7 +355,7 @@ public class LdapIDPEntry extends BaseEntry {
             .append(", metadataUrl=").append(metadataUrl).append(", metadataTimeout=").append(metadataTimeout).append(", metadataFile=").append(metadataFile)
             .append(", enabled=").append(enabled).append(", acsIndex=").append(acsIndex).append(", scoping=").append(scoping)
             .append(", nameIdPolicy=").append(nameIdPolicy).append(", allowCreate=").append(allowCreate).append(", nameIdFormat=").append(nameIdFormat)
-            .append(", avoidSubjConf=").append(avoidSubjectConfirmations).append(", disableSSO=").append(disableSSO).append(", dateLastModified=").append(lastModified)
+            .append(", avoidSubjConf=").append(avoidSubjectConfirmations).append(", disableSSO=").append(disableSSOForIDP).append(", dateLastModified=").append(lastModified)
             .append("]");
         return builder.toString();
     }
