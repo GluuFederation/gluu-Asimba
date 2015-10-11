@@ -181,7 +181,7 @@ public class SAML2IDP extends AbstractIDP
     /**
      * Creates an organization object from LDAP entry object..
      */
-    public SAML2IDP(LdapIDPEntry entry) throws OAException {
+    public SAML2IDP(LdapIDPEntry entry, String _sMPMId) throws OAException {
         super(entry.getId(), entry.getFriendlyName(), entry.getLastModified());
         
         init(entry.getId(), entry.getSourceId().getBytes(), entry.getFriendlyName(),
@@ -189,7 +189,7 @@ public class SAML2IDP extends AbstractIDP
                 entry.getMetadataTimeout(), entry.isAcsIndex(), entry.isAllowCreate(),
                 entry.isScoping(), entry.isNameIdPolicy(), entry.getNameIdFormat(),
                 entry.isAvoidSubjectConfirmations(), entry.isDisableSSOForIDP(),
-                entry.getLastModified(), entry.getId()
+                entry.getLastModified(), _sMPMId
             );
     }
     
