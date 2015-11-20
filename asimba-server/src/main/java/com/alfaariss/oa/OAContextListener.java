@@ -152,23 +152,25 @@ public class OAContextListener implements ServletContextListener
             }
             
             String sWebInf = oServletContext.getRealPath("WEB-INF");
-            StringBuffer sbConfigFile = new StringBuffer(sWebInf);
-            if (!sbConfigFile.toString().endsWith(File.separator))
-                sbConfigFile.append(File.separator);
-            sbConfigFile.append(PROPERTIES_FILENAME);
-            
-            File fConfig = new File(sbConfigFile.toString());
-            if (fConfig.exists())
-            {
-                _logger.info("Updating configuration items with the items in file: " 
-                    + fConfig.toString());
-                pConfig.putAll(getProperties(fConfig));
+            if (sWebInf != null) {
+                _logger.info("Cannot find path in ServletContext for WEB-INF");
+                StringBuffer sbConfigFile = new StringBuffer(sWebInf);
+                if (!sbConfigFile.toString().endsWith(File.separator))
+                    sbConfigFile.append(File.separator);
+                sbConfigFile.append(PROPERTIES_FILENAME);
+
+                File fConfig = new File(sbConfigFile.toString());
+                if (fConfig.exists())
+                {
+                    _logger.info("Updating configuration items with the items in file: " 
+                        + fConfig.toString());
+                    pConfig.putAll(getProperties(fConfig));
+                }
+                else
+                {   
+                    _logger.info("No optional configuration properties ("+PROPERTIES_FILENAME+") file found at: " + fConfig.toString());
+                }
             }
-            else
-            {   
-                _logger.info("No optional configuration properties ("+PROPERTIES_FILENAME+") file found at: " + fConfig.toString());
-            }
-            
             //Search for PROPERTIES_FILENAME file in servlet context classloader classpath 
             //it looks first at this location: ./<context>/web-inf/classes/[PROPERTIES_FILENAME]
             //if previous location didn't contain PROPERTIES_FILENAME then checking: 
