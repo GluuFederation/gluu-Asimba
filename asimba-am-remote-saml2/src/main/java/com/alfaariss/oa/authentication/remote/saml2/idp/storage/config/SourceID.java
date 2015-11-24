@@ -22,8 +22,15 @@
  */
 package com.alfaariss.oa.authentication.remote.saml2.idp.storage.config;
 
+import com.alfaariss.oa.OAException;
+import com.alfaariss.oa.SystemErrors;
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * SourceID object to be stored as key in a Map.
@@ -32,6 +39,9 @@ import java.util.Arrays;
  */
 public class SourceID implements Serializable
 {
+    /** Local logger instance */
+    private static Log _oLogger = LogFactory.getLog(IDPConfigStorage.class);
+        
     private static final long serialVersionUID = 3773317282651547828L;
     private byte[] _baSourceID;
     
@@ -42,6 +52,15 @@ public class SourceID implements Serializable
     public SourceID(byte[] baSourceID)
     {
         _baSourceID = baSourceID;
+    }
+    
+    /**
+     * Constructor
+     * @param baSourceID
+     */
+    public SourceID(String sID) throws OAException
+    {
+        _baSourceID = generateSHA1(sID);
     }
     
     /**
@@ -62,5 +81,26 @@ public class SourceID implements Serializable
         if(!(other instanceof SourceID))
             return false;
         return Arrays.equals(_baSourceID, ((SourceID)other)._baSourceID);
+    }
+    
+    
+
+    private byte[] generateSHA1(String id) throws OAException
+    {
+        try
+        {
+            MessageDigest dig = MessageDigest.getInstance("SHA-1");
+            return dig.digest(id.getBytes("UTF-8"));
+        }
+        catch (NoSuchAlgorithmException e)
+        {
+            _oLogger.error("SHA-1 not supported", e);
+            throw new OAException(SystemErrors.ERROR_INTERNAL);
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            _oLogger.error("UTF-8 not supported", e);
+            throw new OAException(SystemErrors.ERROR_INTERNAL);
+        }
     }
 }
