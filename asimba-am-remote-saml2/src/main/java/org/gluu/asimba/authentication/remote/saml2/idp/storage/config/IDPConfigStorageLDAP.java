@@ -1,0 +1,282 @@
+/*
+ * Asimba Server
+ * 
+ * Copyright (c) 2015, Gluu
+ * Copyright (C) 2013 Asimba
+ * Copyright (C) 2007-2008 Alfa & Ariss B.V.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see www.gnu.org/licenses
+ * 
+ * Asimba - Serious Open Source SSO - More information on www.asimba.org
+ * 
+ */
+package org.gluu.asimba.authentication.remote.saml2.idp.storage.config;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Map;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.asimba.util.saml2.metadata.provider.management.MdMgrManager;
+import org.asimba.util.saml2.metadata.provider.management.MetadataProviderManagerUtil;
+import org.asimba.utility.filesystem.PathTranslator;
+import org.joda.time.DateTime;
+import org.joda.time.format.ISODateTimeFormat;
+import org.w3c.dom.Element;
+
+import com.alfaariss.oa.OAException;
+import com.alfaariss.oa.SystemErrors;
+import com.alfaariss.oa.api.configuration.IConfigurationManager;
+import com.alfaariss.oa.authentication.remote.saml2.idp.storage.config.SourceID;
+import com.alfaariss.oa.engine.core.idp.storage.IIDP;
+import com.alfaariss.oa.engine.idp.storage.configuration.AbstractConfigurationStorage;
+import com.alfaariss.oa.util.saml2.idp.SAML2IDP;
+import org.gluu.asimba.util.ldap.LdapIDPEntry;
+
+/**
+ * Uses the XML configuration file as organization storage for SAML2IDPs
+ * 
+ * Configuration like:
+ * <storage id="[id-value]" class="[...IDPConfigStorage]" registerWithEngine="[true/false]">
+ *   <mp_manager id="[id-value]" primary="[true/false]" />
+ *   <idp ...>
+ *   	[idp-configuration]
+ *   </idp>
+ * </storage>
+ * 
+ * #signing : optional attribute to indicate whether default-signing should be enabled 
+ * 		for a SAML2Requestor
+ * 
+ * mp_manager : optional configuration for metadataprovider manager; if the configuration is
+ * 		not provided, a MetadataProviderManager is used by the name of the Profile; if it is
+ * 		created, it will also be removed upon destroy() of the SAMLRequestors
+ * #id : attribute that indicates the id of the MetadataProviderManager
+ * 		that is responsible for managing the MetadataProvider for a SAML2Requestor; when
+ * 		mpmanaged_id is not set, the profileId is used to identify the MetadataProviderManager
+ * #primary : if true, and if the manager was instantiated, the manager will also be destroyed
+ * 		when destroy() of the SAML2Requestors is called. Defaults to false. 
+ *
+ * 
+ * @author Dmitry Ognyannikov
+ */
+public class IDPConfigStorageLDAP extends AbstractConfigurationStorage 
+{
+	/** Configuration elements */
+	public static final String EL_MPMANAGER = "mp_manager";
+
+	/** Local logger instance */
+	private static Log _oLogger = LogFactory.getLog(IDPConfigStorageLDAP.class);
+	
+    private final static String DEFAULT_ID = "saml2";
+    
+    /** Id of the Storage */
+    protected String _sId;
+    
+    /** Id of the MetadataProviderManager that manages metadata for the SAML2IDPs that are
+     * created by this Storage; configurable; defaults to the Id of the Storage (_sId) */
+    protected String _sMPMId;
+    protected boolean _bOwnMPM;
+    
+    
+    private Map<SourceID, SAML2IDP> _mapIDPsOnSourceID;
+        
+    /**
+     * Creates the storage.
+     */
+    public IDPConfigStorageLDAP()
+    {
+        super();
+        _mapIDPsOnSourceID = new Hashtable<SourceID, SAML2IDP>();
+    }
+
+    /**
+     * @see com.alfaariss.oa.engine.idp.storage.configuration.AbstractConfigurationStorage#start(com.alfaariss.oa.api.configuration.IConfigurationManager, org.w3c.dom.Element)
+     */
+    public void start(IConfigurationManager configManager, Element config)
+        throws OAException
+    {
+        _sId = configManager.getParam(config, "id");
+        if (_sId == null)
+        {
+            _oLogger.info("No optional 'id' item for storage configured, using default");
+            _sId = DEFAULT_ID;
+        }
+
+        // Establish MetadataProviderManager Id that refers to existing IMetadataProviderManager
+        Element elMPManager = configManager.getSection(config, EL_MPMANAGER);
+        if (elMPManager == null) {
+        	_oLogger.info("Using MetadataProviderManager Id from IDPStorage@id: '"+_sId+"'");
+        	_sMPMId = _sId;
+        } else {
+        	_sMPMId = configManager.getParam(elMPManager, "id");
+        	if (_sMPMId == null) {
+        		_oLogger.error("Missing @id attribute for '"+EL_MPMANAGER+"' configuration");
+        		throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+        	}
+        	_oLogger.info("Using MetadataProviderManager Id from configuration: '"+_sMPMId+"'");
+        }
+        
+        // Make sure the MetadataProviderManager exists
+        boolean bCreated = MetadataProviderManagerUtil.establishMPM(_sMPMId, configManager, elMPManager);
+        
+        if (elMPManager == null) {
+        	_bOwnMPM = bCreated;
+        } else {
+        	String sPrimary = configManager.getParam(elMPManager, "primary");
+        	if (sPrimary == null ) {
+        		_bOwnMPM = bCreated;	// default: own it when it was created by us
+        	} else {
+        		if ("false".equalsIgnoreCase(sPrimary)) {
+        			_bOwnMPM = false;
+        		} else if ("true".equalsIgnoreCase(sPrimary)) {
+        			_bOwnMPM = true;
+        		} else {
+        			_oLogger.error("Invalid value for '@primary': '"+sPrimary+"'");
+        			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+        		}
+        	}
+        }
+        
+        super.start(configManager, config);
+        
+        Enumeration<?> enumIDPs = _htIDPs.elements();
+        while (enumIDPs.hasMoreElements())
+        {
+            SAML2IDP saml2IDP = (SAML2IDP)enumIDPs.nextElement();
+            _mapIDPsOnSourceID.put(new SourceID(saml2IDP.getSourceID()), saml2IDP);
+        }
+        
+        _oLogger.info("Started storage with id: " + _sId);
+    }
+    
+    /**
+     * @see com.alfaariss.oa.engine.core.idp.storage.IIDPStorage#getID()
+     */
+    public String getID()
+    {
+        return _sId;
+    }
+
+    /**
+     * @see com.alfaariss.oa.engine.core.idp.storage.IIDPStorage#getIDP(java.lang.Object, java.lang.String)
+     */
+    public IIDP getIDP(Object id, String type) throws OAException
+    {
+        if (type.equals(SAML2IDP.TYPE_ID) && id instanceof String)
+            return getIDP((String)id);
+        else if (type.equals(SAML2IDP.TYPE_SOURCEID) && id instanceof byte[])
+            return getIDPBySourceID((byte[])id);
+
+        //else not supported
+        return null;
+    }
+    
+    /**
+     * @see com.alfaariss.oa.engine.idp.storage.configuration.AbstractConfigurationStorage#stop()
+     */
+    public void stop()
+    {
+        if (_mapIDPsOnSourceID != null)
+            _mapIDPsOnSourceID.clear();
+        
+        // Clean up the MetadataProviderManager?
+        if (_bOwnMPM) {
+        	_oLogger.info("Cleaning up MetadataProviderManager '"+_sMPMId+"'");
+        	MdMgrManager.getInstance().deleteMetadataProviderManager(_sMPMId);
+        }
+        
+        super.stop();
+    }
+
+    /**
+     * @see com.alfaariss.oa.engine.idp.storage.configuration.AbstractConfigurationStorage#createIDP(com.alfaariss.oa.api.configuration.IConfigurationManager, org.w3c.dom.Element)
+     */ 
+   @Override
+    protected IIDP createIDP(IConfigurationManager configManager, Element config)
+        throws OAException
+    {
+        SAML2IDP saml2IDP = null;
+        
+        try
+        {
+            String sID = configManager.getParam(config, "id");
+            if (sID == null)
+            {
+                _oLogger.error(
+                    "No 'id' item found in 'organization' section in configuration");
+                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+            }
+            byte[] baSourceID = generateSHA1(sID);
+            
+            // search entry by sID
+            
+            LdapIDPEntry entry = null;
+            
+            
+            
+            saml2IDP = new SAML2IDP(entry, baSourceID, _sMPMId);
+        }
+        catch (OAException e)
+        {
+            throw e;
+        }
+        catch(Exception e)
+        {
+            _oLogger.fatal("Internal error while reading organization configuration", e);
+            throw new OAException(SystemErrors.ERROR_INTERNAL);
+        }
+        
+        return saml2IDP;
+    }
+
+    /**
+     * Resolves the organization specified by it's SourceID.
+     *
+     * @param baSourceID The SourceID of the organization
+     * @return Organization The requested organization object
+     */
+    protected SAML2IDP getIDPBySourceID(byte[] baSourceID)
+    {
+        return _mapIDPsOnSourceID.get(new SourceID(baSourceID));
+    }
+
+    private byte[] generateSHA1(String id) throws OAException
+    {
+        try
+        {
+            MessageDigest dig = MessageDigest.getInstance("SHA-1");
+            return dig.digest(id.getBytes("UTF-8"));
+        }
+        catch (NoSuchAlgorithmException e)
+        {
+            _oLogger.error("SHA-1 not supported", e);
+            throw new OAException(SystemErrors.ERROR_INTERNAL);
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            _oLogger.error("UTF-8 not supported", e);
+            throw new OAException(SystemErrors.ERROR_INTERNAL);
+        }
+    }
+}
