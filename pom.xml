@@ -82,7 +82,8 @@
     <module>asimba-engine-attribute-gather-jdbc</module>
     <module>asimba-engine-attribute-gather-jndi</module>
   	<module>asimba-engine-requestor-configuration</module>
-    <module>asimba-engine-requestor-jdbc</module>
+	<module>asimba-engine-requestor-jdbc</module>
+	<module>asimba-engine-requestor-ldap</module>
   	<module>asimba-engine-authentication-configuration</module>
     <module>asimba-engine-authentication-jdbc</module>
   	<module>asimba-engine-authorization-configuration</module>
