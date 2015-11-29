@@ -21,6 +21,7 @@
  * 
  */
 package com.alfaariss.oa.engine.requestor.configuration;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,6 +45,7 @@ import com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory;
  * The requestor pool factory.
  *
  * Reads factory information from configuration items.
+ * 
  * @author MHO
  * @author Alfa & Ariss
  *

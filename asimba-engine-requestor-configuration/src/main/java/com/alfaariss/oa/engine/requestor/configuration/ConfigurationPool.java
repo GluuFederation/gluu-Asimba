@@ -42,6 +42,7 @@ import com.alfaariss.oa.engine.core.requestor.RequestorPool;
  * Requestor pool factory.
  * 
  * Reads the information from the configuration.
+ * 
  * @author MHO
  * @author Alfa & Ariss
  *
