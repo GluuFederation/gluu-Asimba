@@ -569,6 +569,7 @@ public class WebBrowserSSO extends AbstractSAML2Profile
         catch (StatusException e)
         {
             //The request was invalid, so try to send a SAML error response.
+            _logger.debug("The request was invalid, so try to send a SAML error response");
             StatusResponseType samlResponse = protocol.createErrorResponse(
                 protocol.getDestination(), e.getTopLevelstatusCode(), 
                 e.getSecondLevelStatusCode());
@@ -868,7 +869,7 @@ public class WebBrowserSSO extends AbstractSAML2Profile
                 SingleSignOnService.DEFAULT_ELEMENT_NAME, sBindingType, 
                 sDestination, null);
             context.setPeerEntityEndpoint(endPoint);
-                        
+            
             AbstractEncodingFactory encFactory = 
                 AbstractEncodingFactory.createInstance(request, response, 
                     sBindingType, _responseBindingProperties);
