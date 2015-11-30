@@ -46,112 +46,103 @@ import com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory;
  * The requestor pool factory.
  *
  * Reads factory information from LDAP items.
- * 
+ *
  * @author Dmitry Ognyannikov
  */
-public class LDAPFactory implements IRequestorPoolFactory, IComponent 
-{
+public class LDAPFactory implements IRequestorPoolFactory, IComponent {
+
     private static Log _logger;
     private IConfigurationManager _configurationManager;
     private Element _eConfig;
-    
+
     private HashMap<String, RequestorPool> _mapPools;
     private HashMap<String, IRequestor> _mapRequestors;
-    
-	/**
-	 * Creates the object.
-	 */
-	public LDAPFactory()
-    {
+
+    /**
+     * Creates the object.
+     */
+    public LDAPFactory() {
         _logger = LogFactory.getLog(LDAPFactory.class);
         _mapPools = new HashMap<String, RequestorPool>();
         _mapRequestors = new HashMap<String, IRequestor>();
         _eConfig = null;
-	}
+    }
 
     /**
      * Returns the requestor pool were the supplied request id is part of.
+     *
      * @see IRequestorPoolFactory#getRequestorPool(java.lang.String)
      */
-    public RequestorPool getRequestorPool(String sRequestor) throws RequestorException
-    {
-        for (RequestorPool oRequestorPool:_mapPools.values())
-        {
-            if (oRequestorPool.existRequestor(sRequestor))
+    public RequestorPool getRequestorPool(String sRequestor) throws RequestorException {
+        for (RequestorPool oRequestorPool : _mapPools.values()) {
+            if (oRequestorPool.existRequestor(sRequestor)) {
                 return oRequestorPool;
+            }
         }
         return null;
     }
 
     /**
      * Returns the requestor specified by its ID.
+     *
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getRequestor(java.lang.String)
      */
-    public IRequestor getRequestor(String sRequestor) throws RequestorException
-    {
+    public IRequestor getRequestor(String sRequestor) throws RequestorException {
         return _mapRequestors.get(sRequestor);
     }
 
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#isPool(java.lang.String)
      */
-    public boolean isPool(String sPoolID)
-    {
-        if (_mapPools != null)
+    public boolean isPool(String sPoolID) {
+        if (_mapPools != null) {
             return _mapPools.containsKey(sPoolID);
-    
+        }
+
         return false;
     }
 
     /**
      * Starts the component.
+     *
      * @see IComponent#start(IConfigurationManager, org.w3c.dom.Element)
      */
-    public void start(IConfigurationManager oConfigurationManager, Element eConfig) throws OAException
-    {
-        try
-        {
+    public void start(IConfigurationManager oConfigurationManager, Element eConfig) throws OAException {
+        try {
             _configurationManager = oConfigurationManager;
             _eConfig = eConfig;
             Element ePool = _configurationManager.getSection(eConfig, "pool");
-            while (ePool != null)
-            {
+            while (ePool != null) {
                 RequestorPool oRequestorPool = new LDAPPool(_configurationManager, ePool);
-                
-                for (IRequestor oRequestor: oRequestorPool.getRequestors())
-                {
-                    if (_mapRequestors.containsKey(oRequestor.getID()))
-                    {
+
+                for (IRequestor oRequestor : oRequestorPool.getRequestors()) {
+                    if (_mapRequestors.containsKey(oRequestor.getID())) {
                         StringBuffer sbError = new StringBuffer("Duplicate entry for requestor with id '");
                         sbError.append(oRequestor.getID());
                         sbError.append("' in pool: ");
                         sbError.append(oRequestorPool.getID());
                         _logger.error(sbError.toString());
-                        
+
                         throw new RequestorException(SystemErrors.ERROR_INIT);
                     }
                     _mapRequestors.put(oRequestor.getID(), oRequestor);
                 }
-                
-                if (_mapPools.containsKey(oRequestorPool.getID()))
-                {
 
-                    _logger.error("Duplicate entry for requestorpool with id: " 
-                        + oRequestorPool.getID());
+                if (_mapPools.containsKey(oRequestorPool.getID())) {
+
+                    _logger.error("Duplicate entry for requestorpool with id: "
+                            + oRequestorPool.getID());
                     throw new RequestorException(SystemErrors.ERROR_INIT);
                 }
-                
+
                 _mapPools.put(oRequestorPool.getID(), oRequestorPool);
                 ePool = _configurationManager.getNextSection(ePool);
             }
-            
-        }
-        catch(RequestorException e)
-        {
+
+        } catch (RequestorException e) {
+            _logger.error("Internal error during initialization", e);
             throw e;
-        }
-        catch(Exception e)
-        {
+        } catch (Exception e) {
             _logger.fatal("Internal error during initialization", e);
             throw new RequestorException(SystemErrors.ERROR_INTERNAL);
         }
@@ -159,12 +150,11 @@ public class LDAPFactory implements IRequestorPoolFactory, IComponent
 
     /**
      * Restarts the component.
+     *
      * @see com.alfaariss.oa.api.IComponent#restart(org.w3c.dom.Element)
      */
-    public void restart(Element eConfig) throws OAException
-    {
-        synchronized(this)
-        {
+    public void restart(Element eConfig) throws OAException {
+        synchronized (this) {
             stop();
             start(_configurationManager, eConfig);
         }
@@ -172,16 +162,18 @@ public class LDAPFactory implements IRequestorPoolFactory, IComponent
 
     /**
      * Stops the component.
+     *
      * @see com.alfaariss.oa.api.IComponent#stop()
      */
-    public void stop()
-    {
-        if (_mapPools != null)
+    public void stop() {
+        if (_mapPools != null) {
             _mapPools.clear();
-        
-        if (_mapRequestors != null)
+        }
+
+        if (_mapRequestors != null) {
             _mapRequestors.clear();
-        
+        }
+
         _eConfig = null;
     }
 
@@ -189,43 +181,39 @@ public class LDAPFactory implements IRequestorPoolFactory, IComponent
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllEnabledRequestorPools()
      */
     public Collection<RequestorPool> getAllEnabledRequestorPools()
-        throws RequestorException
-    {
+            throws RequestorException {
         Collection<RequestorPool> collPools = new Vector<RequestorPool>();
-        if (_mapPools != null)
-        {
-            for (RequestorPool pool: _mapPools.values())
-            {
-                if (pool.isEnabled())
+        if (_mapPools != null) {
+            for (RequestorPool pool : _mapPools.values()) {
+                if (pool.isEnabled()) {
                     collPools.add(pool);
+                }
             }
         }
         return Collections.unmodifiableCollection(collPools);
     }
-    
+
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllRequestorPools()
      */
-    public Collection<RequestorPool> getAllRequestorPools() throws RequestorException
-    {
-        if (_mapPools == null)
+    public Collection<RequestorPool> getAllRequestorPools() throws RequestorException {
+        if (_mapPools == null) {
             return Collections.unmodifiableCollection(new Vector<RequestorPool>());
-        
+        }
+
         return Collections.unmodifiableCollection(_mapPools.values());
     }
 
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllEnabledRequestors()
      */
-    public Collection<IRequestor> getAllEnabledRequestors() throws RequestorException
-    {
+    public Collection<IRequestor> getAllEnabledRequestors() throws RequestorException {
         Collection<IRequestor> collRequestors = new Vector<IRequestor>();
-        if (_mapRequestors != null)
-        {
-            for (IRequestor requestor: _mapRequestors.values())
-            {
-                if (requestor.isEnabled())
+        if (_mapRequestors != null) {
+            for (IRequestor requestor : _mapRequestors.values()) {
+                if (requestor.isEnabled()) {
                     collRequestors.add(requestor);
+                }
             }
         }
         return Collections.unmodifiableCollection(collRequestors);
@@ -234,22 +222,22 @@ public class LDAPFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllRequestors()
      */
-    public Collection<IRequestor> getAllRequestors() throws RequestorException
-    {
-        if (_mapRequestors == null)
+    public Collection<IRequestor> getAllRequestors() throws RequestorException {
+        if (_mapRequestors == null) {
             return Collections.unmodifiableCollection(new Vector<IRequestor>());
-        
+        }
+
         return Collections.unmodifiableCollection(_mapRequestors.values());
     }
 
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#isRequestor(java.lang.String)
      */
-    public boolean isRequestor(String requestorID) throws RequestorException
-    {
-        if (_mapRequestors != null)
+    public boolean isRequestor(String requestorID) throws RequestorException {
+        if (_mapRequestors != null) {
             return _mapRequestors.containsKey(requestorID);
-    
+        }
+
         return false;
     }
 
@@ -257,39 +245,31 @@ public class LDAPFactory implements IRequestorPoolFactory, IComponent
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getRequestor(java.lang.Object, java.lang.String)
      */
     public IRequestor getRequestor(Object id, String type)
-        throws RequestorException
-    {
-        try
-        {
+            throws RequestorException {
+        try {
             Element ePool = _configurationManager.getSection(_eConfig, "pool");
-            while (ePool != null)
-            {
+            while (ePool != null) {
                 Element eRequestors = _configurationManager.getSection(ePool, "requestors");
-                if (eRequestors != null)
-                {
+                if (eRequestors != null) {
                     Element eRequestor = _configurationManager.getSection(eRequestors, "requestor");
-                    while (eRequestor != null)
-                    {
+                    while (eRequestor != null) {
                         String sType = _configurationManager.getParam(eRequestor, type);
-                        if (sType != null && sType.equals(String.valueOf(id)))
-                        {
+                        if (sType != null && sType.equals(String.valueOf(id))) {
                             String sID = _configurationManager.getParam(eRequestor, "id");
-                            if (sID != null)
-                            {
+                            if (sID != null) {
                                 return _mapRequestors.get(sID);
                             }
                         }
-                        
+
                         eRequestor = _configurationManager.getNextSection(eRequestor);
                     }
                 }
-                
+
                 ePool = _configurationManager.getNextSection(ePool);
             }
             return null;
-        }
-        catch (ConfigurationException e)
-        {
+        } catch (ConfigurationException e) {
+            _logger.error("Internal error during getRequestor", e);
             throw new RequestorException(SystemErrors.ERROR_CONFIG_READ);
         }
     }
@@ -298,34 +278,26 @@ public class LDAPFactory implements IRequestorPoolFactory, IComponent
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#isRequestorIDSupported(java.lang.String)
      */
     public boolean isRequestorIDSupported(String type)
-        throws RequestorException
-    {//DD The requestor ID type is supported if the type is available as configuration param within a requestor section
-        try
-        {
+            throws RequestorException {//DD The requestor ID type is supported if the type is available as configuration param within a requestor section
+        try {
             Element ePool = _configurationManager.getSection(_eConfig, "pool");
-            while (ePool != null)
-            {
+            while (ePool != null) {
                 Element eRequestors = _configurationManager.getSection(ePool, "requestors");
-                if (eRequestors != null)
-                {
+                if (eRequestors != null) {
                     Element eRequestor = _configurationManager.getSection(eRequestors, "requestor");
-                    while (eRequestor != null)
-                    {
+                    while (eRequestor != null) {
                         String sType = _configurationManager.getParam(eRequestor, type);
-                        if (sType != null)
-                        {
+                        if (sType != null) {
                             return true;
                         }
-                        
+
                         eRequestor = _configurationManager.getNextSection(eRequestor);
                     }
                 }
-                
+
                 ePool = _configurationManager.getNextSection(ePool);
             }
-        }
-        catch (ConfigurationException e)
-        {
+        } catch (ConfigurationException e) {
             throw new RequestorException(SystemErrors.ERROR_CONFIG_READ);
         }
 

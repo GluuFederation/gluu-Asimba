@@ -41,280 +41,235 @@ import com.alfaariss.oa.engine.core.requestor.RequestorPool;
 
 /**
  * Requestor pool factory.
- * 
+ *
  * Reads the information from LDAP.
- * 
+ *
  * @author Dmitry Ognyannikov
  */
-public class LDAPPool extends RequestorPool
-{   
+public class LDAPPool extends RequestorPool {
+
     private static Log _logger;
-    
+
     /**
      * Creates the object.
-     *  
-     * @param oConfigurationManager The configuration manager where the config 
+     *
+     * @param oConfigurationManager The configuration manager where the config
      * can be read from.
      * @param eConfig The configuration base section.
      * @throws RequestorException
      */
-    public LDAPPool(IConfigurationManager oConfigurationManager, 
-        Element eConfig) throws RequestorException
-    {
-        try
-        {
+    public LDAPPool(IConfigurationManager oConfigurationManager,
+            Element eConfig) throws RequestorException {
+        try {
             _logger = LogFactory.getLog(LDAPPool.class);
-            
+
             _sID = oConfigurationManager.getParam(eConfig, "id");
-            if (_sID == null)
-            {
+            if (_sID == null) {
                 _logger.error("No 'id' item in 'pool' section found in configuration");
                 throw new RequestorException(SystemErrors.ERROR_CONFIG_READ);
             }
             _sFriendlyName = oConfigurationManager.getParam(eConfig, "friendlyname");
-            if (_sFriendlyName == null)
-            {
+            if (_sFriendlyName == null) {
                 _logger.error("No 'friendlyname' item in 'pool' section found in configuration");
                 throw new RequestorException(SystemErrors.ERROR_CONFIG_READ);
-            }            
+            }
             _bEnabled = true;
             String sEnabled = oConfigurationManager.getParam(eConfig, "enabled");
-            if (sEnabled != null)
-            {
-                if (sEnabled.equalsIgnoreCase("FALSE"))
+            if (sEnabled != null) {
+                if (sEnabled.equalsIgnoreCase("FALSE")) {
                     _bEnabled = false;
-                else if (!sEnabled.equalsIgnoreCase("TRUE"))
-                {
-                    _logger.error("Unknown value in 'enabled' configuration item: " 
-                        + sEnabled);
+                } else if (!sEnabled.equalsIgnoreCase("TRUE")) {
+                    _logger.error("Unknown value in 'enabled' configuration item: "
+                            + sEnabled);
                     throw new RequestorException(SystemErrors.ERROR_CONFIG_READ);
                 }
             }
 
             readPoolConfiguration(oConfigurationManager, eConfig);
-        }
-        catch (RequestorException e)
-        {
+        } catch (RequestorException e) {
+            _logger.error("Internal error during pool object creation", e);
             throw e;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             _logger.fatal("Internal error during pool object creation", e);
             throw new RequestorException(SystemErrors.ERROR_INTERNAL);
         }
     }
 
-    private void readPoolConfiguration(IConfigurationManager oConfigurationManager, 
-        Element eConfig) throws RequestorException
-    {
-        try
-        {
+    private void readPoolConfiguration(IConfigurationManager oConfigurationManager,
+            Element eConfig) throws RequestorException {
+        try {
             Element eAuthorization = oConfigurationManager.getSection(eConfig, "authorization");
-            if (eAuthorization != null)
-            {
+            if (eAuthorization != null) {
                 Element ePre = oConfigurationManager.getSection(eAuthorization, "pre");
-                if (ePre != null)
+                if (ePre != null) {
                     _sPreAuthorizationProfileID = oConfigurationManager.getParam(ePre, "profile");
+                }
                 Element ePost = oConfigurationManager.getSection(eAuthorization, "post");
-                if (ePost != null)
+                if (ePost != null) {
                     _sPostAuthorizationProfileID = oConfigurationManager.getParam(ePost, "profile");
+                }
             }
             Element eAttributeRelease = oConfigurationManager.getSection(eConfig, "attributerelease");
-            if (eAttributeRelease != null)
+            if (eAttributeRelease != null) {
                 _sAttributeReleasePolicyID = oConfigurationManager.getParam(eAttributeRelease, "policy");
-            
+            }
+
             Element eAuthentication = oConfigurationManager.getSection(eConfig, "authentication");
-            if (eAuthentication != null)
-            {
+            if (eAuthentication != null) {
                 _bForced = false;
                 String sForced = oConfigurationManager.getParam(eAuthentication, "forced");
-                if (sForced != null)
-                {
-                    if (sForced.equalsIgnoreCase("TRUE"))
+                if (sForced != null) {
+                    if (sForced.equalsIgnoreCase("TRUE")) {
                         _bForced = true;
-                    else if (!sForced.equalsIgnoreCase("FALSE"))
-                    {
+                    } else if (!sForced.equalsIgnoreCase("FALSE")) {
                         StringBuffer sbError = new StringBuffer("Wrong configuration in requestor pool with id '");
                         sbError.append(_sID);
                         sbError.append("': Unknown value in 'forced' configuration item: ");
                         sbError.append(sForced);
-                        
+
                         _logger.error(sbError.toString());
                         throw new RequestorException(SystemErrors.ERROR_CONFIG_READ);
                     }
                 }
-                
+
                 Element eAuthProfile = oConfigurationManager.getSection(eAuthentication, "profile");
-                while (eAuthProfile != null)
-                {
+                while (eAuthProfile != null) {
                     addAuthenticationProfileID(oConfigurationManager.getParam(eAuthProfile, "id"));
                     eAuthProfile = oConfigurationManager.getNextSection(eAuthProfile);
                 }
             }
-            
-            Element eProperties = oConfigurationManager.getSection(
-                eConfig, "properties");
 
-            if (eProperties == null)
-            {
-                _logger.info(
-                    "No 'properties' section found, no extended properties found for requestorpool: " 
-                    + _sID);
+            Element eProperties = oConfigurationManager.getSection(
+                    eConfig, "properties");
+
+            if (eProperties == null) {
+                _logger.info("No 'properties' section found, no extended properties found for requestorpool: "
+                        + _sID);
                 _properties = new Properties();
+            } else {
+                _properties = readExtendedProperties(oConfigurationManager, eProperties);
             }
-            else
-            {
-                _properties = readExtendedProperties(
-                    oConfigurationManager, eProperties);
-            }
-            
+
             Element eRequestors = oConfigurationManager.getSection(eConfig, "requestors");
-            if (eRequestors == null)
-            {
+            if (eRequestors == null) {
                 _logger.error("No 'requestors' section found");
                 throw new RequestorException(SystemErrors.ERROR_CONFIG_READ);
             }
-            
+
             Element eRequestor = oConfigurationManager.getSection(eRequestors, "requestor");
-            while(eRequestor != null)
-            {
+            while (eRequestor != null) {
                 Requestor oRequestor = createRequestor(oConfigurationManager, eRequestor);
-                if (oRequestor != null)
+                if (oRequestor != null) {
                     addRequestor(oRequestor);
-                
+                }
+
                 eRequestor = oConfigurationManager.getNextSection(eRequestor);
             }
-        }
-        catch (RequestorException e)
-        {
+        } catch (RequestorException e) {
+            _logger.error("Internal error during pool object update", e);
             throw e;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             _logger.fatal("Internal error during pool object update", e);
             throw new RequestorException(SystemErrors.ERROR_INTERNAL);
         }
     }
-    
-    private Requestor createRequestor(IConfigurationManager oConfigurationManager, 
-        Element eConfig) throws RequestorException
-    {
+
+    private Requestor createRequestor(IConfigurationManager oConfigurationManager,
+            Element eConfig) throws RequestorException {
         Requestor oRequestor = null;
-        try
-        {
+        try {
             String sID = oConfigurationManager.getParam(eConfig, "id");
-            if (sID == null)
-            {
+            if (sID == null) {
                 _logger.error("No 'id' item in 'requestor' section found in configuration");
                 throw new RequestorException(SystemErrors.ERROR_CONFIG_READ);
             }
-            
+
             String sEnabled = oConfigurationManager.getParam(eConfig, "enabled");
             boolean bEnabled = true;
-            if (sEnabled != null)
-            {
-                if (sEnabled.equalsIgnoreCase("FALSE"))
+            if (sEnabled != null) {
+                if (sEnabled.equalsIgnoreCase("FALSE")) {
                     bEnabled = false;
-                else if (!sEnabled.equalsIgnoreCase("TRUE"))
-                {
-                    _logger.error("Unknown value in 'enabled' configuration item: " 
-                        + sEnabled);
+                } else if (!sEnabled.equalsIgnoreCase("TRUE")) {
+                    _logger.error("Unknown value in 'enabled' configuration item: "
+                            + sEnabled);
                     throw new RequestorException(SystemErrors.ERROR_CONFIG_READ);
                 }
             }
-            
-            if (!bEnabled)
-            {
+
+            if (!bEnabled) {
                 StringBuffer sbInfo = new StringBuffer("Requestor with id '");
                 sbInfo.append(sID);
                 sbInfo.append("' is disabled");
                 _logger.info(sbInfo.toString());
                 return null;
             }
-            
+
             String sFriendlyName = oConfigurationManager.getParam(eConfig, "friendlyname");
-            if (sFriendlyName == null)
-            {
+            if (sFriendlyName == null) {
                 _logger.error("No 'friendlyname' item in 'requestor' section found in configuration");
                 throw new RequestorException(SystemErrors.ERROR_CONFIG_READ);
-            }                                             
-            
-            Element eProperties = oConfigurationManager.getSection(
-                eConfig, "properties");
-            Properties properties = null;
-            if (eProperties == null)
-            {
-                _logger.info(
-                    "No 'properties' section found, no extended properties found for requestor: " 
-                    + sID);
-                properties = new Properties();
             }
-            else
-            {
-                properties = readExtendedProperties(
-                    oConfigurationManager, eProperties);
-            }            
-               
+
+            Element eProperties = oConfigurationManager.getSection(
+                    eConfig, "properties");
+            Properties properties = null;
+            if (eProperties == null) {
+                _logger.info("No 'properties' section found, no extended properties found for requestor: "
+                        + sID);
+                properties = new Properties();
+            } else {
+                properties = readExtendedProperties(oConfigurationManager, eProperties);
+            }
+
             String sDateLastModified = oConfigurationManager.getParam(eConfig, "lastmodified");
             Date dLastModified = null;
-            
+
             if (sDateLastModified != null) {
-            	// Convert to java.util.Date
-            	try {
-	            	DateTime dt = ISODateTimeFormat.dateTimeNoMillis().parseDateTime(sDateLastModified);
-            		dLastModified = dt.toDate();
-            	} catch (IllegalArgumentException iae) {
-            		_logger.info("Invalid 'lastmodified' timestamp provided: "+sDateLastModified+"; ignoring.");
-            		dLastModified = null;
-            	}
+                // Convert to java.util.Date
+                try {
+                    DateTime dt = ISODateTimeFormat.dateTimeNoMillis().parseDateTime(sDateLastModified);
+                    dLastModified = dt.toDate();
+                } catch (IllegalArgumentException iae) {
+                    _logger.info("Invalid 'lastmodified' timestamp provided: " + sDateLastModified + "; ignoring.");
+                    dLastModified = null;
+                }
             }
-            
+
             oRequestor = new Requestor(sID, sFriendlyName, bEnabled, properties, dLastModified);
             _logger.info("Found: " + oRequestor);
-        }
-        catch (RequestorException e)
-        {
+        } catch (RequestorException e) {
+            _logger.error("Internal error during pool object creation", e);
             throw e;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             _logger.fatal("Internal error during pool object update", e);
             throw new RequestorException(SystemErrors.ERROR_INTERNAL, e);
         }
-        
+
         return oRequestor;
     }
-    
+
     //Read extended properties form configuration
     private Properties readExtendedProperties(
-        IConfigurationManager config, Element eProperties) throws OAException
-    {
+            IConfigurationManager config, Element eProperties) throws OAException {
         Properties prop = new Properties();
         Element eProperty = config.getSection(eProperties, "property");
-        while(eProperty != null)
-        {
+        while (eProperty != null) {
             String sName = config.getParam(eProperty, "name");
-            if (sName == null)
-            {
-                _logger.error(
-                    "No 'name' item found in 'property' section in configuration");
+            if (sName == null) {
+                _logger.error("No 'name' item found in 'property' section in configuration");
                 throw new OAException(SystemErrors.ERROR_CONFIG_READ);
             }
-            if(prop.containsKey(sName))
-            {
-                _logger.error(
-                    "Duplicate 'name' item found in 'property' section in configuration, property is not added: " + sName);
+            if (prop.containsKey(sName)) {
+                _logger.error("Duplicate 'name' item found in 'property' section in configuration, property is not added: " + sName);
                 throw new OAException(SystemErrors.ERROR_CONFIG_READ);
             }
-            
+
             String sValue = config.getParam(eProperty, "value");
-            if (sValue == null)
-            {
-                _logger.error(
-                    "No 'value' item found in 'property' section in configuration");
+            if (sValue == null) {
+                _logger.error("No 'value' item found in 'property' section in configuration");
                 throw new OAException(SystemErrors.ERROR_CONFIG_READ);
             }
-            
+
             prop.put(sName, sValue);
             eProperty = config.getNextSection(eProperty);
         }
