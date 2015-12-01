@@ -66,6 +66,7 @@ abstract public class AbstractConfigurationStorage<IDP extends IIDP> implements 
     /**
      * @see com.alfaariss.oa.engine.core.idp.storage.IIDPStorage#exists(java.lang.String)
      */
+    @Override
     public boolean exists(String id)
     {
         return _htIDPs.containsKey(id);
@@ -74,6 +75,7 @@ abstract public class AbstractConfigurationStorage<IDP extends IIDP> implements 
     /**
      * @see com.alfaariss.oa.engine.core.idp.storage.IIDPStorage#getAll()
      */
+    @Override
     public List<IIDP> getAll()
     {
         return Collections.unmodifiableList(_listIDPs);
@@ -82,6 +84,7 @@ abstract public class AbstractConfigurationStorage<IDP extends IIDP> implements 
     /**
      * @see com.alfaariss.oa.engine.core.idp.storage.IIDPStorage#getIDP(java.lang.String)
      */
+    @Override
     public IIDP getIDP(String id)
     {
         return _htIDPs.get(id);
@@ -90,6 +93,7 @@ abstract public class AbstractConfigurationStorage<IDP extends IIDP> implements 
     /**
      * @see com.alfaariss.oa.engine.core.idp.storage.IIDPStorage#start(com.alfaariss.oa.api.configuration.IConfigurationManager, org.w3c.dom.Element)
      */
+    @Override
     public void start(IConfigurationManager configManager, Element config)
         throws OAException
     {
@@ -136,6 +140,7 @@ abstract public class AbstractConfigurationStorage<IDP extends IIDP> implements 
     /**
      * @see com.alfaariss.oa.engine.core.idp.storage.IIDPStorage#stop()
      */
+    @Override
     public void stop()
     {
         if (_listIDPs != null)
