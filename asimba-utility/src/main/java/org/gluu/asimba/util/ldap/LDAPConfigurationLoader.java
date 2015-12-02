@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see www.gnu.org/licenses
  * 
- * Asimba - Serious Open Source SSO - More information on www.asimba.org
+ * gluu-Asimba - Serious Open Source SSO - More information on www.gluu.org
  * 
  */
 package org.gluu.asimba.util.ldap;
@@ -88,17 +88,17 @@ public class LDAPConfigurationLoader implements IComponent {
 
     @Override
     public void start(IConfigurationManager oConfigurationManager, Element eConfig) throws OAException {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        //throw new UnsupportedOperationException("Not supported yet."); 
     }
 
     @Override
     public void restart(Element eConfig) throws OAException {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        //throw new UnsupportedOperationException("Not supported yet."); 
     }
 
     @Override
     public void stop() {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        //throw new UnsupportedOperationException("Not supported yet."); 
     }
 
     /**

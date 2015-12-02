@@ -37,6 +37,9 @@ import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.engine.core.idp.storage.IIDP;
 import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
+import java.util.Properties;
+import org.gluu.asimba.util.ldap.LDAPConfigurationLoader;
+import org.gluu.asimba.util.ldap.LdapIDPEntry;
 
 /**
  * IDP Storage implementation using LDAP.
@@ -46,14 +49,13 @@ import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
 abstract public class AbstractLDAPStorage<IDP extends IIDP> implements IIDPStorage {
     
     /** System logger */
-    private static Log _logger;
+    private static final Log _logger = LogFactory.getLog(AbstractLDAPStorage.class);;
     /** Hashtable containing all IDP's */
     protected Hashtable<String, IDP> _htIDPs;
     /** List containing all IDP's*/
     protected List<IIDP> _listIDPs;
     
     public AbstractLDAPStorage() {
-        _logger = LogFactory.getLog(this.getClass());
         _htIDPs = new Hashtable<String, IDP>();
         _listIDPs = new Vector<IIDP>();
     }
@@ -88,43 +90,40 @@ abstract public class AbstractLDAPStorage<IDP extends IIDP> implements IIDPStora
     @Override
     public void start(IConfigurationManager configManager, Element config)
         throws OAException {
-        Element eIDP = configManager.getSection(config, "idp");
-        while (eIDP != null)
-        {
-            IDP idp = createIDP(configManager, eIDP);
+        Properties props = new Properties();
+        props.setProperty("bindDN", "cn=directory manager");
+        props.setProperty("baseDNs", "o=gluu");
+        props.setProperty("bindPassword", "Ni2Bih3nCUU=");
+        props.setProperty("servers", "localhost:1636");
+        props.setProperty("maxconnections", "4");
+        props.setProperty("useSSL", "true");
+        props.setProperty("configurationEntryDN", "ou=oxauth,ou=configuration,inum=@!16BD.0CCC.B2A2.7B12!0002!5359.316B,ou=appliances,o=gluu");
+        props.setProperty("binaryAttributes", "objectGUID");
+        
+        LDAPConfigurationLoader loader = new LDAPConfigurationLoader();
+        loader.loadConfiguration(props);
+        List<LdapIDPEntry> idpEntries = loader.getIdpEntries();
+        
+        for (LdapIDPEntry idpEntry : idpEntries) {
+            IDP idp = createIDP(idpEntry);
             
-            if (_htIDPs.containsKey(idp.getID()))
-            {
+            if (_htIDPs.containsKey(idp.getID())) {
                 _logger.error("Configured IDP is not unique: " + idp.getID());
                 throw new OAException(SystemErrors.ERROR_INIT);
             }
             
             boolean bEnabled = true;
-            String sEnabled = configManager.getParam(config, "enabled");
-            if (sEnabled != null)
-            {
-                if (sEnabled.equalsIgnoreCase("FALSE"))
-                    bEnabled = false;
-                else if (!sEnabled.equalsIgnoreCase("TRUE"))
-                {
-                    _logger.error("Invalid 'signing' parameter found in configuration, must be 'true' or 'false': " + sEnabled);
-                    throw new OAException(SystemErrors.ERROR_INIT);
-                }
-            }
+            //TODO: check enabled - where?
             
-            if (!bEnabled)
-            {
+            if (!bEnabled) {
                 _logger.info("IDP disabled: " + idp.getID());
             }
-            else
-            {
+            else {
                 _htIDPs.put(idp.getID(), idp);
                 _listIDPs.add(idp);
                 
                 _logger.info("Found IDP with ID: " + idp.getID());
             }
-            
-            eIDP = configManager.getNextSection(eIDP);
         }
     }
 
@@ -148,7 +147,6 @@ abstract public class AbstractLDAPStorage<IDP extends IIDP> implements IIDPStora
      * @return The configured IDP.
      * @throws OAException if IDP could not be created.
      */
-    abstract protected IDP createIDP(IConfigurationManager configManager, Element config)
-        throws OAException;
+    abstract protected IDP createIDP(LdapIDPEntry idpEntry) throws OAException;
     
 }

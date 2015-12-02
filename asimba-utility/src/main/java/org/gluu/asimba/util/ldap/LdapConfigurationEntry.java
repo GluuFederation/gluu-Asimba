@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see www.gnu.org/licenses
  * 
- * Asimba - Serious Open Source SSO - More information on www.asimba.org
+ * gluu-Asimba - Serious Open Source SSO - More information on www.gluu.org
  * 
  */
 package org.gluu.asimba.util.ldap;
