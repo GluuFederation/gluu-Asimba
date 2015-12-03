@@ -199,7 +199,17 @@
 			<artifactId>asimba-am-remote-saml2</artifactId>
 			<version>${asimba.version}</version>
 		</dependency>
-
+		
+		<dependency>
+			<groupId>org.xdi</groupId>
+			<artifactId>oxasimba-selector</artifactId>
+			<version>3.0.3-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.xdi</groupId>
+			<artifactId>oxasimba-proxy</artifactId>
+			<version>3.0.3-SNAPSHOT</version>
+		</dependency>
 
 		<dependency>
 			<groupId>javax.servlet</groupId>

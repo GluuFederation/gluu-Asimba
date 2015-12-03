@@ -12,3 +12,6 @@
 hs_err_pid*
 /asimba-engine-requestor-ldap/target/
 /asimba-engine-idp-ldap/target/
+/asimba-server-distribution/target/
+/proxy/target/
+/selector/target/
