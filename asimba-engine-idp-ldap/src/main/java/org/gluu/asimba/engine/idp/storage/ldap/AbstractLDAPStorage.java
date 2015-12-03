@@ -142,8 +142,7 @@ abstract public class AbstractLDAPStorage<IDP extends IIDP> implements IIDPStora
     /**
      * Creates the IDP object by reading it's configuration.
      * 
-     * @param configManager The configuration manager.
-     * @param config The configuration of the IDP object.
+     * @param idpEntry The LDAP record.
      * @return The configured IDP.
      * @throws OAException if IDP could not be created.
      */
