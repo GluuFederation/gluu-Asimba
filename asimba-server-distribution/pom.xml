@@ -165,12 +165,22 @@
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
+  		<artifactId>asimba-engine-idp-ldap</artifactId>
+  		<version>${asimbaVersion}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.asimba</groupId>
   		<artifactId>asimba-engine-requestor-configuration</artifactId>
   		<version>${asimbaVersion}</version>
   	</dependency>
   	<dependency>
   		<groupId>org.asimba</groupId>
   		<artifactId>asimba-engine-requestor-jdbc</artifactId>
+  		<version>${asimbaVersion}</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.asimba</groupId>
+  		<artifactId>asimba-engine-requestor-ldap</artifactId>
   		<version>${asimbaVersion}</version>
   	</dependency>
   	<dependency>
