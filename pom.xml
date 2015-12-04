@@ -106,6 +106,8 @@
     <module>asimba-am-password-asimbausersxml</module>
     <module>asimba-am-smsotp</module>
     <module>asimba-am-identifying</module>
+    <module>proxy</module>
+    <module>selector</module>
     <!-- IDP modules part of server-core: -->
     <module>asimba-saml2-utility</module>
     <module>asimba-idp-profile-saml2</module>
@@ -118,8 +120,6 @@
     <module>asimba-engine-cluster-jgroups</module>
     <module>asimba-engine-tgt-jgroups</module>
     <module>asimba-engine-session-jgroups</module>
-    <module>proxy</module>
-    <module>selector</module>
   </modules>
 
   <properties>
