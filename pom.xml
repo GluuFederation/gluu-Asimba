@@ -106,8 +106,10 @@
     <module>asimba-am-password-asimbausersxml</module>
     <module>asimba-am-smsotp</module>
     <module>asimba-am-identifying</module>
-    <module>proxy</module>
-    <module>selector</module>
+    <module>asimba-proxy</module>
+    <module>asimba-selector</module>
+    <module>asimba-selector-ldap</module>
+    
     <!-- IDP modules part of server-core: -->
     <module>asimba-saml2-utility</module>
     <module>asimba-idp-profile-saml2</module>
