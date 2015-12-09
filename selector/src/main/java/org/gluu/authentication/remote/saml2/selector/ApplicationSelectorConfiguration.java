@@ -26,19 +26,21 @@ import org.w3c.dom.NodeList;
  */
 public class ApplicationSelectorConfiguration {
 
-	private Log log;
+	private static final Log log = LogFactory.getLog(ApplicationSelectorConfiguration.class);
 
 	private final String CONFIGURATION_FILE_NAME = "asimba-selector.xml";
 
 	private Map<String, String> applicationMapping;
 
+        /**
+         * Configuration file load mutex. 
+         */
 	private final ReentrantLock reloadLock = new ReentrantLock();
 	private boolean isReload = false;
 
 	private long lastModTime = -1;
 
 	public ApplicationSelectorConfiguration() {
-		this.log = LogFactory.getLog(ApplicationSelectorConfiguration.class);
 		this.applicationMapping = new HashMap<String, String>();
 	}
 
@@ -72,19 +74,19 @@ public class ApplicationSelectorConfiguration {
 	}
 
 	private void loadFileSync(File confFile) {
-		this.isReload = true;
+            this.isReload = true;
 
-		reloadLock.lock(); // block until condition holds
-		try {
-			if (!this.isReload) {
-				return;
-			}
+            reloadLock.lock(); // block until condition holds
+            try {
+                if (!this.isReload) {
+                    return;
+                }
 
-			loadFile(confFile);
-		} finally {
-            reloadLock.unlock();
-            this.isReload = false;
-		}
+                loadFile(confFile);
+            } finally {
+                reloadLock.unlock();
+                this.isReload = false;
+            }
 	}
 
 	private void loadFile(File confFile) {

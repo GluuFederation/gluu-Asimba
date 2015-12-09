@@ -187,7 +187,6 @@ public class DefaultSelector implements ISAMLOrganizationSelector
         }
         
         return selectedOrganization;
-        
     }
 
     private void forwardUser(HttpServletRequest oRequest, 
