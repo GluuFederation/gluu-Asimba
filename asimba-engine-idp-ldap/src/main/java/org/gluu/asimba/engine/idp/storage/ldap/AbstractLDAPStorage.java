@@ -39,6 +39,7 @@ import com.alfaariss.oa.engine.core.idp.storage.IIDP;
 import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
 import java.util.Properties;
 import org.gluu.asimba.util.ldap.LDAPConfigurationLoader;
+import org.gluu.asimba.util.ldap.LDAPUtility;
 import org.gluu.asimba.util.ldap.LdapIDPEntry;
 
 /**
@@ -90,15 +91,7 @@ abstract public class AbstractLDAPStorage<IDP extends IIDP> implements IIDPStora
     @Override
     public void start(IConfigurationManager configManager, Element config)
         throws OAException {
-        Properties props = new Properties();
-        props.setProperty("bindDN", "cn=directory manager");
-        props.setProperty("baseDNs", "o=gluu");
-        props.setProperty("bindPassword", "Ni2Bih3nCUU=");
-        props.setProperty("servers", "localhost:1636");
-        props.setProperty("maxconnections", "4");
-        props.setProperty("useSSL", "true");
-        props.setProperty("configurationEntryDN", "ou=oxauth,ou=configuration,inum=@!16BD.0CCC.B2A2.7B12!0002!5359.316B,ou=appliances,o=gluu");
-        props.setProperty("binaryAttributes", "objectGUID");
+        Properties props = LDAPUtility.getLDAPConfiguration();
         
         LDAPConfigurationLoader loader = new LDAPConfigurationLoader();
         loader.loadConfiguration(props);
