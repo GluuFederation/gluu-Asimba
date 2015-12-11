@@ -51,16 +51,11 @@ public class ApplicationSelectorConfigurationLDAP {
 
     private Map<String, String> applicationMapping;
 
-    /**
-     * Configuration file load mutex. 
-     */
-    private final ReentrantLock reloadLock = new ReentrantLock();
-
     public ApplicationSelectorConfigurationLDAP() {
             applicationMapping = new HashMap<>();
     }
 
-    public void loadConfiguration() throws OAException {
+    public synchronized void loadConfiguration() throws OAException {
         final LDAPConnectionProvider provider;
         final OperationsFacade ops;
         final LdapEntryManager ldapEntryManager;

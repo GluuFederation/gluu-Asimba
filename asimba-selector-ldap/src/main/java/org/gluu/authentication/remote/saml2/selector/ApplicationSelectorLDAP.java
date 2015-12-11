@@ -64,7 +64,7 @@ public class ApplicationSelectorLDAP extends DefaultSelector {
         loadApplicationMapping();
     }
 
-    private void loadApplicationMapping() {
+    private void loadApplicationMapping() throws OAException {
         this.applicationSelectorConfiguration.loadConfiguration();
         this.applicationMapping = this.applicationSelectorConfiguration.getApplicationMapping();
     }
