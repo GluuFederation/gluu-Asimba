@@ -1,7 +1,7 @@
 /*
  * Asimba Server
  * 
- * Copyright (c) 2015, Gluu
+ * Copyright (C) 2015, Gluu
  * Copyright (C) 2013 Asimba
  * Copyright (C) 2007-2008 Alfa & Ariss B.V.
  * 
@@ -48,50 +48,51 @@ import com.alfaariss.oa.util.saml2.idp.SAML2IDP;
  */
 public class ApplicationSelectorLDAP extends DefaultSelector {
 
-	private Log log;
-	
-	private ApplicationSelectorConfigurationLDAP applicationSelectorConfiguration;
-	private Map<String, String> applicationMapping;
+    private final static Log log = LogFactory.getLog(ApplicationSelectorLDAP.class);;
 
-	public ApplicationSelectorLDAP() {
-		this.log = LogFactory.getLog(ApplicationSelectorLDAP.class);
-		this.applicationSelectorConfiguration = new ApplicationSelectorConfigurationLDAP();
-	}
+    private ApplicationSelectorConfigurationLDAP applicationSelectorConfiguration;
+    private Map<String, String> applicationMapping;
 
-	public void start(IConfigurationManager oConfigurationManager, Element eConfig) throws OAException {
-		super.start(oConfigurationManager, eConfig);
-		loadApplicationMapping();
-	}
 
-	private void loadApplicationMapping() {
-		this.applicationSelectorConfiguration.loadConfiguration();
-		this.applicationMapping = this.applicationSelectorConfiguration.getApplicationMapping();
-	}
 
-	@Override
-	public SAML2IDP resolve(HttpServletRequest oRequest, HttpServletResponse oResponse, ISession oSession,
-			List<SAML2IDP> listOrganizations, String sMethodName, List<Warnings> oWarnings) throws OAException {
+    public ApplicationSelectorLDAP() {
+        this.applicationSelectorConfiguration = new ApplicationSelectorConfigurationLDAP();
+    }
 
-		String requestorId = oSession.getRequestorId();
-		log.debug("Attempting to find mapping by requestorId: " + requestorId);
+    public void start(IConfigurationManager oConfigurationManager, Element eConfig) throws OAException {
+        super.start(oConfigurationManager, eConfig);
+        loadApplicationMapping();
+    }
 
-		String organizationId = this.applicationMapping.get(requestorId);
-		if (organizationId != null) {
-			log.debug("Found organizationId: " + organizationId + " by requestorId: " + requestorId);
+    private void loadApplicationMapping() {
+        this.applicationSelectorConfiguration.loadConfiguration();
+        this.applicationMapping = this.applicationSelectorConfiguration.getApplicationMapping();
+    }
 
-			for (SAML2IDP org : listOrganizations) {
-				if (org.getID().equals(organizationId)) {
-					return org;
-				}
-			}
-		} else {
-			log.debug("Can't find mapping by requestorId: " + requestorId);
-		}
+    @Override
+    public SAML2IDP resolve(HttpServletRequest oRequest, HttpServletResponse oResponse, ISession oSession,
+        List<SAML2IDP> listOrganizations, String sMethodName, List<Warnings> oWarnings) throws OAException {
 
-		SAML2IDP result = super.resolve(oRequest, oResponse, oSession, listOrganizations, sMethodName, oWarnings);
+        String requestorId = oSession.getRequestorId();
+        log.debug("Attempting to find mapping by requestorId: " + requestorId);
 
-		return result;
-	}
+        String organizationId = this.applicationMapping.get(requestorId);
+        if (organizationId != null) {
+            log.debug("Found organizationId: " + organizationId + " by requestorId: " + requestorId);
+
+            for (SAML2IDP org : listOrganizations) {
+                if (org.getID().equals(organizationId)) {
+                    return org;
+                }
+            }
+        } else {
+            log.debug("Can't find mapping by requestorId: " + requestorId);
+        }
+
+        SAML2IDP result = super.resolve(oRequest, oResponse, oSession, listOrganizations, sMethodName, oWarnings);
+
+        return result;
+    }
 
 
 }

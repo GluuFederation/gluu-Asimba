@@ -49,9 +49,9 @@ public class LDAPConfigurationLoader implements IComponent {
     public LDAPConfigurationLoader() {}
     
     public void loadConfiguration() throws OAException {
-        LDAPConnectionProvider provider;
-        OperationsFacade ops;
-        LdapEntryManager ldapEntryManager;
+        final LDAPConnectionProvider provider;
+        final OperationsFacade ops;
+        final LdapEntryManager ldapEntryManager;
         
         // connect
         try {

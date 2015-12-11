@@ -48,7 +48,7 @@ import com.alfaariss.oa.util.saml2.idp.SAML2IDP;
  */
 public class ApplicationSelector extends DefaultSelector {
 
-	private Log log;
+	private final Log log;
 	
 	private ApplicationSelectorConfiguration applicationSelectorConfiguration;
 	private Map<String, String> applicationMapping;

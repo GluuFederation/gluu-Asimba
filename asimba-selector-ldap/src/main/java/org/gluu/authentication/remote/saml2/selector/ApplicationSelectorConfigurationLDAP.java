@@ -1,7 +1,7 @@
 /*
  * Asimba Server
  * 
- * Copyright (c) 2015, Gluu
+ * Copyright (C) 2015, Gluu
  * Copyright (C) 2013 Asimba
  * Copyright (C) 2007-2008 Alfa & Ariss B.V.
  * 
@@ -23,24 +23,22 @@
  */
 package org.gluu.authentication.remote.saml2.selector;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
+import com.alfaariss.oa.OAException;
+import com.alfaariss.oa.SystemErrors;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+
+import org.gluu.asimba.util.ldap.LDAPUtility;
+import org.gluu.site.ldap.LDAPConnectionProvider;
+import org.gluu.site.ldap.OperationsFacade;
+import org.gluu.site.ldap.persistence.LdapEntryManager;
 
 /**
  * LDAP Configuration for application based selector.
@@ -49,112 +47,76 @@ import org.w3c.dom.NodeList;
  */
 public class ApplicationSelectorConfigurationLDAP {
 
-	private static final Log log = LogFactory.getLog(ApplicationSelectorConfigurationLDAP.class);
+    private static final Log _logger = LogFactory.getLog(ApplicationSelectorConfigurationLDAP.class);
 
-	private final String CONFIGURATION_FILE_NAME = "asimba-selector.xml";
+    private Map<String, String> applicationMapping;
 
-	private Map<String, String> applicationMapping;
+    /**
+     * Configuration file load mutex. 
+     */
+    private final ReentrantLock reloadLock = new ReentrantLock();
 
-        /**
-         * Configuration file load mutex. 
-         */
-	private final ReentrantLock reloadLock = new ReentrantLock();
-	private boolean isReload = false;
+    public ApplicationSelectorConfigurationLDAP() {
+            applicationMapping = new HashMap<>();
+    }
 
-	private long lastModTime = -1;
+    public void loadConfiguration() throws OAException {
+        final LDAPConnectionProvider provider;
+        final OperationsFacade ops;
+        final LdapEntryManager ldapEntryManager;
 
-	public ApplicationSelectorConfigurationLDAP() {
-		this.applicationMapping = new HashMap<String, String>();
-	}
+        // connect
+        try {
+            Properties props = LDAPUtility.getLDAPConfiguration();
+            provider = new LDAPConnectionProvider(props);
+            ops = new OperationsFacade(provider, null);
+            ldapEntryManager = new LdapEntryManager(ops);
+        } catch (Exception e) {
+            _logger.error("cannot open LDAP", e);
+            throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+        }
 
-	public void loadConfiguration() {
-		this.applicationMapping = new HashMap<String, String>();
+        try {
+            applicationMapping = loadIdpMapping(ldapEntryManager);
+        } catch (Exception e) {
+            _logger.error("cannot load LDAP ApplicationSelector settings", e);
+            throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+        } finally {
+            ldapEntryManager.destroy();
+        }
+    }
 
-		String confFilePath = getConfigurationFilePath();
-		if (confFilePath == null) {
-			return;
-		}
+    private Map<String, String> loadIdpMapping(LdapEntryManager ldapEntryManager) throws OAException {
+        Map<String, String> result = new HashMap<String, String>();
 
-		File confFile = new File(confFilePath);
-		if (this.lastModTime == confFile.lastModified()) {
-			return;
-		}
-	
-		loadFileSync(confFile);
-	}
-
-	public String getConfigurationFilePath() {
-		String tomcatHome = System.getProperty("catalina.home");
-		if (tomcatHome == null) {
-			log.error("Failed to load mapping from '" + CONFIGURATION_FILE_NAME + "'. The environment variable catalina.home isn't defined");
-			return null;
-		}
-		
-		String confPath = System.getProperty("catalina.home") + File.separator + "conf" + File.separator + CONFIGURATION_FILE_NAME;
-		log.info("Reading configuration from: " + confPath);
-		
-		return confPath;
-	}
-
-	private void loadFileSync(File confFile) {
-            this.isReload = true;
-
-            reloadLock.lock(); // block until condition holds
-            try {
-                if (!this.isReload) {
-                    return;
-                }
-
-                loadFile(confFile);
-            } finally {
-                reloadLock.unlock();
-                this.isReload = false;
+        final ApplicationSelectorLDAPEntry template = new ApplicationSelectorLDAPEntry();
+        List<ApplicationSelectorLDAPEntry> entries = ldapEntryManager.findEntries(template);
+        // load LDAP entries
+        for (ApplicationSelectorLDAPEntry entry : entries) {
+            
+            String entityId = entry.getId();
+            String organizationId = entry.getOrganizationId();
+            
+            if (!entry.isEnabled()) {
+                _logger.info("ApplicationSelector is disabled. Id: " + entityId + ", organizationId: " + organizationId);
+                continue;
             }
-	}
+            
+            if (result.containsKey(entityId)) {
+                _logger.error("Dublicated ApplicationSelector. Id: " + entityId + ", organizationId: " + organizationId);
+                continue;
+            }
+            
+            _logger.info("ApplicationSelector loaded. Id: " + entityId + ", organizationId: " + organizationId);
+            result.put(entityId, organizationId);
+        }
 
-	private void loadFile(File confFile) {
-		try {
-			DocumentBuilderFactory fty = DocumentBuilderFactory.newInstance();
-			fty.setNamespaceAware(true);
-			DocumentBuilder builder = fty.newDocumentBuilder();
-			Document xmlDoc = builder.parse(confFile);
+        return result;
+    }
 
-			// Load mapping
-			this.applicationMapping = loadIdpMapping(xmlDoc);
-			this.lastModTime = confFile.lastModified();
-		} catch (Exception ex) {
-			log.error("Faield to load mapping configuration", ex);
-		}
-	}
-
-	private Map<String, String> loadIdpMapping(Document xmlDoc) throws XPathExpressionException {
-		Map<String, String> result = new HashMap<String, String>();
-		XPath xPath = XPathFactory.newInstance().newXPath();
-
-		XPathExpression query = xPath.compile("/asimba-selector/application");
-		NodeList nodes = (NodeList) query.evaluate(xmlDoc, XPathConstants.NODESET);
-		for (int i = 0; i < nodes.getLength(); i++) {
-			Node node = nodes.item(i);
-
-			Node entityIdNode = node.getAttributes().getNamedItem("entityId");
-			if (entityIdNode == null) {
-				continue;
-			}
-
-			Node organizationIdNode = node.getAttributes().getNamedItem("organizationId");
-			if (organizationIdNode == null) {
-				continue;
-			}
-			
-			result.put(entityIdNode.getNodeValue(), organizationIdNode.getNodeValue());
-		}
-
-		return result;
-	}
-
-	public Map<String, String> getApplicationMapping() {
-		return applicationMapping;
-	}
+    public Map<String, String> getApplicationMapping() {
+        return applicationMapping;
+    }
 
 }
 

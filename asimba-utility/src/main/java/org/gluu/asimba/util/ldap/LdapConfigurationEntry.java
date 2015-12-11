@@ -1,7 +1,7 @@
 /*
  * Asimba Server
  * 
- * Copyright (c) 2015, Gluu
+ * Copyright (C) 2015, Gluu
  * Copyright (C) 2013 Asimba
  * Copyright (C) 2007-2008 Alfa & Ariss B.V.
  * 
