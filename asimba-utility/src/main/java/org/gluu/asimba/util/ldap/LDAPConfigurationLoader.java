@@ -48,13 +48,14 @@ public class LDAPConfigurationLoader implements IComponent {
     
     public LDAPConfigurationLoader() {}
     
-    public void loadConfiguration(Properties props) throws OAException {
+    public void loadConfiguration() throws OAException {
         LDAPConnectionProvider provider;
         OperationsFacade ops;
         LdapEntryManager ldapEntryManager;
         
         // connect
         try {
+            Properties props = LDAPUtility.getLDAPConfiguration();
             provider = new LDAPConnectionProvider(props);
             ops = new OperationsFacade(provider, null);
             ldapEntryManager = new LdapEntryManager(ops);

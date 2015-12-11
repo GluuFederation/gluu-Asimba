@@ -91,10 +91,7 @@ abstract public class AbstractLDAPStorage<IDP extends IIDP> implements IIDPStora
     @Override
     public void start(IConfigurationManager configManager, Element config)
         throws OAException {
-        Properties props = LDAPUtility.getLDAPConfiguration();
-        
         LDAPConfigurationLoader loader = new LDAPConfigurationLoader();
-        loader.loadConfiguration(props);
         List<LdapIDPEntry> idpEntries = loader.getIdpEntries();
         
         for (LdapIDPEntry idpEntry : idpEntries) {
