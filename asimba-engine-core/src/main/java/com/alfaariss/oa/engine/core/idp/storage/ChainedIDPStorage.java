@@ -60,10 +60,10 @@ public class ChainedIDPStorage<IDP extends IIDP> implements IIDPStorage {
 	public static final String EL_STORAGES = "storages";
 	public static final String ATTR_REGISTER_SUBSTORAGE = "registerWithEngine";
 
-	/**
-	 * Local logger instance
-	 */
-    private final Log _oLogger = LogFactory.getLog(ChainedIDPStorage.class);
+    /**
+     * Local logger instance
+     */
+    private static final Log _oLogger = LogFactory.getLog(ChainedIDPStorage.class);
 
     /**
      * ID of the ChainedIDPStorage storage

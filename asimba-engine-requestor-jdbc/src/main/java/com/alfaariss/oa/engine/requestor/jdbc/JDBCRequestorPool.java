@@ -126,7 +126,7 @@ public class JDBCRequestorPool extends RequestorPool
             }
             
             _bEnabled = oResultSet.getBoolean(COLUMN_ENABLED);
-            _bForced = oResultSet.getBoolean(COLUMN_FORCED);
+            _bForcedAuthenticate = oResultSet.getBoolean(COLUMN_FORCED);
             _sAttributeReleasePolicyID = oResultSet.getString(COLUMN_RELEASEPOLICY);
             _sPreAuthorizationProfileID = oResultSet.getString(COLUMN_PREAUTHORIZATION);
             _sPostAuthorizationProfileID = oResultSet.getString(COLUMN_POSTAUTHORIZATIE);

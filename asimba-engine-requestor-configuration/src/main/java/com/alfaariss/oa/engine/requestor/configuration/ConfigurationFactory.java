@@ -59,21 +59,22 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     private HashMap<String, RequestorPool> _mapPools;
     private HashMap<String, IRequestor> _mapRequestors;
     
-	/**
-	 * Creates the object.
-	 */
+    /**
+     * Creates the object.
+     */
 	public ConfigurationFactory()
     {
         _logger = LogFactory.getLog(ConfigurationFactory.class);
         _mapPools = new HashMap<String, RequestorPool>();
         _mapRequestors = new HashMap<String, IRequestor>();
         _eConfig = null;
-	}
+    }
 
     /**
      * Returns the requestor pool were the supplied request id is part of.
      * @see IRequestorPoolFactory#getRequestorPool(java.lang.String)
      */
+    @Override
     public RequestorPool getRequestorPool(String sRequestor) throws RequestorException
     {
         for (RequestorPool oRequestorPool:_mapPools.values())
@@ -88,6 +89,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
      * Returns the requestor specified by its ID.
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getRequestor(java.lang.String)
      */
+    @Override
     public IRequestor getRequestor(String sRequestor) throws RequestorException
     {
         return _mapRequestors.get(sRequestor);
@@ -96,6 +98,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#isPool(java.lang.String)
      */
+    @Override
     public boolean isPool(String sPoolID)
     {
         if (_mapPools != null)
@@ -108,6 +111,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
      * Starts the component.
      * @see IComponent#start(IConfigurationManager, org.w3c.dom.Element)
      */
+    @Override
     public void start(IConfigurationManager oConfigurationManager, Element eConfig) throws OAException
     {
         try
@@ -162,6 +166,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
      * Restarts the component.
      * @see com.alfaariss.oa.api.IComponent#restart(org.w3c.dom.Element)
      */
+    @Override
     public void restart(Element eConfig) throws OAException
     {
         synchronized(this)
@@ -175,6 +180,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
      * Stops the component.
      * @see com.alfaariss.oa.api.IComponent#stop()
      */
+    @Override
     public void stop()
     {
         if (_mapPools != null)
@@ -189,6 +195,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllEnabledRequestorPools()
      */
+    @Override
     public Collection<RequestorPool> getAllEnabledRequestorPools()
         throws RequestorException
     {
@@ -207,6 +214,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllRequestorPools()
      */
+    @Override
     public Collection<RequestorPool> getAllRequestorPools() throws RequestorException
     {
         if (_mapPools == null)
@@ -218,6 +226,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllEnabledRequestors()
      */
+    @Override
     public Collection<IRequestor> getAllEnabledRequestors() throws RequestorException
     {
         Collection<IRequestor> collRequestors = new Vector<IRequestor>();
@@ -235,6 +244,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllRequestors()
      */
+    @Override
     public Collection<IRequestor> getAllRequestors() throws RequestorException
     {
         if (_mapRequestors == null)
@@ -246,6 +256,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#isRequestor(java.lang.String)
      */
+    @Override
     public boolean isRequestor(String requestorID) throws RequestorException
     {
         if (_mapRequestors != null)
@@ -257,6 +268,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getRequestor(java.lang.Object, java.lang.String)
      */
+    @Override
     public IRequestor getRequestor(Object id, String type)
         throws RequestorException
     {
@@ -298,9 +310,12 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#isRequestorIDSupported(java.lang.String)
      */
+    @Override
     public boolean isRequestorIDSupported(String type)
         throws RequestorException
-    {//DD The requestor ID type is supported if the type is available as configuration param within a requestor section
+    {
+        // The requestor ID type is supported if the type is available as configuration param within a requestor section
+        
         try
         {
             Element ePool = _configurationManager.getSection(_eConfig, "pool");

@@ -23,8 +23,6 @@ package org.asimba.util.saml2.metadata.provider;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import com.alfaariss.oa.util.saml2.SAML2Requestor;
-
 /**
  * Helper class that contains all the configurable metadata properties
  */

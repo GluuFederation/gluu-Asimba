@@ -47,8 +47,9 @@ import com.alfaariss.oa.engine.core.attribute.gather.processor.IProcessor;
  */
 public class AttributeGatherer implements IComponent, IProcessor
 {
-    private static Log _logger;    
-    private List<IProcessor> _listProcessors;
+    private static Log _logger = LogFactory.getLog(AttributeGatherer.class);  
+    
+    private final List<IProcessor> _listProcessors;
     private boolean _bEnabled;
     private IConfigurationManager _configurationManager;
     private String _sID;
@@ -59,7 +60,6 @@ public class AttributeGatherer implements IComponent, IProcessor
 	 */
 	public AttributeGatherer()
     {
-        _logger = LogFactory.getLog(AttributeGatherer.class);
         _listProcessors = new Vector<IProcessor>();
         _bEnabled = false;
 	}

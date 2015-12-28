@@ -42,8 +42,8 @@ import com.alfaariss.oa.engine.core.authentication.AuthenticationProfile;
  */
 public abstract class AbstractTGT implements ITGT, Serializable 
 { 
-	private static final long serialVersionUID = 1998890823651449352L;
-	/** tgt id */
+    private static final long serialVersionUID = 1998890823651449352L;
+    /** tgt id */
     protected String _id;
     /** expire time */
     protected long _lExpireTime;
@@ -74,6 +74,7 @@ public abstract class AbstractTGT implements ITGT, Serializable
     /**
 	 * @see com.alfaariss.oa.api.tgt.ITGT#getId()
 	 */
+        @Override
 	public String getId()
     {
         return _id;
@@ -82,6 +83,7 @@ public abstract class AbstractTGT implements ITGT, Serializable
     /**
      * @see ITGT#getAuthenticationProfile()
      */
+    @Override
     public IAuthenticationProfile getAuthenticationProfile()
     {
     	return _authNProfile;
@@ -91,6 +93,7 @@ public abstract class AbstractTGT implements ITGT, Serializable
      * @see com.alfaariss.oa.api.tgt.ITGT#setAuthenticationProfile(
      *  IAuthenticationProfile)
      */
+    @Override
     public void setAuthenticationProfile(IAuthenticationProfile profile)
     {
         _authNProfile = profile;
@@ -99,6 +102,7 @@ public abstract class AbstractTGT implements ITGT, Serializable
     /**
      * @see com.alfaariss.oa.api.tgt.ITGT#addAuthNProfileID(java.lang.String)
      */
+    @Override
     public void addAuthNProfileID(String sProfileID)
     {
         _authNProfileIDs.add(sProfileID);        
@@ -115,23 +119,26 @@ public abstract class AbstractTGT implements ITGT, Serializable
     /**
      * @see com.alfaariss.oa.api.tgt.ITGT#getAuthNProfileIDs()
      */
+    @Override
     public List<String> getAuthNProfileIDs()
     {
         return Collections.unmodifiableList(_authNProfileIDs);
     }
 
-	/**
-	 * @see com.alfaariss.oa.api.tgt.ITGT#setUser(com.alfaariss.oa.api.user.IUser)
-	 */
-	public void setUser(IUser user)
+    /**
+     * @see com.alfaariss.oa.api.tgt.ITGT#setUser(com.alfaariss.oa.api.user.IUser)
+     */
+    @Override
+    public void setUser(IUser user)
     {
         _uOwner = user;
 	}
 
-	/**
-	 * @see com.alfaariss.oa.api.tgt.ITGT#getUser()
-	 */
-	public IUser getUser()
+    /**
+     * @see com.alfaariss.oa.api.tgt.ITGT#getUser()
+     */
+        @Override
+    public IUser getUser()
     {
     	return _uOwner;
     }
@@ -139,6 +146,7 @@ public abstract class AbstractTGT implements ITGT, Serializable
     /**
      * @see com.alfaariss.oa.api.tgt.ITGT#isExpired()
      */
+    @Override
     public boolean isExpired()
     {
         return _lExpireTime <= System.currentTimeMillis();
@@ -147,6 +155,7 @@ public abstract class AbstractTGT implements ITGT, Serializable
     /**
      * @see com.alfaariss.oa.api.tgt.ITGT#getTgtExpTime()
      */
+    @Override
     public Date getTgtExpTime()
     {
 		return new Date(_lExpireTime);
@@ -155,6 +164,7 @@ public abstract class AbstractTGT implements ITGT, Serializable
     /**
      * @see com.alfaariss.oa.api.tgt.ITGT#expire()
      */
+    @Override
     public void expire()
     {
         _lExpireTime = 0;
@@ -165,6 +175,7 @@ public abstract class AbstractTGT implements ITGT, Serializable
      * Return the hashcode from the id.
      * @see java.lang.Object#hashCode()
      */
+    @Override
     public int hashCode()
     {
         return _id.hashCode();
@@ -174,6 +185,7 @@ public abstract class AbstractTGT implements ITGT, Serializable
      * Compare ID.
      * @see java.lang.Object#equals(java.lang.Object)
      */
+    @Override
     public boolean equals(Object other)
     {
         if(!(other instanceof AbstractTGT))
@@ -184,6 +196,7 @@ public abstract class AbstractTGT implements ITGT, Serializable
     /**
      * @see com.alfaariss.oa.api.tgt.ITGT#addRequestorID(java.lang.String)
      */
+    @Override
     public void addRequestorID(String sRequestorID)
     {
         _listRequestorIDs.add(sRequestorID);
@@ -192,6 +205,7 @@ public abstract class AbstractTGT implements ITGT, Serializable
     /**
      * @see com.alfaariss.oa.api.tgt.ITGT#removeRequestorID(java.lang.String)
      */
+    @Override
     public boolean removeRequestorID(String sRequestorID)
     {
         return _listRequestorIDs.remove(sRequestorID);
@@ -201,6 +215,7 @@ public abstract class AbstractTGT implements ITGT, Serializable
      * Returns an unmodifiable list of strings.
      * @see com.alfaariss.oa.api.tgt.ITGT#getRequestorIDs()
      */
+    @Override
     public List<String> getRequestorIDs()
     {
         return Collections.unmodifiableList(_listRequestorIDs);
@@ -209,6 +224,7 @@ public abstract class AbstractTGT implements ITGT, Serializable
     /**
      * @see com.alfaariss.oa.api.tgt.ITGT#getAttributes()
      */
+    @Override
     public ITGTAttributes getAttributes()
     {
         return _attributes;

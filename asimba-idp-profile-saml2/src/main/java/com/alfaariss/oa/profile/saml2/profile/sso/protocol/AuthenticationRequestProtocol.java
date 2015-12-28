@@ -184,8 +184,7 @@ public class AuthenticationRequestProtocol extends AbstractAuthenticationRequest
             
             if (_saml2Requestor != null)
             {
-                MetadataProvider oMP = 
-                    _saml2Requestor.getMetadataProvider();
+                MetadataProvider oMP = _saml2Requestor.getMetadataProvider();
                 
                 if (oMP != null)
                 {

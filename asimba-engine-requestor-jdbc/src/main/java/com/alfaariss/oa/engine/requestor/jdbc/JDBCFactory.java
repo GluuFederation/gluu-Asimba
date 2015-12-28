@@ -69,7 +69,7 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
     private final static String TABLE_NAME_REQUESTOR_PROPS = "requestorpool_requestor_properties";
     private final static String TABLE_NAME_POOL_PROPS = "requestorpool_properties"; 
     
-    private Log _logger;
+    private static final Log _logger = LogFactory.getLog(JDBCFactory.class);;
     private IConfigurationManager _configurationManager;
     private DataSource _oDataSource;
     
@@ -114,7 +114,6 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
 	 */
 	public JDBCFactory()
     {
-        _logger = LogFactory.getLog(JDBCFactory.class);
         _oDataSource = null;
         _sPoolsTable = null;
         _sAuthenticationTable = null;
@@ -138,6 +137,7 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
      * Returns the requestor pool were the supplied request id is a part from.
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getRequestorPool(java.lang.String)
      */
+    @Override
     public RequestorPool getRequestorPool(String sRequestor) throws RequestorException
     {
         JDBCRequestorPool oRequestorPool = null;
@@ -247,6 +247,7 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
      * Returns the requestor specified by its ID.
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getRequestor(java.lang.String)
      */
+    @Override
     public IRequestor getRequestor(String sRequestor) throws RequestorException
     {
         IRequestor oRequestor = null;
@@ -340,6 +341,7 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#isPool(java.lang.String)
      */
+    @Override
     public boolean isPool(String sPoolID) throws RequestorException
     {
         boolean bIsPool = false;
@@ -407,6 +409,7 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
      * Starts the component.
      * @see IComponent#start(IConfigurationManager, org.w3c.dom.Element)
      */
+    @Override
     public void start(IConfigurationManager oConfigurationManager, Element eConfig) throws OAException
     {
         Connection oConnection = null;
@@ -672,6 +675,7 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
      * Restarts the component.
      * @see com.alfaariss.oa.api.IComponent#restart(org.w3c.dom.Element)
      */
+    @Override
     public void restart(Element eConfig) throws OAException
     {
         synchronized(this)
@@ -685,6 +689,7 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
      * Stops the component.
      * @see com.alfaariss.oa.api.IComponent#stop()
      */
+    @Override
     public void stop()
     {
         _oDataSource = null;
@@ -715,6 +720,7 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllRequestorPools()
      */
+    @Override
     public Collection<RequestorPool> getAllRequestorPools() throws RequestorException
     {
         Collection<RequestorPool> collPools = new Vector<RequestorPool>();
@@ -790,6 +796,7 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllEnabledRequestorPools()
      */
+    @Override
     public Collection<RequestorPool> getAllEnabledRequestorPools()
         throws RequestorException
     {
@@ -867,6 +874,7 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllEnabledRequestors()
      */
+    @Override
     public Collection<IRequestor> getAllEnabledRequestors() throws RequestorException
     {
         Collection<IRequestor> collRequestors = new Vector<IRequestor>();
@@ -962,6 +970,7 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllRequestors()
      */
+    @Override
     public Collection<IRequestor> getAllRequestors() throws RequestorException
     {
         Collection<IRequestor> collRequestors = new Vector<IRequestor>();
@@ -1056,6 +1065,7 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#isRequestor(java.lang.String)
      */
+    @Override
     public boolean isRequestor(String requestorID) throws RequestorException
     {
         boolean bIsRequestor = false;
@@ -1122,6 +1132,7 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getRequestor(java.lang.Object, java.lang.String)
      */
+    @Override
     public IRequestor getRequestor(Object id, String type)
         throws RequestorException
     {
@@ -1225,6 +1236,7 @@ public class JDBCFactory implements IRequestorPoolFactory, IComponent
     /**
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#isRequestorIDSupported(java.lang.String)
      */
+    @Override
     public boolean isRequestorIDSupported(String type)
         throws RequestorException
     {

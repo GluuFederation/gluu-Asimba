@@ -48,7 +48,7 @@ import com.alfaariss.oa.engine.core.requestor.RequestorPool;
  */
 public class LDAPPool extends RequestorPool {
 
-    private static Log _logger;
+    private static final Log _logger = LogFactory.getLog(LDAPPool.class);
 
     /**
      * Creates the object.
@@ -61,8 +61,6 @@ public class LDAPPool extends RequestorPool {
     public LDAPPool(IConfigurationManager oConfigurationManager,
             Element eConfig) throws RequestorException {
         try {
-            _logger = LogFactory.getLog(LDAPPool.class);
-
             _sID = oConfigurationManager.getParam(eConfig, "id");
             if (_sID == null) {
                 _logger.error("No 'id' item in 'pool' section found in configuration");
@@ -116,11 +114,11 @@ public class LDAPPool extends RequestorPool {
 
             Element eAuthentication = oConfigurationManager.getSection(eConfig, "authentication");
             if (eAuthentication != null) {
-                _bForced = false;
+                _bForcedAuthenticate = false;
                 String sForced = oConfigurationManager.getParam(eAuthentication, "forced");
                 if (sForced != null) {
                     if (sForced.equalsIgnoreCase("TRUE")) {
-                        _bForced = true;
+                        _bForcedAuthenticate = true;
                     } else if (!sForced.equalsIgnoreCase("FALSE")) {
                         StringBuffer sbError = new StringBuffer("Wrong configuration in requestor pool with id '");
                         sbError.append(_sID);
