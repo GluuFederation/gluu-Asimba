@@ -23,7 +23,11 @@
  */
 package org.gluu.asimba.engine.requestor.ldap;
 
+import com.alfaariss.oa.api.requestor.IRequestor;
 import java.util.Date;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
@@ -36,16 +40,13 @@ import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
  * @author Dmitry Ognyannikov
  */
 @LdapEntry(sortBy = "dateLastModified")
-@LdapObjectClass(values = {"top", "oxAsimbaApplicationRequestorPoolEntry"})
+@LdapObjectClass(values = {"top", "oxAsimbaRequestorPoolEntry"})
 public class RequestorPoolEntry {
     /**
      * The entity id of the RequestorPool.
      */
     @LdapAttribute(name = "uniqueIdentifier", ignoreDuringUpdate = true)
     private String id;
-    
-    @LdapAttribute
-    private String organizationId;
     
     /**
      * the application friendly name.
@@ -61,6 +62,29 @@ public class RequestorPoolEntry {
      */
     @LdapAttribute
     private Date lastModified = new Date();
+    
+    /**
+     * Sets whether the IdP should force the user to reauthenticate. Boolean values will be marshalled to either "true"
+     * or "false".
+     */
+    @LdapAttribute
+    private boolean forcedAuthenticate;
+    /** pre authorization profile id */
+    @LdapAttribute
+    private String preAuthorizationProfileID;
+    /** post authorization profile id */
+    @LdapAttribute
+    private String postAuthorizationProfileID;
+    /** attribute release policy id */
+    @LdapAttribute
+    private String attributeReleasePolicyID; 
+    /** properties */
+    @LdapAttribute
+    private String properties;
+    
+    private String authenticationProfileIDs;
+    
+    private String requestors;
 
     /**
      * @return the id
@@ -119,16 +143,100 @@ public class RequestorPoolEntry {
     }
 
     /**
-     * @return the organizationId
+     * @return the forcedAuthenticate
      */
-    public String getOrganizationId() {
-        return organizationId;
+    public boolean isForcedAuthenticate() {
+        return forcedAuthenticate;
     }
 
     /**
-     * @param organizationId the organizationId to set
+     * @param forcedAuthenticate the forcedAuthenticate to set
      */
-    public void setOrganizationId(String organizationId) {
-        this.organizationId = organizationId;
+    public void setForcedAuthenticate(boolean forcedAuthenticate) {
+        this.forcedAuthenticate = forcedAuthenticate;
+    }
+
+    /**
+     * @return the preAuthorizationProfileID
+     */
+    public String getPreAuthorizationProfileID() {
+        return preAuthorizationProfileID;
+    }
+
+    /**
+     * @param preAuthorizationProfileID the preAuthorizationProfileID to set
+     */
+    public void setPreAuthorizationProfileID(String preAuthorizationProfileID) {
+        this.preAuthorizationProfileID = preAuthorizationProfileID;
+    }
+
+    /**
+     * @return the postAuthorizationProfileID
+     */
+    public String getPostAuthorizationProfileID() {
+        return postAuthorizationProfileID;
+    }
+
+    /**
+     * @param postAuthorizationProfileID the postAuthorizationProfileID to set
+     */
+    public void setPostAuthorizationProfileID(String postAuthorizationProfileID) {
+        this.postAuthorizationProfileID = postAuthorizationProfileID;
+    }
+
+    /**
+     * @return the attributeReleasePolicyID
+     */
+    public String getAttributeReleasePolicyID() {
+        return attributeReleasePolicyID;
+    }
+
+    /**
+     * @param attributeReleasePolicyID the attributeReleasePolicyID to set
+     */
+    public void setAttributeReleasePolicyID(String attributeReleasePolicyID) {
+        this.attributeReleasePolicyID = attributeReleasePolicyID;
+    }
+
+    /**
+     * @return the properties
+     */
+    public String getProperties() {
+        return properties;
+    }
+
+    /**
+     * @param properties the properties to set
+     */
+    public void setProperties(String properties) {
+        this.properties = properties;
+    }
+
+    /**
+     * @return the authenticationProfileIDs
+     */
+    public String getAuthenticationProfileIDs() {
+        return authenticationProfileIDs;
+    }
+
+    /**
+     * @param authenticationProfileIDs the authenticationProfileIDs to set
+     */
+    public void setAuthenticationProfileIDs(String authenticationProfileIDs) {
+        this.authenticationProfileIDs = authenticationProfileIDs;
+    }
+
+    /**
+     * @return the requestors
+     */
+    public String getRequestors() {
+        return requestors;
+    }
+
+    /**
+     * @param requestors the requestors to set
+     */
+    public void setRequestors(String requestors) {
+        this.requestors = requestors;
     }
 }

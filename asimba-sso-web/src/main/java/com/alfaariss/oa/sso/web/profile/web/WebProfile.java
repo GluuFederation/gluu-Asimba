@@ -104,6 +104,10 @@ import com.alfaariss.oa.util.web.ResponseHeader;
  */
 public class WebProfile implements ISSOProfile, IService, IAuthority
 {
+    
+    private static final Log _systemLogger = LogFactory.getLog(WebProfile.class);
+    private static final Log _eventLogger = LogFactory.getLog(Engine.EVENT_LOGGER);
+    
     /** Profile ID: user */
     public final static String PROFILE_ID = "web";
     
@@ -142,8 +146,6 @@ public class WebProfile implements ISSOProfile, IService, IAuthority
     private PreAuthorizationManager _preAuthorizationManager;
     private PostAuthorizationManager _postAuthorizationManager;
     private AuthenticationManager _authenticationManager;
-    private Log _systemLogger;
-    private Log _eventLogger;
     private IConfigurationManager _configurationManager;
     private String _sGlobalPreAuthzProfileID;
     private String _sGlobalPostAuthzProfileID;
@@ -162,9 +164,6 @@ public class WebProfile implements ISSOProfile, IService, IAuthority
      */
     public WebProfile(AuthenticationManager authenticationManager)
     {
-        _systemLogger = LogFactory.getLog(WebProfile.class);
-        _eventLogger = LogFactory.getLog(Engine.EVENT_LOGGER);
-        
         _postAuthorizationManager = new PostAuthorizationManager();
         _preAuthorizationManager = new PreAuthorizationManager();
         _authenticationManager = authenticationManager;

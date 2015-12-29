@@ -26,7 +26,6 @@ package org.gluu.asimba.engine.requestor.ldap;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,15 +34,16 @@ import org.w3c.dom.Element;
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.IComponent;
-import com.alfaariss.oa.api.configuration.ConfigurationException;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.requestor.IRequestor;
 import com.alfaariss.oa.engine.core.requestor.RequestorException;
 import com.alfaariss.oa.engine.core.requestor.RequestorPool;
 import com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import org.gluu.asimba.util.ldap.LDAPUtility;
 import org.gluu.site.ldap.LDAPConnectionProvider;
 import org.gluu.site.ldap.OperationsFacade;
@@ -70,8 +70,8 @@ public class LDAPFactory implements IRequestorPoolFactory, IComponent {
      */
     public LDAPFactory() {
         _logger = LogFactory.getLog(LDAPFactory.class);
-        _mapPools = new HashMap<String, RequestorPool>();
-        _mapRequestors = new HashMap<String, IRequestor>();
+        _mapPools = new HashMap<>();
+        _mapRequestors = new HashMap<>();
         _eConfig = null;
     }
 
@@ -142,65 +142,51 @@ public class LDAPFactory implements IRequestorPoolFactory, IComponent {
 
             try {
                 HashMap<String, RequestorPool> pools = new HashMap<>();
+                HashMap<String, IRequestor> requestors = new HashMap<>();
                 
                 final RequestorPoolEntry template = new RequestorPoolEntry();
                 List<RequestorPoolEntry> entries = ldapEntryManager.findEntries(template);
+                
                 // load LDAP entries
                 for (RequestorPoolEntry entry : entries) {
 
                     String entityId = entry.getId();
-                    String organizationId = entry.getOrganizationId();
 
                     if (!entry.isEnabled()) {
-                        _logger.info("RequestorPool is disabled. Id: " + entityId + ", organizationId: " + organizationId);
+                        _logger.info("RequestorPool is disabled. Id: " + entityId + ", friendlyName: " + entry.getFriendlyName());
                         continue;
                     }
 
                     if (pools.containsKey(entityId)) {
-                        _logger.error("Dublicated RequestorPool. Id: " + entityId + ", organizationId: " + organizationId);
+                        _logger.error("Dublicated RequestorPool. Id: " + entityId + ", friendlyName: " + entry.getFriendlyName());
                         continue;
                     }
-
-                    _logger.info("RequestorPool loaded. Id: " + entityId + ", organizationId: " + organizationId);
                     
-                    //pools.put(entityId, organizationId);
+                    //TODO: convert JSON to List<String> _listAuthenticationProfileIDs
+                    List<String> authenticationProfileIDs = new ArrayList<>();
+                    //TODO: convert JSON to Set<IRequestor> _setRequestors
+                    Set<IRequestor> poolRequestors = new HashSet<>();
+                    
+                    for (IRequestor requestor : poolRequestors)
+                        requestors.put(requestor.getID(), requestor);
+                    
+                    _logger.info("RequestorPool loaded. Id: " + entityId + ", friendlyName: " + entry.getFriendlyName());
+                    
+                    RequestorPool oRequestorPool = new RequestorPool(entry.getId(), entry.getFriendlyName(), entry.isEnabled(), entry.isForcedAuthenticate(), 
+                            entry.getPreAuthorizationProfileID(), entry.getPostAuthorizationProfileID(), entry.getAttributeReleasePolicyID(), 
+                            poolRequestors, authenticationProfileIDs);
+                    pools.put(oRequestorPool.getID(), oRequestorPool);
+                    
                 }
+                
+                _mapPools = pools;
+                _mapRequestors = requestors;
             } catch (Exception e) {
                 _logger.error("cannot load LDAP settings", e);
                 throw new OAException(SystemErrors.ERROR_CONFIG_READ);
             } finally {
                 ldapEntryManager.destroy();
             }
-            
-            
-            Element ePool = _configurationManager.getSection(eConfig, "pool");
-            while (ePool != null) {
-                RequestorPool oRequestorPool = new LDAPPool(_configurationManager, ePool);
-
-                for (IRequestor oRequestor : oRequestorPool.getRequestors()) {
-                    if (_mapRequestors.containsKey(oRequestor.getID())) {
-                        StringBuilder sbError = new StringBuilder("Duplicate entry for requestor with id '");
-                        sbError.append(oRequestor.getID());
-                        sbError.append("' in pool: ");
-                        sbError.append(oRequestorPool.getID());
-                        _logger.error(sbError.toString());
-
-                        throw new RequestorException(SystemErrors.ERROR_INIT);
-                    }
-                    _mapRequestors.put(oRequestor.getID(), oRequestor);
-                }
-
-                if (_mapPools.containsKey(oRequestorPool.getID())) {
-
-                    _logger.error("Duplicate entry for requestorpool with id: "
-                            + oRequestorPool.getID());
-                    throw new RequestorException(SystemErrors.ERROR_INIT);
-                }
-
-                _mapPools.put(oRequestorPool.getID(), oRequestorPool);
-                ePool = _configurationManager.getNextSection(ePool);
-            }
-
         } catch (RequestorException e) {
             _logger.error("Internal error during initialization", e);
             throw e;
@@ -248,7 +234,7 @@ public class LDAPFactory implements IRequestorPoolFactory, IComponent {
     @Override
     public Collection<RequestorPool> getAllEnabledRequestorPools()
             throws RequestorException {
-        Collection<RequestorPool> collPools = new Vector<RequestorPool>();
+        Collection<RequestorPool> collPools = new ArrayList<>();
         if (_mapPools != null) {
             for (RequestorPool pool : _mapPools.values()) {
                 if (pool.isEnabled()) {
@@ -265,11 +251,10 @@ public class LDAPFactory implements IRequestorPoolFactory, IComponent {
      */
     @Override
     public Collection<RequestorPool> getAllRequestorPools() throws RequestorException {
-        if (_mapPools == null) {
-            return Collections.unmodifiableCollection(new Vector<RequestorPool>());
-        }
-
-        return Collections.unmodifiableCollection(_mapPools.values());
+        if (_mapPools == null) 
+            return Collections.unmodifiableCollection(new ArrayList<RequestorPool>());
+        else
+            return Collections.unmodifiableCollection(_mapPools.values());
     }
 
     /**
@@ -295,11 +280,10 @@ public class LDAPFactory implements IRequestorPoolFactory, IComponent {
      */
     @Override
     public Collection<IRequestor> getAllRequestors() throws RequestorException {
-        if (_mapRequestors == null) {
-            return Collections.unmodifiableCollection(new Vector<IRequestor>());
-        }
-
-        return Collections.unmodifiableCollection(_mapRequestors.values());
+        if (_mapRequestors == null) 
+            return Collections.unmodifiableCollection(new ArrayList<IRequestor>());
+        else
+            return Collections.unmodifiableCollection(_mapRequestors.values());
     }
 
     /**
@@ -308,11 +292,10 @@ public class LDAPFactory implements IRequestorPoolFactory, IComponent {
      */
     @Override
     public boolean isRequestor(String requestorID) throws RequestorException {
-        if (_mapRequestors != null) {
+        if (_mapRequestors != null)
             return _mapRequestors.containsKey(requestorID);
-        }
-
-        return false;
+        else
+            return false;
     }
 
     /**
@@ -323,32 +306,11 @@ public class LDAPFactory implements IRequestorPoolFactory, IComponent {
     @Override
     public IRequestor getRequestor(Object id, String type)
             throws RequestorException {
-        try {
-            Element ePool = _configurationManager.getSection(_eConfig, "pool");
-            while (ePool != null) {
-                Element eRequestors = _configurationManager.getSection(ePool, "requestors");
-                if (eRequestors != null) {
-                    Element eRequestor = _configurationManager.getSection(eRequestors, "requestor");
-                    while (eRequestor != null) {
-                        String sType = _configurationManager.getParam(eRequestor, type);
-                        if (sType != null && sType.equals(String.valueOf(id))) {
-                            String sID = _configurationManager.getParam(eRequestor, "id");
-                            if (sID != null) {
-                                return _mapRequestors.get(sID);
-                            }
-                        }
+        for (IRequestor requestor : _mapRequestors.values())
+            if (requestor.isProperty(type) && id.equals(requestor.getProperty(type)))
+                return requestor;
 
-                        eRequestor = _configurationManager.getNextSection(eRequestor);
-                    }
-                }
-
-                ePool = _configurationManager.getNextSection(ePool);
-            }
-            return null;
-        } catch (ConfigurationException e) {
-            _logger.error("Internal error during getRequestor", e);
-            throw new RequestorException(SystemErrors.ERROR_CONFIG_READ);
-        }
+        return null;
     }
 
     /**
@@ -358,29 +320,11 @@ public class LDAPFactory implements IRequestorPoolFactory, IComponent {
     @Override
     public boolean isRequestorIDSupported(String type)
             throws RequestorException {
-        // The requestor ID type is supported if the type is available as configuration param within a requestor section
+        // The requestor ID type is supported if the type is available as param within a requestor
         
-        try {
-            Element ePool = _configurationManager.getSection(_eConfig, "pool");
-            while (ePool != null) {
-                Element eRequestors = _configurationManager.getSection(ePool, "requestors");
-                if (eRequestors != null) {
-                    Element eRequestor = _configurationManager.getSection(eRequestors, "requestor");
-                    while (eRequestor != null) {
-                        String sType = _configurationManager.getParam(eRequestor, type);
-                        if (sType != null) {
-                            return true;
-                        }
-
-                        eRequestor = _configurationManager.getNextSection(eRequestor);
-                    }
-                }
-
-                ePool = _configurationManager.getNextSection(ePool);
-            }
-        } catch (ConfigurationException e) {
-            throw new RequestorException(SystemErrors.ERROR_CONFIG_READ);
-        }
+        for (IRequestor requestor : _mapRequestors.values())
+            if (requestor.isProperty(type))
+                return true;
 
         return false;
     }
