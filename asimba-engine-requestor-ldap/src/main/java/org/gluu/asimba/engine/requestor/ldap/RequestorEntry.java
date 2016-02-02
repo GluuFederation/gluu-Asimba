@@ -24,6 +24,7 @@
 package org.gluu.asimba.engine.requestor.ldap;
 
 import java.util.Date;
+import java.util.Properties;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
@@ -51,7 +52,7 @@ public class RequestorEntry {
     private String friendlyName;
     
     @LdapAttribute
-    private String properties;
+    private Properties properties;;
     
     @LdapAttribute
     private boolean enabled = true;

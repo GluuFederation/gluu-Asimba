@@ -68,7 +68,7 @@ public class RequestorPoolEntry {
      * or "false".
      */
     @LdapAttribute
-    private boolean forcedAuthenticate;
+    private boolean forcedAuthenticate = false;
     /** pre authorization profile id */
     @LdapAttribute
     private String preAuthorizationProfileID;
@@ -80,8 +80,9 @@ public class RequestorPoolEntry {
     private String attributeReleasePolicyID; 
     /** properties */
     @LdapAttribute
-    private String properties;
+    private Properties properties;
     
+    @LdapAttribute
     private String authenticationProfileIDs;
     
     private String requestors;
@@ -201,14 +202,14 @@ public class RequestorPoolEntry {
     /**
      * @return the properties
      */
-    public String getProperties() {
+    public Properties getProperties() {
         return properties;
     }
 
     /**
      * @param properties the properties to set
      */
-    public void setProperties(String properties) {
+    public void setProperties(Properties properties) {
         this.properties = properties;
     }
 

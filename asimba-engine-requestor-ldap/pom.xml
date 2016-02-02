@@ -28,10 +28,10 @@
     	<artifactId>asimba-engine-core</artifactId>
     	<version>${default.asimba.version}</version>
     </dependency>
-	<dependency>
-		<groupId>joda-time</groupId>
-		<artifactId>joda-time</artifactId>
-		<version>1.6.2</version>
-	</dependency>    
+    <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>1.6.2</version>
+    </dependency>    
   </dependencies>
 </project>

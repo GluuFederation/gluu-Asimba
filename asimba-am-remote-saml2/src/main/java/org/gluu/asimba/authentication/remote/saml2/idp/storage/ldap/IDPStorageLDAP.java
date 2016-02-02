@@ -42,7 +42,7 @@ import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.authentication.remote.saml2.idp.storage.config.SourceID;
 import com.alfaariss.oa.engine.core.idp.storage.IIDP;
 import com.alfaariss.oa.util.saml2.idp.SAML2IDP;
-import org.gluu.asimba.util.ldap.LdapIDPEntry;
+import org.gluu.asimba.util.ldap.idp.LdapIDPEntry;
 import org.gluu.asimba.engine.idp.storage.ldap.AbstractLDAPStorage;
 
 /**

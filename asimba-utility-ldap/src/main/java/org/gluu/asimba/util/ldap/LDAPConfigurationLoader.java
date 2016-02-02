@@ -23,6 +23,7 @@
  */
 package org.gluu.asimba.util.ldap;
 
+import org.gluu.asimba.util.ldap.idp.LdapIDPEntry;
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.IComponent;

@@ -122,6 +122,7 @@
     <module>asimba-engine-cluster-jgroups</module>
     <module>asimba-engine-tgt-jgroups</module>
     <module>asimba-engine-session-jgroups</module>
+    <module>asimba-utility-ldap</module>
   </modules>
 
   <properties>

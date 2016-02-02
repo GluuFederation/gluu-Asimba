@@ -40,7 +40,7 @@ import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
 import java.util.Properties;
 import org.gluu.asimba.util.ldap.LDAPConfigurationLoader;
 import org.gluu.asimba.util.ldap.LDAPUtility;
-import org.gluu.asimba.util.ldap.LdapIDPEntry;
+import org.gluu.asimba.util.ldap.idp.LdapIDPEntry;
 
 /**
  * IDP Storage implementation using LDAP.

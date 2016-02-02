@@ -23,6 +23,7 @@
  */
 package org.gluu.asimba.util.ldap;
 
+import org.gluu.asimba.util.ldap.idp.LdapIDPEntry;
 import java.util.List;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapDN;

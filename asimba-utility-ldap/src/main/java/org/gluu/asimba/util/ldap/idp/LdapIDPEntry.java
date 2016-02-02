@@ -21,7 +21,7 @@
  * gluu-Asimba - Serious Open Source SSO - More information on www.gluu.org
  * 
  */
-package org.gluu.asimba.util.ldap;
+package org.gluu.asimba.util.ldap.idp;
 
 import java.util.Date;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
@@ -40,6 +40,8 @@ public class LdapIDPEntry extends BaseEntry {
     
     /**
      * The id of the organization.
+     * 
+     * It should be the entityID of remote IDP/ADFS
      */
     @LdapAttribute(name = "uniqueIdentifier", ignoreDuringUpdate = true)
     private String id;
@@ -54,7 +56,7 @@ public class LdapIDPEntry extends BaseEntry {
     private String sourceId;
     
     /**
-     * the organization friendly name.
+     * The organization friendly name.
      */
     @LdapAttribute
     private String friendlyName;
@@ -100,7 +102,7 @@ public class LdapIDPEntry extends BaseEntry {
     private boolean nameIdPolicy = true;
     
     /**
-     * AllowCreate value or NULL if disabled.
+     * AllowCreate value or false if disabled.
      */
     @LdapAttribute
     private boolean allowCreate = true;

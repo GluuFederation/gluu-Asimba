@@ -53,7 +53,7 @@ import org.opensaml.xml.util.XMLObjectHelper;
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.engine.core.idp.storage.AbstractIDP;
-import org.gluu.asimba.util.ldap.LdapIDPEntry;
+import org.gluu.asimba.util.ldap.idp.LdapIDPEntry;
 
 /**
  * SAML2 remote organization object.
