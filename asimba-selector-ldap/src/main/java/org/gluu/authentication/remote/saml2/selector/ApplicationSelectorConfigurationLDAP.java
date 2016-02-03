@@ -39,6 +39,8 @@ import org.gluu.asimba.util.ldap.LDAPUtility;
 import org.gluu.site.ldap.LDAPConnectionProvider;
 import org.gluu.site.ldap.OperationsFacade;
 import org.gluu.site.ldap.persistence.LdapEntryManager;
+import org.gluu.asimba.util.ldap.selector.ApplicationSelectorLDAPEntry;
+
 
 /**
  * LDAP Configuration for application based selector.

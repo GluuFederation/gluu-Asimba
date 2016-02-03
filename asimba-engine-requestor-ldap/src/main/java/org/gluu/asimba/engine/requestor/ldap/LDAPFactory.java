@@ -48,6 +48,7 @@ import org.gluu.asimba.util.ldap.LDAPUtility;
 import org.gluu.site.ldap.LDAPConnectionProvider;
 import org.gluu.site.ldap.OperationsFacade;
 import org.gluu.site.ldap.persistence.LdapEntryManager;
+import org.gluu.asimba.util.ldap.sp.RequestorPoolEntry;
 
 /**
  * The requestor pool factory.

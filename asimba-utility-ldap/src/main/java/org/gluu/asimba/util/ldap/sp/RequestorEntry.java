@@ -1,7 +1,7 @@
 /*
  * Asimba Server
  * 
- * Copyright (C) 2015, Gluu
+ * Copyright (c) 2015, Gluu
  * Copyright (C) 2013 Asimba
  * Copyright (C) 2007-2008 Alfa & Ariss B.V.
  * 
@@ -21,35 +21,43 @@
  * gluu-Asimba - Serious Open Source SSO - More information on www.gluu.org
  * 
  */
-package org.gluu.authentication.remote.saml2.selector;
+package org.gluu.asimba.util.ldap.sp;
 
 import java.util.Date;
+import java.util.Properties;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 
 /**
- * ApplicationSelector configuration mapping entry.
- * 
+ * The requestor entity.
+ *
+ * Reads requestor information from LDAP.
+ *
  * @author Dmitry Ognyannikov
  */
 @LdapEntry(sortBy = "dateLastModified")
-@LdapObjectClass(values = {"top", "oxAsimbaApplicationSelectorEntry"})
-public class ApplicationSelectorLDAPEntry {
+@LdapObjectClass(values = {"top", "oxAsimbaRequestorEntry"})
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
+public class RequestorEntry {
     /**
-     * The entity id of the selector.
+     * The entity id of the Requestor.
      */
     @LdapAttribute(name = "uniqueIdentifier", ignoreDuringUpdate = true)
     private String id;
-    
-    @LdapAttribute
-    private String organizationId;
     
     /**
      * the application friendly name.
      */
     @LdapAttribute
     private String friendlyName;
+    
+    @LdapAttribute
+    private Properties properties;
     
     @LdapAttribute
     private boolean enabled = true;
@@ -117,18 +125,16 @@ public class ApplicationSelectorLDAPEntry {
     }
 
     /**
-     * @return the organizationId
+     * @return the properties
      */
-    public String getOrganizationId() {
-        return organizationId;
+    public Properties getProperties() {
+        return properties;
     }
 
     /**
-     * @param organizationId the organizationId to set
+     * @param properties the properties to set
      */
-    public void setOrganizationId(String organizationId) {
-        this.organizationId = organizationId;
+    public void setProperties(Properties properties) {
+        this.properties = properties;
     }
-    
-    
 }

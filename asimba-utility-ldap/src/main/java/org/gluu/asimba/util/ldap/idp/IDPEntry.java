@@ -24,12 +24,17 @@
 package org.gluu.asimba.util.ldap.idp;
 
 import java.util.Date;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * SAML2 IDP Entry for XML/JSON.
  * 
  * @author Dmitry Ognyannikov
  */
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
 public class IDPEntry {
     
     /**

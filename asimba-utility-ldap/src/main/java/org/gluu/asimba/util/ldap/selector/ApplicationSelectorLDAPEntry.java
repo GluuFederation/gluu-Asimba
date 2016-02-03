@@ -1,7 +1,7 @@
 /*
  * Asimba Server
  * 
- * Copyright (c) 2015, Gluu
+ * Copyright (C) 2015, Gluu
  * Copyright (C) 2013 Asimba
  * Copyright (C) 2007-2008 Alfa & Ariss B.V.
  * 
@@ -21,38 +21,40 @@
  * gluu-Asimba - Serious Open Source SSO - More information on www.gluu.org
  * 
  */
-package org.gluu.asimba.engine.requestor.ldap;
+package org.gluu.asimba.util.ldap.selector;
 
 import java.util.Date;
-import java.util.Properties;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 
 /**
- * The requestor entity.
- *
- * Reads requestor information from LDAP.
- *
+ * ApplicationSelector configuration mapping entry.
+ * 
  * @author Dmitry Ognyannikov
  */
 @LdapEntry(sortBy = "dateLastModified")
-@LdapObjectClass(values = {"top", "oxAsimbaRequestorEntry"})
-public class RequestorEntry {
+@LdapObjectClass(values = {"top", "oxAsimbaApplicationSelectorEntry"})
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
+public class ApplicationSelectorLDAPEntry {
     /**
-     * The entity id of the Requestor.
+     * The entity id of the selector.
      */
     @LdapAttribute(name = "uniqueIdentifier", ignoreDuringUpdate = true)
     private String id;
+    
+    @LdapAttribute
+    private String organizationId;
     
     /**
      * the application friendly name.
      */
     @LdapAttribute
     private String friendlyName;
-    
-    @LdapAttribute
-    private Properties properties;;
     
     @LdapAttribute
     private boolean enabled = true;
@@ -118,4 +120,20 @@ public class RequestorEntry {
     public void setLastModified(Date lastModified) {
         this.lastModified = lastModified;
     }
+
+    /**
+     * @return the organizationId
+     */
+    public String getOrganizationId() {
+        return organizationId;
+    }
+
+    /**
+     * @param organizationId the organizationId to set
+     */
+    public void setOrganizationId(String organizationId) {
+        this.organizationId = organizationId;
+    }
+    
+    
 }

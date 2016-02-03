@@ -21,13 +21,13 @@
  * gluu-Asimba - Serious Open Source SSO - More information on www.gluu.org
  * 
  */
-package org.gluu.asimba.engine.requestor.ldap;
+package org.gluu.asimba.util.ldap.sp;
 
-import com.alfaariss.oa.api.requestor.IRequestor;
 import java.util.Date;
-import java.util.List;
 import java.util.Properties;
-import java.util.Set;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
@@ -41,6 +41,8 @@ import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
  */
 @LdapEntry(sortBy = "dateLastModified")
 @LdapObjectClass(values = {"top", "oxAsimbaRequestorPoolEntry"})
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
 public class RequestorPoolEntry {
     /**
      * The entity id of the RequestorPool.
