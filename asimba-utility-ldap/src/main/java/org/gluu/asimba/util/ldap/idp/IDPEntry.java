@@ -27,6 +27,7 @@ import java.util.Date;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * SAML2 IDP Entry for XML/JSON.
@@ -120,6 +121,10 @@ public class IDPEntry {
      */
     private Date lastModified = new Date();
     
+    /**
+     * The URL for the sourceId field value calculation.
+     */
+    private String identificationURL;
     
     
     public IDPEntry() {}
@@ -333,6 +338,20 @@ public class IDPEntry {
     public void setLastModified(Date lastModified) {
         this.lastModified = lastModified;
     }
+
+    /**
+     * @return the identificationURL
+     */
+    public String getIdentificationURL() {
+        return identificationURL;
+    }
+
+    /**
+     * @param identificationURL the identificationURL to set
+     */
+    public void setIdentificationURL(String identificationURL) {
+        this.identificationURL = identificationURL;
+    }
     
     @Override
     public String toString() {
@@ -342,6 +361,7 @@ public class IDPEntry {
             .append(", enabled=").append(enabled).append(", acsIndex=").append(acsIndex).append(", scoping=").append(scoping)
             .append(", nameIdPolicy=").append(nameIdPolicy).append(", allowCreate=").append(allowCreate).append(", nameIdFormat=").append(nameIdFormat)
             .append(", avoidSubjConf=").append(avoidSubjectConfirmations).append(", disableSSO=").append(disableSSOForIDP).append(", dateLastModified=").append(lastModified)
+            .append(", identificationURL=").append(identificationURL)
             .append("]");
         return builder.toString();
     }

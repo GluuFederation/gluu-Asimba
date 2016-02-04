@@ -136,6 +136,12 @@ public class LdapIDPEntry extends BaseEntry {
     @LdapAttribute
     private Date lastModified = new Date();
     
+    /**
+     * The URL for the sourceId field value calculation.
+     */
+    @LdapAttribute
+    private String identificationURL;
+    
     
     
     public LdapIDPEntry() {}
@@ -360,6 +366,20 @@ public class LdapIDPEntry extends BaseEntry {
             .append(", avoidSubjConf=").append(avoidSubjectConfirmations).append(", disableSSO=").append(disableSSOForIDP).append(", dateLastModified=").append(lastModified)
             .append("]");
         return builder.toString();
+    }
+
+    /**
+     * @return the identificationURL
+     */
+    public String getIdentificationURL() {
+        return identificationURL;
+    }
+
+    /**
+     * @param identificationURL the identificationURL to set
+     */
+    public void setIdentificationURL(String identificationURL) {
+        this.identificationURL = identificationURL;
     }
     
 }

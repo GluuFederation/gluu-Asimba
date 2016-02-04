@@ -51,16 +51,25 @@ public class RequestorEntry {
     private String id;
     
     /**
-     * the application friendly name.
+     * The application friendly name.
      */
     @LdapAttribute
     private String friendlyName;
+    
+    /**
+     * The parent pool id.
+     */
+    @LdapAttribute
+    private String poolID;
     
     @LdapAttribute
     private Properties properties;
     
     @LdapAttribute
     private boolean enabled = true;
+    
+    @LdapAttribute
+    private boolean signing = true;
     
     /**
      * Timestamp when Entry was last modified, or null when unknown.
@@ -136,5 +145,33 @@ public class RequestorEntry {
      */
     public void setProperties(Properties properties) {
         this.properties = properties;
+    }
+
+    /**
+     * @return the signing
+     */
+    public boolean isSigning() {
+        return signing;
+    }
+
+    /**
+     * @param signing the signing to set
+     */
+    public void setSigning(boolean signing) {
+        this.signing = signing;
+    }
+
+    /**
+     * @return the poolID
+     */
+    public String getPoolID() {
+        return poolID;
+    }
+
+    /**
+     * @param poolID the poolID to set
+     */
+    public void setPoolID(String poolID) {
+        this.poolID = poolID;
     }
 }
