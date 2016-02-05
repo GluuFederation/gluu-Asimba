@@ -31,6 +31,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
+import lombok.Data;
 
 /**
  * The requestor pool entity.
@@ -43,6 +44,7 @@ import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 @LdapObjectClass(values = {"top", "oxAsimbaRequestorPoolEntry"})
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
+@Data
 public class RequestorPoolEntry {
     /**
      * The entity id of the RequestorPool.

@@ -28,6 +28,7 @@ import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 import org.xdi.ldap.model.BaseEntry;
+import lombok.Data;
 
 /**
  * SAML2 IDP Entry for LDAP.
@@ -36,6 +37,7 @@ import org.xdi.ldap.model.BaseEntry;
  */
 @LdapEntry(sortBy = "dateLastModified")
 @LdapObjectClass(values = {"top", "oxAsimbaIDPEntry"})
+@Data
 public class LdapIDPEntry extends BaseEntry {
     
     /**

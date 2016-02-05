@@ -30,7 +30,8 @@ import org.gluu.site.ldap.persistence.annotation.LdapDN;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 import org.xdi.ldap.model.BaseEntry;
-
+import lombok.Data;
+        
 /**
  * IDPs configuration list for LDAP.
  * 
@@ -38,6 +39,7 @@ import org.xdi.ldap.model.BaseEntry;
  */
 @LdapEntry
 @LdapObjectClass(values = {"top", "oxAsimbaConfigurationEntry"})
+@Data
 public class LdapConfigurationEntry extends BaseEntry {
     
     @LdapDN

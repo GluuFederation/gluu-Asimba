@@ -30,6 +30,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
+import lombok.Data;
 
 /**
  * ApplicationSelector configuration mapping entry.
@@ -40,6 +41,7 @@ import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 @LdapObjectClass(values = {"top", "oxAsimbaApplicationSelectorEntry"})
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
+@Data
 public class ApplicationSelectorLDAPEntry {
     /**
      * The entity id of the selector.
