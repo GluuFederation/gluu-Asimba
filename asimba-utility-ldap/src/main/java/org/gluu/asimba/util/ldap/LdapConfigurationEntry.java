@@ -38,67 +38,9 @@ import lombok.Data;
  * @author Dmitry Ognyannikov
  */
 @LdapEntry
-@LdapObjectClass(values = {"top", "oxAsimbaConfigurationEntry"})
-@Data
+@LdapObjectClass(values = {"top", "oxAsimbaConfiguration"})
 public class LdapConfigurationEntry extends BaseEntry {
-    
-    @LdapDN
-    private String dn;
-    
-    @LdapAttribute(name = "oxAsimbaIDPEntry")
-    private List<String> idps;
-    
-    private List<LdapIDPEntry> idpEntries;
     
     public LdapConfigurationEntry() {}
 
-    /**
-     * @return the dn
-     */
-    public String getDn() {
-        return dn;
-    }
-
-    /**
-     * @param dn the dn to set
-     */
-    public void setDn(String dn) {
-        this.dn = dn;
-    }
-
-    /**
-     * @return the idps
-     */
-    public List<String> getIdps() {
-        return idps;
-    }
-
-    /**
-     * @param idps the idps to set
-     */
-    public void setIdps(List<String> idps) {
-        this.idps = idps;
-    }
-
-    /**
-     * @return the idpEntries
-     */
-    public List<LdapIDPEntry> getIdpEntries() {
-        return idpEntries;
-    }
-
-    /**
-     * @param idpEntries the idpEntries to set
-     */
-    public void setIdpEntries(List<LdapIDPEntry> idpEntries) {
-        this.idpEntries = idpEntries;
-    }
-    
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("LdapConfigurationEntry [dn=").append(dn)
-            .append("]");
-        return builder.toString();
-    }
 }

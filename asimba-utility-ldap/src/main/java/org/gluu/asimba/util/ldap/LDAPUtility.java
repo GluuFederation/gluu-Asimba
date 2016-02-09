@@ -30,6 +30,9 @@ import java.io.*;
 import java.util.Properties;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.gluu.site.ldap.LDAPConnectionProvider;
+import org.gluu.site.ldap.OperationsFacade;
+import org.gluu.site.ldap.persistence.LdapEntryManager;
 
 /**
  * LDAP utility functions.
@@ -40,22 +43,22 @@ public class LDAPUtility {
     
     private static final Log log = LogFactory.getLog(LDAPUtility.class);
     
-    public static final String LDAP_CONFIGURATION_FILE_NAME = "asimba-ldap.properties";
+    private static final String ASIMBA_LDAP_CONFIGURATION_FILENAME = "oxasimba-ldap.properties";
     
     public static String getLDAPConfigurationFilePath() {
         String tomcatHome = System.getProperty("catalina.home");
         if (tomcatHome == null) {
-            log.error("Failed to load configuration from '" + LDAP_CONFIGURATION_FILE_NAME + "'. The environment variable catalina.home isn't defined");
+            log.error("Failed to load configuration from '" + ASIMBA_LDAP_CONFIGURATION_FILENAME + "'. The environment variable catalina.home isn't defined");
             return null;
         }
 
-        String confPath = System.getProperty("catalina.home") + File.separator + "conf" + File.separator + LDAP_CONFIGURATION_FILE_NAME;
+        String confPath = System.getProperty("catalina.home") + File.separator + "conf" + File.separator + ASIMBA_LDAP_CONFIGURATION_FILENAME;
         log.info("Reading configuration from: " + confPath);
 
         return confPath;
     }
     
-    public static Properties getLDAPConfiguration() throws OAException {
+    public static Properties getLDAPConfigurationProperties() throws OAException {
         String path = getLDAPConfigurationFilePath();
         
         if (path == null) {
@@ -68,6 +71,22 @@ public class LDAPUtility {
             return result;
         } catch (IOException e) {
             log.error("Failed to load configuration from path: " + path, e);
+            throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+        }
+    }
+    
+    public static LdapEntryManager getLDAPEntryManager() throws OAException {
+        final LDAPConnectionProvider provider;
+        final OperationsFacade ops;
+        
+        // connect
+        try {
+            Properties props = LDAPUtility.getLDAPConfigurationProperties();
+            provider = new LDAPConnectionProvider(props);
+            ops = new OperationsFacade(provider, null);
+            return new LdapEntryManager(ops);
+        } catch (Exception e) {
+            log.error("cannot open LdapEntryManager", e);
             throw new OAException(SystemErrors.ERROR_CONFIG_READ);
         }
     }

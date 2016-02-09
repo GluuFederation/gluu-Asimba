@@ -36,7 +36,7 @@ import lombok.Data;
  * @author Dmitry Ognyannikov
  */
 @LdapEntry(sortBy = "dateLastModified")
-@LdapObjectClass(values = {"top", "oxAsimbaIDPEntry"})
+@LdapObjectClass(values = {"top", "oxAsimbaIDP"})
 @Data
 public class LdapIDPEntry extends BaseEntry {
     
@@ -60,13 +60,13 @@ public class LdapIDPEntry extends BaseEntry {
     /**
      * The organization friendly name.
      */
-    @LdapAttribute
+    @LdapAttribute(name = "displayName")
     private String friendlyName;
     
     /**
      * The url of the metadata or NULL if none.
      */
-    @LdapAttribute
+    @LdapAttribute(name = "oxUrl")
     private String metadataUrl;
     
     /**

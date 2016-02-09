@@ -38,7 +38,7 @@ import lombok.Data;
  * @author Dmitry Ognyannikov
  */
 @LdapEntry(sortBy = "dateLastModified")
-@LdapObjectClass(values = {"top", "oxAsimbaApplicationSelectorEntry"})
+@LdapObjectClass(values = {"top", "oxAsimbaSelector"})
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @Data
