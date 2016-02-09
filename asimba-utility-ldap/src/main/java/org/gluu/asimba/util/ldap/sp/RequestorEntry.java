@@ -40,7 +40,7 @@ import lombok.Data;
  *
  * @author Dmitry Ognyannikov
  */
-@LdapEntry(sortBy = "dateLastModified")
+@LdapEntry(sortBy = "uniqueIdentifier")
 @LdapObjectClass(values = {"top", "oxAsimbaSPRequestor"})
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
