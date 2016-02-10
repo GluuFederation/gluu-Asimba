@@ -48,7 +48,7 @@ import org.gluu.asimba.util.ldap.LDAPUtility;
 import org.gluu.site.ldap.LDAPConnectionProvider;
 import org.gluu.site.ldap.OperationsFacade;
 import org.gluu.site.ldap.persistence.LdapEntryManager;
-import org.gluu.asimba.util.ldap.sp.RequestorPoolEntry;
+import org.gluu.asimba.util.ldap.sp.LDAPRequestorPoolEntry;
 
 /**
  * The requestor pool factory.
@@ -126,40 +126,27 @@ public class LDAPFactory implements IRequestorPoolFactory, IComponent {
             _configurationManager = oConfigurationManager;
             _eConfig = eConfig;
             
-            final LDAPConnectionProvider provider;
-            final OperationsFacade ops;
-            final LdapEntryManager ldapEntryManager;
-
-            // connect
-            try {
-                Properties props = LDAPUtility.getLDAPConfiguration();
-                provider = new LDAPConnectionProvider(props);
-                ops = new OperationsFacade(provider, null);
-                ldapEntryManager = new LdapEntryManager(ops);
-            } catch (Exception e) {
-                _logger.error("cannot open LDAP", e);
-                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-            }
+            final LdapEntryManager ldapEntryManager = LDAPUtility.getLDAPEntryManager();
 
             try {
                 HashMap<String, RequestorPool> pools = new HashMap<>();
                 HashMap<String, IRequestor> requestors = new HashMap<>();
                 
-                final RequestorPoolEntry template = new RequestorPoolEntry();
-                List<RequestorPoolEntry> entries = ldapEntryManager.findEntries(template);
+                final LDAPRequestorPoolEntry template = new LDAPRequestorPoolEntry();
+                List<LDAPRequestorPoolEntry> entries = ldapEntryManager.findEntries(template);
                 
                 // load LDAP entries
-                for (RequestorPoolEntry entry : entries) {
+                for (LDAPRequestorPoolEntry entry : entries) {
 
                     String entityId = entry.getId();
 
-                    if (!entry.isEnabled()) {
-                        _logger.info("RequestorPool is disabled. Id: " + entityId + ", friendlyName: " + entry.getFriendlyName());
+                    if (!entry.getEntry().isEnabled()) {
+                        _logger.info("RequestorPool is disabled. Id: " + entityId + ", friendlyName: " + entry.getEntry().getFriendlyName());
                         continue;
                     }
 
                     if (pools.containsKey(entityId)) {
-                        _logger.error("Dublicated RequestorPool. Id: " + entityId + ", friendlyName: " + entry.getFriendlyName());
+                        _logger.error("Dublicated RequestorPool. Id: " + entityId + ", friendlyName: " + entry.getEntry().getFriendlyName());
                         continue;
                     }
                     
@@ -171,10 +158,10 @@ public class LDAPFactory implements IRequestorPoolFactory, IComponent {
                     for (IRequestor requestor : poolRequestors)
                         requestors.put(requestor.getID(), requestor);
                     
-                    _logger.info("RequestorPool loaded. Id: " + entityId + ", friendlyName: " + entry.getFriendlyName());
+                    _logger.info("RequestorPool loaded. Id: " + entityId + ", friendlyName: " + entry.getEntry().getFriendlyName());
                     
-                    RequestorPool oRequestorPool = new RequestorPool(entry.getId(), entry.getFriendlyName(), entry.isEnabled(), entry.isForcedAuthenticate(), 
-                            entry.getPreAuthorizationProfileID(), entry.getPostAuthorizationProfileID(), entry.getAttributeReleasePolicyID(), 
+                    RequestorPool oRequestorPool = new RequestorPool(entry.getId(), entry.getEntry().getFriendlyName(), entry.getEntry().isEnabled(), entry.getEntry().isForcedAuthenticate(), 
+                            entry.getEntry().getPreAuthorizationProfileID(), entry.getEntry().getPostAuthorizationProfileID(), entry.getEntry().getAttributeReleasePolicyID(), 
                             poolRequestors, authenticationProfileIDs);
                     pools.put(oRequestorPool.getID(), oRequestorPool);
                     

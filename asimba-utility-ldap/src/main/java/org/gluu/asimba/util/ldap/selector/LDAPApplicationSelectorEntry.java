@@ -23,26 +23,22 @@
  */
 package org.gluu.asimba.util.ldap.selector;
 
-import java.util.Date;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 import lombok.Data;
+import org.xdi.ldap.model.BaseEntry;
 
 /**
  * ApplicationSelector configuration mapping entry.
+ * The LDAP container for ApplicationSelectorEntry.
  * 
  * @author Dmitry Ognyannikov
  */
 @LdapEntry(sortBy = "uniqueIdentifier")
 @LdapObjectClass(values = {"top", "oxAsimbaSelector"})
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
 @Data
-public class ApplicationSelectorLDAPEntry {
+public class LDAPApplicationSelectorEntry extends BaseEntry {
     /**
      * The entity id of the selector.
      */
@@ -59,83 +55,14 @@ public class ApplicationSelectorLDAPEntry {
     private String friendlyName;
     
     @LdapAttribute
-    private boolean enabled = true;
+    private ApplicationSelectorEntry entry = new ApplicationSelectorEntry();
     
-    /**
-     * Timestamp when Entry was last modified, or null when unknown.
-     */
-    @LdapAttribute
-    private Date lastModified = new Date();
-
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
+    public void setEntry(ApplicationSelectorEntry entry) {
+        this.entry = entry;
+        if (entry != null) {
+            this.id = entry.getId();
+            this.friendlyName = entry.getFriendlyName();
+            this.organizationId = entry.getOrganizationId();
+        }
     }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the friendlyName
-     */
-    public String getFriendlyName() {
-        return friendlyName;
-    }
-
-    /**
-     * @param friendlyName the friendlyName to set
-     */
-    public void setFriendlyName(String friendlyName) {
-        this.friendlyName = friendlyName;
-    }
-
-    /**
-     * @return the enabled
-     */
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    /**
-     * @param enabled the enabled to set
-     */
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    /**
-     * @return the lastModified
-     */
-    public Date getLastModified() {
-        return lastModified;
-    }
-
-    /**
-     * @param lastModified the lastModified to set
-     */
-    public void setLastModified(Date lastModified) {
-        this.lastModified = lastModified;
-    }
-
-    /**
-     * @return the organizationId
-     */
-    public String getOrganizationId() {
-        return organizationId;
-    }
-
-    /**
-     * @param organizationId the organizationId to set
-     */
-    public void setOrganizationId(String organizationId) {
-        this.organizationId = organizationId;
-    }
-    
-    
 }

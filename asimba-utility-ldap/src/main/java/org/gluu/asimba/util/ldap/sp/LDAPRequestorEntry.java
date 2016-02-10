@@ -23,29 +23,22 @@
  */
 package org.gluu.asimba.util.ldap.sp;
 
-import java.util.Date;
-import java.util.Properties;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 import lombok.Data;
+import org.xdi.ldap.model.BaseEntry;
 
 /**
- * The requestor entity.
- *
- * Reads requestor information from LDAP.
+ * The requestor LDAP entity.
+ * The LDAP container for RequestorEntry.
  *
  * @author Dmitry Ognyannikov
  */
 @LdapEntry(sortBy = "uniqueIdentifier")
 @LdapObjectClass(values = {"top", "oxAsimbaSPRequestor"})
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
 @Data
-public class RequestorEntry {
+public class LDAPRequestorEntry extends BaseEntry {
     /**
      * The entity id of the Requestor.
      */
@@ -58,122 +51,14 @@ public class RequestorEntry {
     @LdapAttribute
     private String friendlyName;
     
-    /**
-     * The parent pool id.
-     */
     @LdapAttribute
-    private String poolID;
+    private RequestorEntry entry = new RequestorEntry();
     
-    @LdapAttribute
-    private Properties properties;
-    
-    @LdapAttribute
-    private boolean enabled = true;
-    
-    @LdapAttribute
-    private boolean signing = true;
-    
-    /**
-     * Timestamp when Entry was last modified, or null when unknown.
-     */
-    @LdapAttribute
-    private Date lastModified = new Date();
-
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the friendlyName
-     */
-    public String getFriendlyName() {
-        return friendlyName;
-    }
-
-    /**
-     * @param friendlyName the friendlyName to set
-     */
-    public void setFriendlyName(String friendlyName) {
-        this.friendlyName = friendlyName;
-    }
-
-    /**
-     * @return the enabled
-     */
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    /**
-     * @param enabled the enabled to set
-     */
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    /**
-     * @return the lastModified
-     */
-    public Date getLastModified() {
-        return lastModified;
-    }
-
-    /**
-     * @param lastModified the lastModified to set
-     */
-    public void setLastModified(Date lastModified) {
-        this.lastModified = lastModified;
-    }
-
-    /**
-     * @return the properties
-     */
-    public Properties getProperties() {
-        return properties;
-    }
-
-    /**
-     * @param properties the properties to set
-     */
-    public void setProperties(Properties properties) {
-        this.properties = properties;
-    }
-
-    /**
-     * @return the signing
-     */
-    public boolean isSigning() {
-        return signing;
-    }
-
-    /**
-     * @param signing the signing to set
-     */
-    public void setSigning(boolean signing) {
-        this.signing = signing;
-    }
-
-    /**
-     * @return the poolID
-     */
-    public String getPoolID() {
-        return poolID;
-    }
-
-    /**
-     * @param poolID the poolID to set
-     */
-    public void setPoolID(String poolID) {
-        this.poolID = poolID;
+    public void setEntry(RequestorEntry entry) {
+        this.entry = entry;
+        if (entry != null) {
+            this.id = entry.getId();
+            this.friendlyName = entry.getFriendlyName();
+        }
     }
 }

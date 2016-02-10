@@ -29,17 +29,13 @@ import com.alfaariss.oa.SystemErrors;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.gluu.asimba.util.ldap.LDAPUtility;
-import org.gluu.site.ldap.LDAPConnectionProvider;
-import org.gluu.site.ldap.OperationsFacade;
 import org.gluu.site.ldap.persistence.LdapEntryManager;
-import org.gluu.asimba.util.ldap.selector.ApplicationSelectorLDAPEntry;
+import org.gluu.asimba.util.ldap.selector.LDAPApplicationSelectorEntry;
 
 
 /**
@@ -58,20 +54,7 @@ public class ApplicationSelectorConfigurationLDAP {
     }
 
     public synchronized void loadConfiguration() throws OAException {
-        final LDAPConnectionProvider provider;
-        final OperationsFacade ops;
-        final LdapEntryManager ldapEntryManager;
-
-        // connect
-        try {
-            Properties props = LDAPUtility.getLDAPConfiguration();
-            provider = new LDAPConnectionProvider(props);
-            ops = new OperationsFacade(provider, null);
-            ldapEntryManager = new LdapEntryManager(ops);
-        } catch (Exception e) {
-            _logger.error("cannot open LDAP", e);
-            throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-        }
+        final LdapEntryManager ldapEntryManager = LDAPUtility.getLDAPEntryManager();
 
         try {
             applicationMapping = loadIdpMapping(ldapEntryManager);
@@ -84,17 +67,17 @@ public class ApplicationSelectorConfigurationLDAP {
     }
 
     private Map<String, String> loadIdpMapping(LdapEntryManager ldapEntryManager) throws OAException {
-        Map<String, String> result = new HashMap<String, String>();
+        Map<String, String> result = new HashMap<>();
 
-        final ApplicationSelectorLDAPEntry template = new ApplicationSelectorLDAPEntry();
-        List<ApplicationSelectorLDAPEntry> entries = ldapEntryManager.findEntries(template);
+        final LDAPApplicationSelectorEntry template = new LDAPApplicationSelectorEntry();
+        List<LDAPApplicationSelectorEntry> entries = ldapEntryManager.findEntries(template);
         // load LDAP entries
-        for (ApplicationSelectorLDAPEntry entry : entries) {
+        for (LDAPApplicationSelectorEntry entry : entries) {
             
             String entityId = entry.getId();
-            String organizationId = entry.getOrganizationId();
+            String organizationId = entry.getEntry().getOrganizationId();
             
-            if (!entry.isEnabled()) {
+            if (!entry.getEntry().isEnabled()) {
                 _logger.info("ApplicationSelector is disabled. Id: " + entityId + ", organizationId: " + organizationId);
                 continue;
             }

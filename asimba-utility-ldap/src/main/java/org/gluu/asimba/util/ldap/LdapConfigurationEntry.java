@@ -23,15 +23,10 @@
  */
 package org.gluu.asimba.util.ldap;
 
-import org.gluu.asimba.util.ldap.idp.LdapIDPEntry;
-import java.util.List;
-import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
-import org.gluu.site.ldap.persistence.annotation.LdapDN;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 import org.xdi.ldap.model.BaseEntry;
-import lombok.Data;
-        
+
 /**
  * IDPs configuration list for LDAP.
  * 
