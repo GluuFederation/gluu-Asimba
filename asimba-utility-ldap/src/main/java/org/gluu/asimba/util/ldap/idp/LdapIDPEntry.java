@@ -51,16 +51,16 @@ public class LdapIDPEntry extends BaseEntry {
     /**
      * The organization friendly name.
      */
-    @LdapAttribute(name = "displayName")
+    @LdapAttribute
     private String friendlyName;
     
     /**
      * The URL for the sourceId field value calculation.
      */
-    @LdapAttribute(name = "displayName")
+    @LdapAttribute(name = "identificationURL")
     private String identificationURL;
     
-    @LdapAttribute
+    @LdapAttribute(name = "oxAsimbaEntry")
     private IDPEntry entry = new IDPEntry();
     
     public void setEntry(IDPEntry entry) {

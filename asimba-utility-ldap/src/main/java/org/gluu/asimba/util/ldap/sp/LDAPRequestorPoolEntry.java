@@ -51,7 +51,7 @@ public class LDAPRequestorPoolEntry extends BaseEntry {
     @LdapAttribute
     private String friendlyName;
     
-    @LdapAttribute
+    @LdapAttribute(name = "oxAsimbaEntry")
     private RequestorPoolEntry entry = new RequestorPoolEntry();
 
     public void setEntry(RequestorPoolEntry entry) {

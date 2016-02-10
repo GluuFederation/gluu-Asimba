@@ -51,7 +51,7 @@ public class LDAPRequestorEntry extends BaseEntry {
     @LdapAttribute
     private String friendlyName;
     
-    @LdapAttribute
+    @LdapAttribute(name = "oxAsimbaEntry")
     private RequestorEntry entry = new RequestorEntry();
     
     public void setEntry(RequestorEntry entry) {

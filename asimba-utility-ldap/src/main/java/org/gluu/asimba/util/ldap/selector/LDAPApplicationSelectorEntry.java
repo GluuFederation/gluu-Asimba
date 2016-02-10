@@ -54,7 +54,7 @@ public class LDAPApplicationSelectorEntry extends BaseEntry {
     @LdapAttribute
     private String friendlyName;
     
-    @LdapAttribute
+    @LdapAttribute(name = "oxAsimbaEntry")
     private ApplicationSelectorEntry entry = new ApplicationSelectorEntry();
     
     public void setEntry(ApplicationSelectorEntry entry) {
