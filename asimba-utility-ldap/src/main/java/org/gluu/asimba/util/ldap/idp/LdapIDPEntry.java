@@ -26,6 +26,7 @@ package org.gluu.asimba.util.ldap.idp;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
+import org.gluu.site.ldap.persistence.annotation.LdapJsonObject;
 import org.xdi.ldap.model.BaseEntry;
 import lombok.Data;
 
@@ -61,6 +62,7 @@ public class LdapIDPEntry extends BaseEntry {
     private String identificationURL;
     
     @LdapAttribute(name = "oxAsimbaEntry")
+    @LdapJsonObject
     private IDPEntry entry = new IDPEntry();
     
     public void setEntry(IDPEntry entry) {

@@ -27,6 +27,7 @@ import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 import lombok.Data;
+import org.gluu.site.ldap.persistence.annotation.LdapJsonObject;
 import org.xdi.ldap.model.BaseEntry;
 
 /**
@@ -52,6 +53,7 @@ public class LDAPRequestorEntry extends BaseEntry {
     private String friendlyName;
     
     @LdapAttribute(name = "oxAsimbaEntry")
+    @LdapJsonObject
     private RequestorEntry entry = new RequestorEntry();
     
     public void setEntry(RequestorEntry entry) {

@@ -27,6 +27,7 @@ import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 import lombok.Data;
+import org.gluu.site.ldap.persistence.annotation.LdapJsonObject;
 import org.xdi.ldap.model.BaseEntry;
 
 /**
@@ -55,6 +56,7 @@ public class LDAPApplicationSelectorEntry extends BaseEntry {
     private String friendlyName;
     
     @LdapAttribute(name = "oxAsimbaEntry")
+    @LdapJsonObject
     private ApplicationSelectorEntry entry = new ApplicationSelectorEntry();
     
     public void setEntry(ApplicationSelectorEntry entry) {
