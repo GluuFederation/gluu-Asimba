@@ -40,13 +40,16 @@ import lombok.Data;
 @LdapObjectClass(values = {"top", "oxAsimbaIDP"})
 @Data
 public class LdapIDPEntry extends BaseEntry {
+
+    @LdapAttribute(ignoreDuringUpdate = true)
+    private String inum;
     
     /**
      * The id of the organization.
      * 
      * It should be the entityID of remote IDP/ADFS
      */
-    @LdapAttribute(name = "uniqueIdentifier", ignoreDuringUpdate = true)
+    @LdapAttribute(name = "uniqueIdentifier")
     private String id;
     
     /**
@@ -68,9 +71,25 @@ public class LdapIDPEntry extends BaseEntry {
     public void setEntry(IDPEntry entry) {
         this.entry = entry;
         if (entry != null) {
+            this.inum = entry.getInum();
             this.id = entry.getId();
             this.friendlyName = entry.getFriendlyName();
             this.identificationURL = entry.getIdentificationURL();
         }
+    }
+    
+    public void setInum(String inum) {
+        this.inum = inum;
+        this.entry.setInum(inum);
+    }
+    
+    public void setId(String id) {
+        this.id = id;
+        this.entry.setId(id);
+    }
+    
+    public void setFriendlyName(String friendlyName) {
+        this.friendlyName = friendlyName;
+        this.entry.setFriendlyName(friendlyName);
     }
 }

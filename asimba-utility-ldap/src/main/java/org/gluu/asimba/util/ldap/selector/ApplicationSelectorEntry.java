@@ -38,6 +38,9 @@ import lombok.Data;
 @XmlAccessorType(XmlAccessType.FIELD)
 @Data
 public class ApplicationSelectorEntry {
+    
+    private String inum;
+    
     /**
      * The entity id of the selector.
      */

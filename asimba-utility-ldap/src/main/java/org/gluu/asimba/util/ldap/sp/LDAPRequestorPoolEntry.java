@@ -40,10 +40,14 @@ import org.xdi.ldap.model.BaseEntry;
 @LdapObjectClass(values = {"top", "oxAsimbaRequestorPool"})
 @Data
 public class LDAPRequestorPoolEntry extends BaseEntry {
+
+    @LdapAttribute(ignoreDuringUpdate = true)
+    private String inum;
+    
     /**
      * The entity id of the RequestorPool.
      */
-    @LdapAttribute(name = "uniqueIdentifier", ignoreDuringUpdate = true)
+    @LdapAttribute(name = "uniqueIdentifier")
     private String id;
     
     /**
@@ -59,8 +63,24 @@ public class LDAPRequestorPoolEntry extends BaseEntry {
     public void setEntry(RequestorPoolEntry entry) {
         this.entry = entry;
         if (entry != null) {
+            this.inum = entry.getInum();
             this.id = entry.getId();
             this.friendlyName = entry.getFriendlyName();
         }
+    }
+    
+    public void setInum(String inum) {
+        this.inum = inum;
+        this.entry.setInum(inum);
+    }
+    
+    public void setId(String id) {
+        this.id = id;
+        this.entry.setId(id);
+    }
+    
+    public void setFriendlyName(String friendlyName) {
+        this.friendlyName = friendlyName;
+        this.entry.setFriendlyName(friendlyName);
     }
 }

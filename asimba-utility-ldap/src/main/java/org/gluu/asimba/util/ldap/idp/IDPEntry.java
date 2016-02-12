@@ -40,6 +40,8 @@ import lombok.Data;
 @Data
 public class IDPEntry {
     
+    private String inum;
+    
     /**
      * The id of the organization.
      * 

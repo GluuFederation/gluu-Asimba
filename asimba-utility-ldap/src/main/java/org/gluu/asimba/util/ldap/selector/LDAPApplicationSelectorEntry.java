@@ -40,10 +40,14 @@ import org.xdi.ldap.model.BaseEntry;
 @LdapObjectClass(values = {"top", "oxAsimbaSelector"})
 @Data
 public class LDAPApplicationSelectorEntry extends BaseEntry {
+
+    @LdapAttribute(ignoreDuringUpdate = true)
+    private String inum;
+    
     /**
      * The entity id of the selector.
      */
-    @LdapAttribute(name = "uniqueIdentifier", ignoreDuringUpdate = true)
+    @LdapAttribute(name = "uniqueIdentifier")
     private String id;
     
     @LdapAttribute
@@ -62,9 +66,25 @@ public class LDAPApplicationSelectorEntry extends BaseEntry {
     public void setEntry(ApplicationSelectorEntry entry) {
         this.entry = entry;
         if (entry != null) {
+            this.inum = entry.getInum();
             this.id = entry.getId();
             this.friendlyName = entry.getFriendlyName();
             this.organizationId = entry.getOrganizationId();
         }
+    }
+    
+    public void setInum(String inum) {
+        this.inum = inum;
+        this.entry.setInum(inum);
+    }
+    
+    public void setId(String id) {
+        this.id = id;
+        this.entry.setId(id);
+    }
+    
+    public void setFriendlyName(String friendlyName) {
+        this.friendlyName = friendlyName;
+        this.entry.setFriendlyName(friendlyName);
     }
 }

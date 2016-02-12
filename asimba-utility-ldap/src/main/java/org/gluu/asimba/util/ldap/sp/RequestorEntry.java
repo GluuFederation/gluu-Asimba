@@ -41,6 +41,9 @@ import lombok.Data;
 @XmlAccessorType(XmlAccessType.FIELD)
 @Data
 public class RequestorEntry {
+    
+    private String inum;
+    
     /**
      * The entity id of the Requestor.
      */
