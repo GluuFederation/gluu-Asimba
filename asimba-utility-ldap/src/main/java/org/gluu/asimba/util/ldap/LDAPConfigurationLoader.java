@@ -1,7 +1,7 @@
 /*
  * Asimba Server
  * 
- * Copyright (c) 2015, Gluu
+ * Copyright (C) 2015, Gluu
  * Copyright (C) 2013 Asimba
  * Copyright (C) 2007-2008 Alfa & Ariss B.V.
  * 
@@ -18,13 +18,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see www.gnu.org/licenses
  * 
- * Asimba - Serious Open Source SSO - More information on www.asimba.org
+ * gluu-Asimba - Serious Open Source SSO - More information on www.gluu.org
  * 
  */
 package org.gluu.asimba.util.ldap;
 
+import org.gluu.asimba.util.ldap.idp.LdapIDPEntry;
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
+import com.alfaariss.oa.api.IComponent;
+import com.alfaariss.oa.api.configuration.IConfigurationManager;
+import java.io.File;
 import java.util.List;
 import java.util.Properties;
 import org.apache.commons.logging.Log;
@@ -32,43 +36,26 @@ import org.apache.commons.logging.LogFactory;
 import org.gluu.site.ldap.LDAPConnectionProvider;
 import org.gluu.site.ldap.OperationsFacade;
 import org.gluu.site.ldap.persistence.LdapEntryManager;
+import org.w3c.dom.Element;
 
 /**
  * Load IDPs from LDAP.
  * 
  * @author Dmitry Ognyannikov
  */
-public class LDAPConfigurationLoader {
-    private static final Log _logger = LogFactory.getLog(LDAPConfigurationLoader.class);
+public class LDAPConfigurationLoader implements IComponent {
+    private static final Log _logger = LogFactory.getLog(LDAPConfigurationLoader.class); 
     
     private List<LdapIDPEntry> idpEntries;
     
     public LDAPConfigurationLoader() {}
     
-    public void loadConfiguration(Properties props) throws OAException {
-        LDAPConnectionProvider provider;
-        OperationsFacade ops;
-        LdapEntryManager ldapEntryManager;
-        
+    public void loadConfiguration() throws OAException {
         // connect
-        try {
-            provider = new LDAPConnectionProvider(props);
-            ops = new OperationsFacade(provider, null);
-            ldapEntryManager = new LdapEntryManager(ops);
-        } catch (Exception e) {
-            _logger.error("cannot open LDAP", e);
-            throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-        }
+        final LdapEntryManager ldapEntryManager = LDAPUtility.getLDAPEntryManager();
         
         // load IDPs
         try {
-//            final LdapConfigurationEntry m = new LdapConfigurationEntry();
-//            final List<LdapConfigurationEntry> configurationEntries = ldapEntryManager.findEntries(m);
-//            
-//            for (LdapConfigurationEntry ldapConfigurationEntry: configurationEntries) {
-//                
-//            }
-            
             final LdapIDPEntry template = new LdapIDPEntry();
             idpEntries = ldapEntryManager.findEntries(template);
             
@@ -81,6 +68,21 @@ public class LDAPConfigurationLoader {
         } finally {
             ldapEntryManager.destroy();
         }
+    }
+
+    @Override
+    public void start(IConfigurationManager oConfigurationManager, Element eConfig) throws OAException {
+        
+    }
+
+    @Override
+    public void restart(Element eConfig) throws OAException {
+        
+    }
+
+    @Override
+    public void stop() {
+        
     }
 
     /**

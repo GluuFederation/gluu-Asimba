@@ -111,6 +111,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
     /**
      * @see com.alfaariss.oa.engine.idp.storage.configuration.AbstractConfigurationStorage#start(com.alfaariss.oa.api.configuration.IConfigurationManager, org.w3c.dom.Element)
      */
+    @Override
     public void start(IConfigurationManager configManager, Element config)
         throws OAException
     {
@@ -171,6 +172,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
     /**
      * @see com.alfaariss.oa.engine.core.idp.storage.IIDPStorage#getID()
      */
+    @Override
     public String getID()
     {
         return _sId;
@@ -179,6 +181,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
     /**
      * @see com.alfaariss.oa.engine.core.idp.storage.IIDPStorage#getIDP(java.lang.Object, java.lang.String)
      */
+    @Override
     public IIDP getIDP(Object id, String type) throws OAException
     {
         if (type.equals(SAML2IDP.TYPE_ID) && id instanceof String)
@@ -193,6 +196,7 @@ public class IDPConfigStorage extends AbstractConfigurationStorage
     /**
      * @see com.alfaariss.oa.engine.idp.storage.configuration.AbstractConfigurationStorage#stop()
      */
+    @Override
     public void stop()
     {
         if (_mapIDPsOnSourceID != null)

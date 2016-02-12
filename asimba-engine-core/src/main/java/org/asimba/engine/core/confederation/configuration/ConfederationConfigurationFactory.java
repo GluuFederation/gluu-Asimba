@@ -56,17 +56,17 @@ import com.alfaariss.oa.api.configuration.IConfigurationManager;
 public class ConfederationConfigurationFactory implements
 		IConfederationFactory, IComponent 
 {
-	/** Configuration elements */
-	public static final String EL_CONFEDERATION = "confederation";
-	
-	/**
-	 * Local logger instance
-	 */
-	private static Log _oLogger = LogFactory.getLog(ConfederationConfigurationFactory.class);
-	
-	/**
-	 * Local reference to configmanager for reloading configuration
-	 */
+    /** Configuration elements */
+    public static final String EL_CONFEDERATION = "confederation";
+
+    /**
+     * Local logger instance
+     */
+    private static final Log _oLogger = LogFactory.getLog(ConfederationConfigurationFactory.class);
+
+    /**
+     * Local reference to configmanager for reloading configuration
+     */
     private IConfigurationManager _oConfigManager;
     
     /**
@@ -75,7 +75,7 @@ public class ConfederationConfigurationFactory implements
     private Map<String, IConfederation> _mConfederations;
 
     
-    
+    @Override
 	public void start(IConfigurationManager oConfigManager,
 			Element eConfig) throws OAException 
 	{
@@ -101,7 +101,7 @@ public class ConfederationConfigurationFactory implements
 		_oLogger.info("Started Confederation configuration");
 	}
 
-	
+	@Override
 	public void restart(Element eConfig) throws OAException {
 		synchronized (this) {
 			stop();
@@ -109,7 +109,7 @@ public class ConfederationConfigurationFactory implements
 		}
 	}
 
-	
+	@Override
 	public void stop() {
 		if (_mConfederations != null) {
 			for(Entry<String, IConfederation> e: _mConfederations.entrySet()) {

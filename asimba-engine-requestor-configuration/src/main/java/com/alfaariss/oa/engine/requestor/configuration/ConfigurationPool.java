@@ -42,13 +42,14 @@ import com.alfaariss.oa.engine.core.requestor.RequestorPool;
  * Requestor pool factory.
  * 
  * Reads the information from the configuration.
+ * 
  * @author MHO
  * @author Alfa & Ariss
  *
  */
 public class ConfigurationPool extends RequestorPool
 {   
-    private static Log _logger;
+    private static final Log _logger = LogFactory.getLog(ConfigurationPool.class);
     
     /**
      * Creates the object.
@@ -63,8 +64,6 @@ public class ConfigurationPool extends RequestorPool
     {
         try
         {
-            _logger = LogFactory.getLog(ConfigurationPool.class);
-            
             _sID = oConfigurationManager.getParam(eConfig, "id");
             if (_sID == null)
             {
@@ -107,8 +106,7 @@ public class ConfigurationPool extends RequestorPool
     private void readPoolConfiguration(IConfigurationManager oConfigurationManager, 
         Element eConfig) throws RequestorException
     {
-        try
-        {
+        try {
             Element eAuthorization = oConfigurationManager.getSection(eConfig, "authorization");
             if (eAuthorization != null)
             {
@@ -126,12 +124,12 @@ public class ConfigurationPool extends RequestorPool
             Element eAuthentication = oConfigurationManager.getSection(eConfig, "authentication");
             if (eAuthentication != null)
             {
-                _bForced = false;
+                _bForcedAuthenticate = false;
                 String sForced = oConfigurationManager.getParam(eAuthentication, "forced");
                 if (sForced != null)
                 {
                     if (sForced.equalsIgnoreCase("TRUE"))
-                        _bForced = true;
+                        _bForcedAuthenticate = true;
                     else if (!sForced.equalsIgnoreCase("FALSE"))
                     {
                         StringBuffer sbError = new StringBuffer("Wrong configuration in requestor pool with id '");
@@ -200,8 +198,8 @@ public class ConfigurationPool extends RequestorPool
         Element eConfig) throws RequestorException
     {
         Requestor oRequestor = null;
-        try
-        {
+        
+        try {
             String sID = oConfigurationManager.getParam(eConfig, "id");
             if (sID == null)
             {

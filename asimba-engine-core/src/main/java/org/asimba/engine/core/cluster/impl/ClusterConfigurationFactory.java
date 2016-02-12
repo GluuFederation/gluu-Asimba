@@ -42,7 +42,7 @@ public class ClusterConfigurationFactory implements IClusterStorageFactory, ICom
 	public static final String EL_CLUSTER = "cluster";
 
 	/** Local logger instance */
-	private static Log _oLogger = LogFactory.getLog(ClusterConfigurationFactory.class);
+	private static final Log _oLogger = LogFactory.getLog(ClusterConfigurationFactory.class);
 
 	/** Local reference to configmanager for reloading configuration */
 	private IConfigurationManager _oConfigManager;

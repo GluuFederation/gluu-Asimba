@@ -56,7 +56,7 @@ public class AuthenticationContext implements IAuthenticationContext, Serializab
 	public static final String ATTR_AUTHORIZED_PARTY = "authorized_party";
 	
 	
-	private Map<String, String> _mAuthenticationProperties;
+	private final Map<String, String> _mAuthenticationProperties;
 	
 	
 	public AuthenticationContext() {

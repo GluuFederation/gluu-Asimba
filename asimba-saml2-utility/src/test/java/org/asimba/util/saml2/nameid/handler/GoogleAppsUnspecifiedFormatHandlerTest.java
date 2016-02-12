@@ -36,7 +36,7 @@ import com.alfaariss.oa.util.saml2.NameIDFormatter;
 @PrepareForTest( { Engine.class })
 public class GoogleAppsUnspecifiedFormatHandlerTest {
 
-	private static Logger _logger = LoggerFactory.getLogger(GoogleAppsUnspecifiedFormatHandlerTest.class);
+	private static final Logger _logger = LoggerFactory.getLogger(GoogleAppsUnspecifiedFormatHandlerTest.class);
 
 	public static final String REQUESTOR_PROPERTY_SELECTOR = "custom_selector";
 	public static final String SELECTOR_VALUE = "yes";

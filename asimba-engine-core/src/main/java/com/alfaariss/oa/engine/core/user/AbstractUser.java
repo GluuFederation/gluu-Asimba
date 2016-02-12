@@ -37,11 +37,11 @@ import com.alfaariss.oa.engine.core.attribute.UserAttributes;
 abstract public class AbstractUser implements IUser
 {
     /** The required user id */
-    private String _sUserId;
+    private final String _sUserId;
     /** The required user organization id */
-    private String _sOrganization;
-    private boolean _bEnabled;
-    private UserAttributes _attributes;
+    private final String _sOrganization;
+    private final boolean _bEnabled;
+    private final UserAttributes _attributes;
     
     /**
      * Creates the user.
@@ -60,6 +60,7 @@ abstract public class AbstractUser implements IUser
     /**
      * @see java.lang.Object#hashCode()
      */
+    @Override
     public int hashCode()
     {
         StringBuffer sbThisUser = new StringBuffer();
@@ -76,6 +77,7 @@ abstract public class AbstractUser implements IUser
      * compared case sensitive.
      * @see java.lang.Object#equals(java.lang.Object)
      */
+    @Override
     public boolean equals(Object other)
     {
         if(!(other instanceof IUser))
@@ -107,6 +109,7 @@ abstract public class AbstractUser implements IUser
     /**
      * @see com.alfaariss.oa.api.user.IUser#getOrganization()
      */
+    @Override
     public String getOrganization()
     {
         return _sOrganization;
@@ -116,6 +119,7 @@ abstract public class AbstractUser implements IUser
      * The user id.
      * @see com.alfaariss.oa.api.user.IUser#getID()
      */
+    @Override
     public String getID()
     {
         return _sUserId;
@@ -125,6 +129,7 @@ abstract public class AbstractUser implements IUser
      * Returns TRUE if the account is enabled.
      * @see com.alfaariss.oa.api.user.IUser#isEnabled()
      */
+    @Override
     public boolean isEnabled()
     {
         return _bEnabled;
@@ -134,6 +139,7 @@ abstract public class AbstractUser implements IUser
      * Returns the specific user attributes.
      * @see com.alfaariss.oa.api.user.IUser#getAttributes()
      */
+    @Override
     public IAttributes getAttributes()
     {
         return _attributes;
@@ -143,6 +149,7 @@ abstract public class AbstractUser implements IUser
      * Updates the supplied attributes object with the user attributes.
      * @see com.alfaariss.oa.api.user.IUser#setAttributes(com.alfaariss.oa.api.attribute.IAttributes)
      */
+    @Override
     public void setAttributes(IAttributes oAttributes)
     {
         Enumeration enumNames = oAttributes.getNames();

@@ -500,7 +500,7 @@ public class SSOService implements IComponent
     public boolean checkSingleSignon(ISession oSession, String sTGTId,
         RequestorPool oRequestorPool) 
         throws SSOException, UserException
-    {      
+    {
         boolean bTGTSufficient = false;
         
         if(!_bSingleSignOn) //SSO enabled
@@ -508,13 +508,14 @@ public class SSOService implements IComponent
             _systemLogger.debug("SSO disabled");
         }
         else
-        {        
-            if (sTGTId == null) //TGT Cookie found
+        {
+            if (sTGTId == null) // Check TGT Cookie
             {
                 _systemLogger.debug("No valid TGT Cookie found");
             }
             else
             {
+                // TGT Cookie found
                 try
                 {
                     //Retrieve TGT

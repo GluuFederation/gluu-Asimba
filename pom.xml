@@ -82,7 +82,8 @@
     <module>asimba-engine-attribute-gather-jdbc</module>
     <module>asimba-engine-attribute-gather-jndi</module>
   	<module>asimba-engine-requestor-configuration</module>
-    <module>asimba-engine-requestor-jdbc</module>
+	<module>asimba-engine-requestor-jdbc</module>
+	<module>asimba-engine-requestor-ldap</module>
   	<module>asimba-engine-authentication-configuration</module>
     <module>asimba-engine-authentication-jdbc</module>
   	<module>asimba-engine-authorization-configuration</module>
@@ -93,17 +94,22 @@
   	<module>asimba-engine-user-provisioning</module>
     <module>asimba-engine-idp-configuration</module>
     <module>asimba-engine-idp-jdbc</module>
+    <module>asimba-engine-idp-ldap</module>
     <module>asimba-helper-stylesheet</module>
     <module>asimba-am-password</module>
     <module>asimba-am-password-jdbc</module>
     <module>asimba-am-password-jndi</module>
-    <!-- add this later, when maven repository is fixed for jradius
+    <!-- add this later, when maven repository will be fixed for jradius
     <module>asimba-am-password-radius</module> -->
     <module>asimba-am-password-htaccess</module>
     <module>asimba-am-guest</module>
     <module>asimba-am-password-asimbausersxml</module>
     <module>asimba-am-smsotp</module>
     <module>asimba-am-identifying</module>
+    <module>asimba-proxy</module>
+    <module>asimba-selector</module>
+    <module>asimba-selector-ldap</module>
+    
     <!-- IDP modules part of server-core: -->
     <module>asimba-saml2-utility</module>
     <module>asimba-idp-profile-saml2</module>
@@ -116,6 +122,7 @@
     <module>asimba-engine-cluster-jgroups</module>
     <module>asimba-engine-tgt-jgroups</module>
     <module>asimba-engine-session-jgroups</module>
+    <module>asimba-utility-ldap</module>
   </modules>
 
   <properties>

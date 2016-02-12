@@ -10,3 +10,12 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+/asimba-engine-requestor-ldap/target/
+/asimba-engine-idp-ldap/target/
+/asimba-server-distribution/target/
+/proxy/target/
+/selector/target/
+/asimba-proxy/target/
+/asimba-selector/target/
+/asimba-selector-ldap/target/
+/asimba-utility-ldap/target/

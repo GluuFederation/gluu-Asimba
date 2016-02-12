@@ -49,8 +49,11 @@ public class RequestorPool implements IManagebleItem
     protected String _sFriendlyName;
     /** enabled */
     protected boolean _bEnabled;
-    /** forced */
-    protected boolean _bForced;
+    /**
+     * Sets whether the IdP should force the user to reauthenticate. Boolean values will be marshalled to either "true"
+     * or "false".
+     */
+    protected boolean _bForcedAuthenticate;
     /** pre authorization profile id */
     protected String _sPreAuthorizationProfileID;
     /** post authorization profile id */
@@ -60,8 +63,8 @@ public class RequestorPool implements IManagebleItem
     /** properties */
     protected Properties _properties;
     
-    private List<String> _listAuthenticationProfileIDs;
-    private Set<IRequestor> _setRequestors;
+    private final List<String> _listAuthenticationProfileIDs;
+    private final Set<IRequestor> _setRequestors;
     
     /**
      * Create a new requestor pool.
@@ -83,7 +86,7 @@ public class RequestorPool implements IManagebleItem
         _sID = id;
         _sFriendlyName = friendlyName;
         _bEnabled = enabled;
-        _bForced = enableForcedAuthentication;
+        _bForcedAuthenticate = enableForcedAuthentication;
         _sPreAuthorizationProfileID = sPreAuthorizationProfileID;
         _sPostAuthorizationProfileID = sPostAuthorizationProfileID;
         _sAttributeReleasePolicyID = sAttributeReleasePolicyID;
@@ -96,6 +99,7 @@ public class RequestorPool implements IManagebleItem
      * The unique ID.
      * @see com.alfaariss.oa.api.IManagebleItem#getID()
      */
+    @Override
     public String getID()
     {
         return _sID;
@@ -105,6 +109,7 @@ public class RequestorPool implements IManagebleItem
      * The readable friendly name.
      * @see com.alfaariss.oa.api.IManagebleItem#getFriendlyName()
      */
+    @Override
     public String getFriendlyName()
     {
         return _sFriendlyName;
@@ -114,6 +119,7 @@ public class RequestorPool implements IManagebleItem
      * Returns TRUE if this object is enabled.
      * @see com.alfaariss.oa.api.IManagebleItem#isEnabled()
      */
+    @Override
     public boolean isEnabled()
     {
         return _bEnabled;
@@ -125,7 +131,7 @@ public class RequestorPool implements IManagebleItem
      */
     public boolean isForcedAuthenticate()
     {
-        return _bForced;
+        return _bForcedAuthenticate;
     }
     
     /**
@@ -192,6 +198,7 @@ public class RequestorPool implements IManagebleItem
      * The {@link java.lang.Object#hashCode()} of the ID.
      * @see java.lang.Object#hashCode()
      */
+    @Override
     public int hashCode()
     {
         return _sID.hashCode();
@@ -201,6 +208,7 @@ public class RequestorPool implements IManagebleItem
      * Returns <code>ID.equals(other.ID)</code>.
      * @see java.lang.Object#equals(java.lang.Object)
      */
+    @Override
     public boolean equals(Object other)
     {
         if(!(other instanceof RequestorPool))
@@ -243,6 +251,7 @@ public class RequestorPool implements IManagebleItem
     /**
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString()
     {
         StringBuffer sbInfo = new StringBuffer(_sFriendlyName);

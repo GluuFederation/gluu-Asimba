@@ -35,168 +35,178 @@ import com.alfaariss.oa.api.attribute.ISessionAttributes;
  * @author Alfa & Ariss
  *
  */
-public class SessionAttributes implements ISessionAttributes 
-{
-    /** serialVersionUID */
+public class SessionAttributes implements ISessionAttributes {
+
+    /**
+     * serialVersionUID
+     */
     private static final long serialVersionUID = 3322934500217377616L;
     private Hashtable<String, Object> _htAttributes;
 
-	/**
-	 * Create new empty attributes.
-	 */
-	public SessionAttributes()
-    {
-        _htAttributes = new Hashtable<String, Object>();
-	}
-
-	/**
-     * Returns the attribute with the supplied name.
-	 * @see com.alfaariss.oa.api.attribute.ISessionAttributes#get(java.lang.Class, java.lang.String)
-	 */
-	public Object get(Class oClass, String sName)
-    {
-        StringBuffer sbName = new StringBuffer(oClass.getName());
-        sbName.append(".");
-        sbName.append(sName);
-        return _htAttributes.get(sbName.toString());
-	}
-
-	/**
-     * @see com.alfaariss.oa.api.attribute.ISessionAttributes#get(java.lang.Class, java.lang.String, java.lang.String)
+    /**
+     * Create new empty attributes.
      */
-    public Object get(Class<?> oClass, String sID, String sName)
-    {
-        StringBuffer sbName = new StringBuffer(oClass.getName());
-        sbName.append(".");
-        sbName.append(sID);
-        sbName.append(".");
-        sbName.append(sName);
-        return _htAttributes.get(sbName.toString());
+    public SessionAttributes() {
+        _htAttributes = new Hashtable<String, Object>();
     }
 
     /**
-	 * Returns all attribute names as an <code>Enumeration</code>.
-	 * @see com.alfaariss.oa.api.attribute.ISessionAttributes#getNames()
-	 */
-	public Enumeration<?> getNames()
-    {
+     * Returns the attribute with the supplied name.
+     *
+     * @see
+     * com.alfaariss.oa.api.attribute.ISessionAttributes#get(java.lang.Class,
+     * java.lang.String)
+     */
+    @Override
+    public Object get(Class oClass, String sName) {
+        return _htAttributes.get(generateAttributeName(oClass, sName));
+    }
+
+    /**
+     * @see
+     * com.alfaariss.oa.api.attribute.ISessionAttributes#get(java.lang.Class,
+     * java.lang.String, java.lang.String)
+     */
+    @Override
+    public Object get(Class<?> oClass, String sID, String sName) {
+        return _htAttributes.get(generateAttributeName(oClass, sID, sName));
+    }
+
+    /**
+     * Returns all attribute names as an <code>Enumeration</code>.
+     *
+     * @see com.alfaariss.oa.api.attribute.ISessionAttributes#getNames()
+     */
+    @Override
+    public Enumeration<?> getNames() {
         return _htAttributes.keys();
     }
 
     /**
      * Removes the attribute with the supplied name.
-	 * @see com.alfaariss.oa.api.attribute.ISessionAttributes#remove(java.lang.Class, java.lang.String)
-	 */
-	public void remove(Class oClass, String sName)
-    {
-        StringBuffer sbName = new StringBuffer(oClass.getName());
-        sbName.append(".");
-        sbName.append(sName);
-	    _htAttributes.remove(sbName.toString());
-	}
+     *
+     * @see
+     * com.alfaariss.oa.api.attribute.ISessionAttributes#remove(java.lang.Class,
+     * java.lang.String)
+     */
+    @Override
+    public void remove(Class oClass, String sName) {
+        _htAttributes.remove(generateAttributeName(oClass, sName));
+    }
 
     /**
-     * @see com.alfaariss.oa.api.attribute.ISessionAttributes#remove(java.lang.Class, java.lang.String, java.lang.String)
+     * @see
+     * com.alfaariss.oa.api.attribute.ISessionAttributes#remove(java.lang.Class,
+     * java.lang.String, java.lang.String)
      */
-    public void remove(Class<?> oClass, String sID, String sName)
-    {
-        StringBuffer sbName = new StringBuffer(oClass.getName());
-        sbName.append(".");
-        sbName.append(sID);
-        sbName.append(".");
-        sbName.append(sName);
-        _htAttributes.remove(sbName.toString());
+    @Override
+    public void remove(Class<?> oClass, String sID, String sName) {
+        _htAttributes.remove(generateAttributeName(oClass, sID, sName));
     }
 
     /**
      * Checks if the attribute with the supplied name exists.
-     * @see com.alfaariss.oa.api.attribute.ISessionAttributes#contains(java.lang.Class, java.lang.String)
+     *
+     * @see
+     * com.alfaariss.oa.api.attribute.ISessionAttributes#contains(java.lang.Class,
+     * java.lang.String)
      */
-    public boolean contains(Class oClass, String sName)
-    {
-        StringBuffer sbName = new StringBuffer(oClass.getName());
-        sbName.append(".");
-        sbName.append(sName);
-        return _htAttributes.containsKey(sbName.toString());
+    @Override
+    public boolean contains(Class oClass, String sName) {
+        return _htAttributes.containsKey(generateAttributeName(oClass, sName));
     }
 
     /**
-     * @see com.alfaariss.oa.api.attribute.ISessionAttributes#contains(java.lang.Class, java.lang.String, java.lang.String)
+     * @see
+     * com.alfaariss.oa.api.attribute.ISessionAttributes#contains(java.lang.Class,
+     * java.lang.String, java.lang.String)
      */
-    public boolean contains(Class<?> oClass, String sID, String sName)
-    {
-        StringBuffer sbName = new StringBuffer(oClass.getName());
-        sbName.append(".");
-        sbName.append(sID);
-        sbName.append(".");
-        sbName.append(sName);
-        return _htAttributes.containsKey(sbName.toString());
+    @Override
+    public boolean contains(Class<?> oClass, String sID, String sName) {
+        return _htAttributes.containsKey(generateAttributeName(oClass, sID, sName));
     }
 
     /**
      * Stores or overwrites the supplied attribute.
-     * @see com.alfaariss.oa.api.attribute.ISessionAttributes#put(java.lang.Class, java.lang.String, java.lang.Object)
+     *
+     * @see
+     * com.alfaariss.oa.api.attribute.ISessionAttributes#put(java.lang.Class,
+     * java.lang.String, java.lang.Object)
      */
-    public void put(Class oClass, String sName, Object oValue)
-    {
-        StringBuffer sbName = new StringBuffer(oClass.getName());
-        sbName.append(".");
-        sbName.append(sName);
-        _htAttributes.put(sbName.toString(), oValue);
+    @Override
+    public void put(Class oClass, String sName, Object oValue) {
+        _htAttributes.put(generateAttributeName(oClass, sName), oValue);
     }
-    
+
     /**
-     * Stores or overwrites the supplied attribute.
-     * This method is added for components that can be configured multiple times 
-     * like authn methods, so that attributes can't be used by multiple the same 
-     * authn methods. In this case the supplied id must be the configured authn 
-     * method id. 
-     * @see com.alfaariss.oa.api.attribute.ISessionAttributes#put(java.lang.Class, java.lang.String, java.lang.String, java.lang.Object)
+     * Stores or overwrites the supplied attribute. This method is added for
+     * components that can be configured multiple times like authn methods, so
+     * that attributes can't be used by multiple the same authn methods. In this
+     * case the supplied id must be the configured authn method id.
+     *
+     * @see
+     * com.alfaariss.oa.api.attribute.ISessionAttributes#put(java.lang.Class,
+     * java.lang.String, java.lang.String, java.lang.Object)
      */
-    public void put(Class<?> oClass, String sID, String sName, Object oValue)
-    {
-        StringBuffer sbName = new StringBuffer(oClass.getName());
-        sbName.append(".");
-        sbName.append(sID);
-        sbName.append(".");
-        sbName.append(sName);
-        _htAttributes.put(sbName.toString(), oValue);
+    @Override
+    public void put(Class<?> oClass, String sID, String sName, Object oValue) {
+        _htAttributes.put(generateAttributeName(oClass, sID, sName), oValue);
     }
-    
+
     /**
      * Return the hash code of the attributes.
+     *
      * @see java.lang.Object#hashCode()
      */
-    public int hashCode()
-    {
+    @Override
+    public int hashCode() {
         return _htAttributes.hashCode();
     }
-    
+
     /**
      * Compare with another object.
+     *
      * @see java.lang.Object#equals(java.lang.Object)
      */
-    public boolean equals(Object other)
-    {
-        if(!(other instanceof SessionAttributes))
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof SessionAttributes)) {
             return false;
+        }
         return _htAttributes.equals(other);
-    }   
-    
+    }
+
     /**
      * Return all attributes in a <code>String</code>.
+     *
      * @see java.lang.Object#toString()
      */
-    public String toString()
-    { 
+    @Override
+    public String toString() {
         return _htAttributes.toString();
     }
 
     /**
      * @see com.alfaariss.oa.api.attribute.ISessionAttributes#size()
      */
-    public int size()
-    {
+    @Override
+    public int size() {
         return _htAttributes.size();
+    }
+
+    private static String generateAttributeName(Class<?> oClass, String sID, String sName) {
+        StringBuilder sbName = new StringBuilder(oClass.getName());
+        sbName.append(".");
+        sbName.append(sID);
+        sbName.append(".");
+        sbName.append(sName);
+        return sbName.toString();
+    }
+
+    private static String generateAttributeName(Class oClass, String sName) {
+        StringBuilder sbName = new StringBuilder(oClass.getName());
+        sbName.append(".");
+        sbName.append(sName);
+        return sbName.toString();
     }
 }

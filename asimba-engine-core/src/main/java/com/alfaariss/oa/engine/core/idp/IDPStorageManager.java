@@ -48,8 +48,8 @@ import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
  */
 public class IDPStorageManager<IDP extends IIDPStorage> implements IComponent
 {
-    private static Log _logger;
-    private Hashtable<String, IIDPStorage> _htStorages;
+    private static final Log _logger = LogFactory.getLog(IDPStorageManager.class);;
+    private final Hashtable<String, IIDPStorage> _htStorages;
     private IConfigurationManager _configurationManager;
     
     /**
@@ -57,7 +57,6 @@ public class IDPStorageManager<IDP extends IIDPStorage> implements IComponent
      */
     public IDPStorageManager()
     {
-        _logger = LogFactory.getLog(this.getClass());
         _htStorages = new Hashtable<String, IIDPStorage>();
     }
     
@@ -65,6 +64,7 @@ public class IDPStorageManager<IDP extends IIDPStorage> implements IComponent
      * Starts the object by reading configuration. 
      * @see com.alfaariss.oa.api.IComponent#start(com.alfaariss.oa.api.configuration.IConfigurationManager, org.w3c.dom.Element)
      */
+    @Override
     public void start(IConfigurationManager configManager, Element config) throws OAException
     {
         _configurationManager = configManager;
@@ -94,6 +94,7 @@ public class IDPStorageManager<IDP extends IIDPStorage> implements IComponent
     /**
      * @see com.alfaariss.oa.api.IComponent#stop()
      */
+    @Override
     public void stop()
     {
         for (IIDPStorage storage: _htStorages.values())
@@ -105,6 +106,7 @@ public class IDPStorageManager<IDP extends IIDPStorage> implements IComponent
     /**
      * @see com.alfaariss.oa.api.IComponent#restart(org.w3c.dom.Element)
      */
+    @Override
     public void restart(Element config) throws OAException
     {
         synchronized(this)

@@ -22,7 +22,6 @@
  */
 package com.alfaariss.oa.util.saml2;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
@@ -45,7 +44,6 @@ import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.configuration.ConfigurationException;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.requestor.IRequestor;
-import com.alfaariss.oa.engine.core.Engine;
 
 /**
  * Requestor object containing requestor specific configuration items.
@@ -234,7 +232,7 @@ public class SAML2Requestor implements Serializable
      * @param sProfileID
      * @throws OAException
      */
-    protected void initFromProperties(Map<?,?> mProperties, boolean bSigning, String sProfileID)
+    private void initFromProperties(Map<?,?> mProperties, boolean bSigning, String sProfileID)
     	throws OAException
     {
         _bSigning = false;
@@ -265,7 +263,7 @@ public class SAML2Requestor implements Serializable
      * 
      * @throws OAException thrown when unrecoverable error occurred
      */
-    protected void initMetadataProvider() throws OAException 
+    private void initMetadataProvider() throws OAException 
     {
         String sInstanceMPFingerprint = _oMetadataProviderConfig.getFingerprint();
         
@@ -362,9 +360,10 @@ public class SAML2Requestor implements Serializable
     /**
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString()
     {
-        StringBuffer sbInfo = new StringBuffer();
+        StringBuilder sbInfo = new StringBuilder();
         sbInfo.append("Requestor '");
         sbInfo.append(_sID);
         sbInfo.append("'");
@@ -383,7 +382,7 @@ public class SAML2Requestor implements Serializable
      * @return
      * @throws ConfigurationException 
      */
-    protected MetadataProviderConfiguration getMetadataConfigFromConfig(
+    private MetadataProviderConfiguration getMetadataConfigFromConfig(
     		IConfigurationManager oConfigManager, Element elConfig) 
     				throws OAException
     {

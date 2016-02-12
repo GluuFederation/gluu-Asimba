@@ -44,17 +44,14 @@ import com.alfaariss.oa.engine.core.attribute.SessionAttributes;
  */
 public abstract class AbstractSession implements ISession, Serializable
 {   
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 2035158024380320256L;
-	/** session id */
+    private static final long serialVersionUID = 2035158024380320256L;
+    /** session id */
     protected String _id;
     /** expire time */
     protected long _lExpireTime;
     /** session attributes */
     protected ISessionAttributes _attributes;
-    private String _requestorId;
+    private final String _requestorId;
     private List<IAuthenticationProfile> _listAuthNProfiles;
     private int _iSelectedAuthNProfile;
     private IUser _uOwner;
@@ -85,6 +82,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#getId()
      */
+    @Override
     public String getId()
     {
         return _id;
@@ -93,6 +91,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#getRequestorId()
      */
+    @Override
     public String getRequestorId()
     {
         return _requestorId;
@@ -101,6 +100,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#getUser()
      */
+    @Override
     public IUser getUser()
     {
         return _uOwner;
@@ -109,6 +109,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#setUser(com.alfaariss.oa.api.user.IUser)
      */
+    @Override
     public void setUser(IUser user)
     {
         _uOwner = user;
@@ -117,6 +118,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#getState()
      */
+    @Override
     public SessionState getState()
     {
         return _state;
@@ -126,6 +128,7 @@ public abstract class AbstractSession implements ISession, Serializable
      * @see com.alfaariss.oa.api.session.ISession#setState(
      *  com.alfaariss.oa.api.session.SessionState)
      */
+    @Override
     public void setState(SessionState state)
     {
         if (state == null)
@@ -136,6 +139,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#expire()
      */
+    @Override
     public void expire()
     {
         _lExpireTime = 0;
@@ -145,6 +149,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#isExpired()
      */
+    @Override
     public boolean isExpired()
     {
         return _lExpireTime <= System.currentTimeMillis();
@@ -153,6 +158,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#getExpTime()
      */
+    @Override
     public long getExpTime()
     {
         return _lExpireTime;
@@ -161,6 +167,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#setExpTime(long)
      */
+    @Override
     public void setExpTime(long expirationTime)
     {
         _lExpireTime = expirationTime;        
@@ -169,6 +176,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#getTGTId()
      */
+    @Override
     public String getTGTId()
     {
         return _tgtId;
@@ -177,6 +185,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#setTGTId(String)
      */
+    @Override
     public void setTGTId(String id)
     {
         _tgtId = id;        
@@ -185,6 +194,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#getAttributes()
      */
+    @Override
     public ISessionAttributes getAttributes()
     {
         return _attributes;
@@ -193,6 +203,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#getProfileURL()
      */
+    @Override
     public String getProfileURL()
     {
         return _sProfileURL;
@@ -202,6 +213,7 @@ public abstract class AbstractSession implements ISession, Serializable
      * @see com.alfaariss.oa.api.session.ISession#setProfileURL(
      *  java.lang.String)
      */
+    @Override
     public void setProfileURL(String url)
     {
         if (url == null)
@@ -212,6 +224,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#isForcedAuthentication()
      */
+    @Override
     public boolean isForcedAuthentication()
     {
         return _forcedAuthentication;
@@ -221,6 +234,7 @@ public abstract class AbstractSession implements ISession, Serializable
      * @see com.alfaariss.oa.api.session.ISession#setForcedAuthentication(
      *  boolean)
      */
+    @Override
     public void setForcedAuthentication(boolean enabled)
     {
         _forcedAuthentication = enabled;        
@@ -230,6 +244,7 @@ public abstract class AbstractSession implements ISession, Serializable
      * Return the hashcode from the id.
      * @see java.lang.Object#hashCode()
      */
+    @Override
     public int hashCode()
     {
         return _id.hashCode();
@@ -239,6 +254,7 @@ public abstract class AbstractSession implements ISession, Serializable
      * Compare ID.
      * @see java.lang.Object#equals(java.lang.Object)
      */
+    @Override
     public boolean equals(Object other)
     {
         if(!(other instanceof AbstractSession))
@@ -249,6 +265,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#getForcedUserID()
      */
+    @Override
     public String getForcedUserID()
     {
         return _sForcedUserID;
@@ -257,6 +274,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#getLocale()
      */
+    @Override
     public Locale getLocale()
     {
         return _locale;
@@ -265,6 +283,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#setForcedUserID(java.lang.String)
      */
+    @Override
     public void setForcedUserID(String id)
     {
         _sForcedUserID = id;
@@ -273,6 +292,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#setLocale(java.util.Locale)
      */
+    @Override
     public void setLocale(Locale locale)
     {
         _locale = locale;
@@ -281,6 +301,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#getAuthNProfiles()
      */
+    @Override
     public List<IAuthenticationProfile> getAuthNProfiles()
     {
         List<IAuthenticationProfile> listReturn = new Vector<IAuthenticationProfile>();
@@ -292,6 +313,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#getSelectedAuthNProfile()
      */
+    @Override
     public IAuthenticationProfile getSelectedAuthNProfile()
     {
         if (_iSelectedAuthNProfile < 0 || _iSelectedAuthNProfile > _listAuthNProfiles.size())
@@ -303,6 +325,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see ISession#setAuthNProfiles(java.util.List)
      */
+    @Override
     public void setAuthNProfiles(List<IAuthenticationProfile> profiles)
     {
         _iSelectedAuthNProfile = -1;
@@ -313,6 +336,7 @@ public abstract class AbstractSession implements ISession, Serializable
      * @see ISession#setSelectedAuthNProfile(
      *  IAuthenticationProfile)
      */
+    @Override
     public void setSelectedAuthNProfile(IAuthenticationProfile profile)
     {
         int iIndex = _listAuthNProfiles.indexOf(profile);
@@ -326,6 +350,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#isPassive()
      */
+    @Override
     public boolean isPassive()
     {
         return _isPassive;
@@ -334,6 +359,7 @@ public abstract class AbstractSession implements ISession, Serializable
     /**
      * @see com.alfaariss.oa.api.session.ISession#setPassive(boolean)
      */
+    @Override
     public void setPassive(boolean passive)
     {
         _isPassive = passive;
@@ -344,7 +370,7 @@ public abstract class AbstractSession implements ISession, Serializable
      */
     public Date getSessionExpTime()
     {
-		return new Date(_lExpireTime);
-	}
+        return new Date(_lExpireTime);
+    }
 
 }

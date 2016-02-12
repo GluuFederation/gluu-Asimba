@@ -18,20 +18,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see www.gnu.org/licenses
  * 
- * Asimba - Serious Open Source SSO - More information on www.asimba.org
+ * gluu-Asimba - Serious Open Source SSO - More information on www.gluu.org
  * 
  */
-package org.gluu.asimba.authentication.remote.saml2.idp.storage.config;
+package org.gluu.asimba.authentication.remote.saml2.idp.storage.ldap;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Map;
@@ -40,9 +34,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asimba.util.saml2.metadata.provider.management.MdMgrManager;
 import org.asimba.util.saml2.metadata.provider.management.MetadataProviderManagerUtil;
-import org.asimba.utility.filesystem.PathTranslator;
-import org.joda.time.DateTime;
-import org.joda.time.format.ISODateTimeFormat;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -50,20 +41,13 @@ import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.authentication.remote.saml2.idp.storage.config.SourceID;
 import com.alfaariss.oa.engine.core.idp.storage.IIDP;
-import com.alfaariss.oa.engine.idp.storage.configuration.AbstractConfigurationStorage;
 import com.alfaariss.oa.util.saml2.idp.SAML2IDP;
-import org.gluu.asimba.util.ldap.LdapIDPEntry;
+import org.gluu.asimba.util.ldap.idp.LdapIDPEntry;
+import org.gluu.asimba.engine.idp.storage.ldap.AbstractLDAPStorage;
 
 /**
- * Uses the XML configuration file as organization storage for SAML2IDPs
+ * Uses LDAP as organization storage for SAML2IDPs
  * 
- * Configuration like:
- * <storage id="[id-value]" class="[...IDPConfigStorage]" registerWithEngine="[true/false]">
- *   <mp_manager id="[id-value]" primary="[true/false]" />
- *   <idp ...>
- *   	[idp-configuration]
- *   </idp>
- * </storage>
  * 
  * #signing : optional attribute to indicate whether default-signing should be enabled 
  * 		for a SAML2Requestor
@@ -80,13 +64,13 @@ import org.gluu.asimba.util.ldap.LdapIDPEntry;
  * 
  * @author Dmitry Ognyannikov
  */
-public class IDPConfigStorageLDAP extends AbstractConfigurationStorage 
+public class IDPStorageLDAP extends AbstractLDAPStorage 
 {
-	/** Configuration elements */
-	public static final String EL_MPMANAGER = "mp_manager";
+    /** Configuration elements */
+    public static final String EL_MPMANAGER = "mp_manager";
 
-	/** Local logger instance */
-	private static Log _oLogger = LogFactory.getLog(IDPConfigStorageLDAP.class);
+    /** Local logger instance */
+    private static final Log _logger = LogFactory.getLog(IDPStorageLDAP.class);
 	
     private final static String DEFAULT_ID = "saml2";
     
@@ -96,6 +80,7 @@ public class IDPConfigStorageLDAP extends AbstractConfigurationStorage
     /** Id of the MetadataProviderManager that manages metadata for the SAML2IDPs that are
      * created by this Storage; configurable; defaults to the Id of the Storage (_sId) */
     protected String _sMPMId;
+    
     protected boolean _bOwnMPM;
     
     
@@ -104,7 +89,7 @@ public class IDPConfigStorageLDAP extends AbstractConfigurationStorage
     /**
      * Creates the storage.
      */
-    public IDPConfigStorageLDAP()
+    public IDPStorageLDAP()
     {
         super();
         _mapIDPsOnSourceID = new Hashtable<SourceID, SAML2IDP>();
@@ -113,28 +98,29 @@ public class IDPConfigStorageLDAP extends AbstractConfigurationStorage
     /**
      * @see com.alfaariss.oa.engine.idp.storage.configuration.AbstractConfigurationStorage#start(com.alfaariss.oa.api.configuration.IConfigurationManager, org.w3c.dom.Element)
      */
+    @Override
     public void start(IConfigurationManager configManager, Element config)
         throws OAException
     {
         _sId = configManager.getParam(config, "id");
         if (_sId == null)
         {
-            _oLogger.info("No optional 'id' item for storage configured, using default");
+            _logger.info("No optional 'id' item for storage configured, using default");
             _sId = DEFAULT_ID;
         }
 
         // Establish MetadataProviderManager Id that refers to existing IMetadataProviderManager
         Element elMPManager = configManager.getSection(config, EL_MPMANAGER);
         if (elMPManager == null) {
-        	_oLogger.info("Using MetadataProviderManager Id from IDPStorage@id: '"+_sId+"'");
+        	_logger.info("Using MetadataProviderManager Id from IDPStorage@id: '"+_sId+"'");
         	_sMPMId = _sId;
         } else {
         	_sMPMId = configManager.getParam(elMPManager, "id");
         	if (_sMPMId == null) {
-        		_oLogger.error("Missing @id attribute for '"+EL_MPMANAGER+"' configuration");
+        		_logger.error("Missing @id attribute for '"+EL_MPMANAGER+"' configuration");
         		throw new OAException(SystemErrors.ERROR_CONFIG_READ);
         	}
-        	_oLogger.info("Using MetadataProviderManager Id from configuration: '"+_sMPMId+"'");
+        	_logger.info("Using MetadataProviderManager Id from configuration: '"+_sMPMId+"'");
         }
         
         // Make sure the MetadataProviderManager exists
@@ -152,7 +138,7 @@ public class IDPConfigStorageLDAP extends AbstractConfigurationStorage
         		} else if ("true".equalsIgnoreCase(sPrimary)) {
         			_bOwnMPM = true;
         		} else {
-        			_oLogger.error("Invalid value for '@primary': '"+sPrimary+"'");
+        			_logger.error("Invalid value for '@primary': '"+sPrimary+"'");
         			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
         		}
         	}
@@ -167,12 +153,13 @@ public class IDPConfigStorageLDAP extends AbstractConfigurationStorage
             _mapIDPsOnSourceID.put(new SourceID(saml2IDP.getSourceID()), saml2IDP);
         }
         
-        _oLogger.info("Started storage with id: " + _sId);
+        _logger.info("Started storage with id: " + _sId);
     }
     
     /**
      * @see com.alfaariss.oa.engine.core.idp.storage.IIDPStorage#getID()
      */
+    @Override
     public String getID()
     {
         return _sId;
@@ -181,6 +168,7 @@ public class IDPConfigStorageLDAP extends AbstractConfigurationStorage
     /**
      * @see com.alfaariss.oa.engine.core.idp.storage.IIDPStorage#getIDP(java.lang.Object, java.lang.String)
      */
+    @Override
     public IIDP getIDP(Object id, String type) throws OAException
     {
         if (type.equals(SAML2IDP.TYPE_ID) && id instanceof String)
@@ -195,6 +183,7 @@ public class IDPConfigStorageLDAP extends AbstractConfigurationStorage
     /**
      * @see com.alfaariss.oa.engine.idp.storage.configuration.AbstractConfigurationStorage#stop()
      */
+    @Override
     public void stop()
     {
         if (_mapIDPsOnSourceID != null)
@@ -202,7 +191,7 @@ public class IDPConfigStorageLDAP extends AbstractConfigurationStorage
         
         // Clean up the MetadataProviderManager?
         if (_bOwnMPM) {
-        	_oLogger.info("Cleaning up MetadataProviderManager '"+_sMPMId+"'");
+        	_logger.info("Cleaning up MetadataProviderManager '"+_sMPMId+"'");
         	MdMgrManager.getInstance().deleteMetadataProviderManager(_sMPMId);
         }
         
@@ -212,30 +201,22 @@ public class IDPConfigStorageLDAP extends AbstractConfigurationStorage
     /**
      * @see com.alfaariss.oa.engine.idp.storage.configuration.AbstractConfigurationStorage#createIDP(com.alfaariss.oa.api.configuration.IConfigurationManager, org.w3c.dom.Element)
      */ 
-   @Override
-    protected IIDP createIDP(IConfigurationManager configManager, Element config)
-        throws OAException
-    {
+    @Override
+    protected IIDP createIDP(LdapIDPEntry idpEntry) throws OAException {
         SAML2IDP saml2IDP = null;
         
         try
         {
-            String sID = configManager.getParam(config, "id");
+            String sID = idpEntry.getId();
             if (sID == null)
             {
-                _oLogger.error(
+                _logger.error(
                     "No 'id' item found in 'organization' section in configuration");
                 throw new OAException(SystemErrors.ERROR_CONFIG_READ);
             }
             byte[] baSourceID = generateSHA1(sID);
             
-            // search entry by sID
-            
-            LdapIDPEntry entry = null;
-            
-            
-            
-            saml2IDP = new SAML2IDP(entry, baSourceID, _sMPMId);
+            saml2IDP = new SAML2IDP(idpEntry, baSourceID, _sMPMId);
         }
         catch (OAException e)
         {
@@ -243,7 +224,7 @@ public class IDPConfigStorageLDAP extends AbstractConfigurationStorage
         }
         catch(Exception e)
         {
-            _oLogger.fatal("Internal error while reading organization configuration", e);
+            _logger.fatal("Internal error while reading organization configuration", e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
         
@@ -270,12 +251,12 @@ public class IDPConfigStorageLDAP extends AbstractConfigurationStorage
         }
         catch (NoSuchAlgorithmException e)
         {
-            _oLogger.error("SHA-1 not supported", e);
+            _logger.error("SHA-1 not supported", e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
         catch (UnsupportedEncodingException e)
         {
-            _oLogger.error("UTF-8 not supported", e);
+            _logger.error("UTF-8 not supported", e);
             throw new OAException(SystemErrors.ERROR_INTERNAL);
         }
     }
