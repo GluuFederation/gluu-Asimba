@@ -55,7 +55,23 @@ public class RequestorEntry {
     private String friendlyName;
     
     /**
-     * The parent pool id.
+     * The url of the metadata or NULL if none.
+     */
+    private String metadataUrl;
+    
+    /**
+     * The timeout to be used in connecting the the url 
+     * metadata or -1 when default must be used.
+     */
+    private int metadataTimeout = -1;
+    
+    /**
+     * The location of the metadata file or NULL if none. 
+     */
+    private String metadataFile;
+    
+    /**
+     * The parent requestor pool ID.
      */
     private String poolID;
     
