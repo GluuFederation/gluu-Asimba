@@ -44,9 +44,9 @@
 			<!-- or when -PdevIntegrationTests is included in mvn invocation -->
 			<id>devIntegrationTests</id>
 			<activation>
-				<property>
+				<!--property>
 					<name>debug</name>
-				</property>
+				</property>-->
 			</activation>
 			<properties>
 				<skip.integration.tests>false</skip.integration.tests>
