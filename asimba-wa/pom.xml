@@ -33,7 +33,7 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<properties>
-				<skip.integration.tests>false</skip.integration.tests>
+				<skip.integration.tests>true</skip.integration.tests>
 				<integrationtest.groups.skip>org.asimba.wa.integrationtest.dev.DevTests, 
  				org.asimba.wa.integrationtest.clustered.ClusteredTests</integrationtest.groups.skip>
 				<asimba.wa.file>asimba-wa.xml</asimba.wa.file>
@@ -65,7 +65,7 @@
 		        </property>
 		    </activation>
             <properties>
-                <skip.integration.tests>false</skip.integration.tests>
+                <skip.integration.tests>true</skip.integration.tests>
                 <integrationtest.groups.skip>org.asimba.wa.integrationtest.dev.DevTests</integrationtest.groups.skip>
                 <asimba.wa.file>asimba-wa-cluster.xml</asimba.wa.file>
                 <jetty.cluster.xml>${basedir}/src/jetty/jetty-cluster.xml</jetty.cluster.xml>                
