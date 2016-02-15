@@ -87,4 +87,9 @@ public class LDAPApplicationSelectorEntry extends BaseEntry {
         this.friendlyName = friendlyName;
         this.entry.setFriendlyName(friendlyName);
     }
+    
+    public void setOrganizationId(String organizationId) {
+        this.organizationId = organizationId;
+        this.entry.setOrganizationId(organizationId);
+    }
 }

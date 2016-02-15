@@ -92,4 +92,9 @@ public class LdapIDPEntry extends BaseEntry {
         this.friendlyName = friendlyName;
         this.entry.setFriendlyName(friendlyName);
     }
+    
+    public void setIdentificationURL(String identificationURL) {
+        this.identificationURL = identificationURL;
+        this.entry.setIdentificationURL(identificationURL);
+    }
 }
