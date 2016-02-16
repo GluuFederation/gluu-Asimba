@@ -97,4 +97,12 @@ public class LdapIDPEntry extends BaseEntry {
         this.identificationURL = identificationURL;
         this.entry.setIdentificationURL(identificationURL);
     }
+    
+    public void setUniqueIdentifier(String uniqueIdentifier) {
+        setId(uniqueIdentifier);
+    }
+    
+    public String getUniqueIdentifier() {
+        return getId();
+    }
 }

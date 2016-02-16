@@ -92,4 +92,12 @@ public class LDAPApplicationSelectorEntry extends BaseEntry {
         this.organizationId = organizationId;
         this.entry.setOrganizationId(organizationId);
     }
+    
+    public void setUniqueIdentifier(String uniqueIdentifier) {
+        setId(uniqueIdentifier);
+    }
+    
+    public String getUniqueIdentifier() {
+        return getId();
+    }
 }

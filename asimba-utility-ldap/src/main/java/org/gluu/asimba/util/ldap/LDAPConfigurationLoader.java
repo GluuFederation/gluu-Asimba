@@ -28,13 +28,9 @@ import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.IComponent;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
-import java.io.File;
 import java.util.List;
-import java.util.Properties;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.gluu.site.ldap.LDAPConnectionProvider;
-import org.gluu.site.ldap.OperationsFacade;
 import org.gluu.site.ldap.persistence.LdapEntryManager;
 import org.w3c.dom.Element;
 

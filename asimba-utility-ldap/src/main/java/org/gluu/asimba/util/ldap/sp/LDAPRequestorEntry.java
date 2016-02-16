@@ -83,4 +83,12 @@ public class LDAPRequestorEntry extends BaseEntry {
         this.friendlyName = friendlyName;
         this.entry.setFriendlyName(friendlyName);
     }
+    
+    public void setUniqueIdentifier(String uniqueIdentifier) {
+        setId(uniqueIdentifier);
+    }
+    
+    public String getUniqueIdentifier() {
+        return getId();
+    }
 }

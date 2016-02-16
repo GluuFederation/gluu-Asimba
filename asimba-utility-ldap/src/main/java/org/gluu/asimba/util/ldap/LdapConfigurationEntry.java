@@ -28,7 +28,7 @@ import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 import org.xdi.ldap.model.BaseEntry;
 
 /**
- * IDPs configuration list for LDAP.
+ * Asimba LDAP settings root directory entry.
  * 
  * @author Dmitry Ognyannikov
  */
