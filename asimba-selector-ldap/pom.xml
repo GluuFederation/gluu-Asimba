@@ -1,22 +1,19 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>asimba-server-baseline</artifactId>
+        <groupId>org.asimba</groupId>
+        <version>2.4.2-SNAPSHOT</version>
+    </parent>
     <groupId>org.xdi</groupId>
     <artifactId>oxasimba-selector-ldap</artifactId>
     <name>OX Asimba selector LDAP</name>
     <url>http://ox.gluu.org</url>
     <packaging>jar</packaging>
-    <version>3.0.3-SNAPSHOT</version>
-
-    <parent>
-      <artifactId>asimba-server-baseline</artifactId>
-      <groupId>org.asimba</groupId>
-      <version>2.4.2.Final</version>
-    </parent>
     
     <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <asimba.version>${default.asimba.version}</asimba.version>
     </properties> 
 
     <dependencies>
@@ -36,27 +33,27 @@
         <dependency>
             <groupId>org.asimba</groupId>
             <artifactId>asimba-api</artifactId>
-            <version>${asimba.version}</version>
+            <version>${default.asimba.version}</version>
         </dependency>
         <dependency>
             <groupId>org.asimba</groupId>
             <artifactId>asimba-engine-core</artifactId>
-            <version>${asimba.version}</version>
+            <version>${default.asimba.version}</version>
         </dependency>
         <dependency>
             <groupId>org.asimba</groupId>
             <artifactId>asimba-saml2-utility</artifactId>
-            <version>${asimba.version}</version>
+            <version>${default.asimba.version}</version>
         </dependency>
         <dependency>
             <groupId>org.asimba</groupId>
             <artifactId>asimba-sso-web</artifactId>
-            <version>${asimba.version}</version>
+            <version>${default.asimba.version}</version>
         </dependency>
         <dependency>
             <groupId>org.asimba</groupId>
             <artifactId>asimba-am-remote-saml2</artifactId>
-            <version>${asimba.version}</version>
+            <version>${default.asimba.version}</version>
         </dependency>
     </dependencies>
 </project>
