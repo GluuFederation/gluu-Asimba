@@ -361,12 +361,12 @@
 		<dependency>
 			<groupId>org.xdi</groupId>
 			<artifactId>oxasimba-selector</artifactId>
-			<version>3.0.3-SNAPSHOT</version>
+			<version>2.4.2.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.xdi</groupId>
 			<artifactId>oxasimba-proxy</artifactId>
-			<version>3.0.3-SNAPSHOT</version>
+			<version>2.4.2.Final</version>
 		</dependency>
 
 		<dependency>
