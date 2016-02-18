@@ -23,6 +23,7 @@
  */
 package org.gluu.asimba.util.ldap.sp;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.Properties;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -40,7 +41,7 @@ import lombok.Data;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @Data
-public class RequestorEntry {
+public class RequestorEntry implements Serializable {
     
     private String inum;
     
