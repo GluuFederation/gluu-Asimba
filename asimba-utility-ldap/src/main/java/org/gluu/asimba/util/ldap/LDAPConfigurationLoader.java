@@ -23,7 +23,6 @@
  */
 package org.gluu.asimba.util.ldap;
 
-import org.gluu.asimba.util.ldap.idp.LdapIDPEntry;
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.IComponent;
@@ -31,7 +30,7 @@ import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.gluu.site.ldap.persistence.LdapEntryManager;
+import org.gluu.asimba.util.ldap.idp.IDPEntry;
 import org.w3c.dom.Element;
 
 /**
@@ -42,28 +41,21 @@ import org.w3c.dom.Element;
 public class LDAPConfigurationLoader implements IComponent {
     private static final Log _logger = LogFactory.getLog(LDAPConfigurationLoader.class); 
     
-    private List<LdapIDPEntry> idpEntries;
+    private List<IDPEntry> idpEntries;
     
     public LDAPConfigurationLoader() {}
     
     public void loadConfiguration() throws OAException {
-        // connect
-        final LdapEntryManager ldapEntryManager = LDAPUtility.getLDAPEntryManager();
         
         // load IDPs
         try {
-            final LdapIDPEntry template = new LdapIDPEntry();
-            idpEntries = ldapEntryManager.findEntries(template);
+            idpEntries = LDAPUtility.loadIDPs();
             
-            for (LdapIDPEntry ldapIDPEntry: idpEntries) {
-                _logger.info("Loaded IDPEntry from LDAP: " + ldapIDPEntry.getId() + " : " + ldapIDPEntry.getFriendlyName());
-            }
+            _logger.info("Loaded IDPEntry from LDAP: " + idpEntries.size() + " IDPs loaded");
         } catch (Exception e) {
             _logger.error("cannot load LDAP IDPs settings", e);
             throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-        } finally {
-            ldapEntryManager.destroy();
-        }
+        } 
     }
 
     @Override
@@ -84,7 +76,7 @@ public class LDAPConfigurationLoader implements IComponent {
     /**
      * @return the idpEntries
      */
-    public List<LdapIDPEntry> getIdpEntries() {
+    public List<IDPEntry> getIdpEntries() {
         return idpEntries;
     }
 }

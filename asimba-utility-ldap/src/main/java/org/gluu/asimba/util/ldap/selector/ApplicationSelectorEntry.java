@@ -43,10 +43,13 @@ public class ApplicationSelectorEntry implements Serializable {
     private String inum;
     
     /**
-     * The entity id of the selector.
+     * The entity id of the selector (SP entityId URL).
      */
     private String id;
     
+    /**
+     * IDP ID (URL).
+     */
     private String organizationId;
     
     /**
