@@ -88,14 +88,16 @@ public class SAML2RequestorsLDAP extends SAML2Requestors {
         oConfigManager, Element elConfig) throws OAException {
         Map<String, SAML2Requestor> resultMap = new HashMap<>();
         // local requestors from LDAP
-        for (String key : _mapRequestors.keySet()) {
-            resultMap.put(key, _mapRequestors.get(key));
-        }
+        if (_mapRequestors != null)
+            for (String key : _mapRequestors.keySet()) {
+                resultMap.put(key, _mapRequestors.get(key));
+            }
         // parent requestors from XML
         Map<String, SAML2Requestor> mapRequestors = super.readRequestors(oConfigManager, elConfig);
-        for (String key : mapRequestors.keySet()) {
-            resultMap.put(key, mapRequestors.get(key));
-        }
+        if (mapRequestors != null)
+            for (String key : mapRequestors.keySet()) {
+                resultMap.put(key, mapRequestors.get(key));
+            }
         return mapRequestors;
     }
     
