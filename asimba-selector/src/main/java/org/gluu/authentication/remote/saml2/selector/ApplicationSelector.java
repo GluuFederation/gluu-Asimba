@@ -88,9 +88,8 @@ public class ApplicationSelector extends DefaultSelector {
 			log.debug("Can't find mapping by requestorId: " + requestorId);
 		}
 
-		SAML2IDP result = super.resolve(oRequest, oResponse, oSession, listOrganizations, sMethodName, oWarnings);
-
-		return result;
+                // Not found, call super
+		return super.resolve(oRequest, oResponse, oSession, listOrganizations, sMethodName, oWarnings);
 	}
 
 

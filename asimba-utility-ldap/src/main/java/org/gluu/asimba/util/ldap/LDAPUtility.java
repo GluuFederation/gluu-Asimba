@@ -27,12 +27,23 @@ import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import java.io.File;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.gluu.asimba.util.ldap.idp.IDPEntry;
+import org.gluu.asimba.util.ldap.idp.LdapIDPEntry;
+import org.gluu.asimba.util.ldap.selector.ApplicationSelectorEntry;
+import org.gluu.asimba.util.ldap.selector.LDAPApplicationSelectorEntry;
+import org.gluu.asimba.util.ldap.sp.LDAPRequestorEntry;
+import org.gluu.asimba.util.ldap.sp.LDAPRequestorPoolEntry;
+import org.gluu.asimba.util.ldap.sp.RequestorEntry;
+import org.gluu.asimba.util.ldap.sp.RequestorPoolEntry;
 import org.gluu.site.ldap.LDAPConnectionProvider;
 import org.gluu.site.ldap.OperationsFacade;
 import org.gluu.site.ldap.persistence.LdapEntryManager;
+import org.xdi.util.StringHelper;
 
 /**
  * LDAP utility functions.
@@ -44,6 +55,8 @@ public class LDAPUtility {
     private static final Log log = LogFactory.getLog(LDAPUtility.class);
     
     private static final String ASIMBA_LDAP_CONFIGURATION_FILENAME = "oxasimba-ldap.properties";
+    
+    private static final LdapEntryManager ldapEntryManager = getLDAPEntryManagerSafe();
     
     public static String getLDAPConfigurationFilePath() {
         String tomcatHome = System.getProperty("catalina.home");
@@ -90,4 +103,159 @@ public class LDAPUtility {
             throw new OAException(SystemErrors.ERROR_CONFIG_READ);
         }
     }
+    
+    private static LdapEntryManager getLDAPEntryManagerSafe() {
+        try {
+            return getLDAPEntryManager();
+        } catch (Exception e) {
+            log.error(e);
+            return null;
+        }
+    }
+    
+    public static LdapConfigurationEntry loadAsimbaConfiguration() {
+        String applianceDn = getDnForAppliance();
+        LdapConfigurationEntry ldapConfiguration = ldapEntryManager.find(LdapConfigurationEntry.class, "ou=oxasimba,ou=configuration,"+applianceDn, null);
+        
+        return ldapConfiguration;
+    }
+    
+    public static List<IDPEntry> loadIDPs() {
+        List<IDPEntry> result = new ArrayList<>();
+        try {
+            List<LdapIDPEntry> entries = ldapEntryManager.findEntries(getDnForLdapIDPEntry(null), LdapIDPEntry.class, null);
+
+            for (LdapIDPEntry entry : entries) {
+                result.add(entry.getEntry());
+            }
+        } catch (Exception ex) {
+            log.error("Failed to load LDAP configuration IDPEntry list");
+        }
+        return result;
+    }
+    
+    public static List<RequestorPoolEntry> loadRequestorPools() {
+        List<RequestorPoolEntry> result = new ArrayList<>();
+        try {
+            List<LDAPRequestorPoolEntry> entries = ldapEntryManager.findEntries(getDnForLDAPRequestorPoolEntry(null), 
+                    LDAPRequestorPoolEntry.class, null);
+            for (LDAPRequestorPoolEntry entry : entries) {
+                result.add(entry.getEntry());
+            }
+        } catch (Exception ex) {
+            log.error("Failed to load LDAP configuration RequestorPoolEntry list");
+        }
+        return result;
+    }
+    
+    public static List<RequestorEntry> loadRequestors() {
+        List<RequestorEntry> result = new ArrayList<>();
+        try {
+            List<LDAPRequestorEntry> entries = ldapEntryManager.findEntries(getDnForLDAPRequestorEntry(null),
+                    LDAPRequestorEntry.class, null);
+            for (LDAPRequestorEntry entry : entries) {
+                result.add(entry.getEntry());
+            }
+        } catch (Exception ex) {
+            log.error("Failed to load LDAP configuration RequestorEntry list");
+        }
+        return result;
+    }
+    
+    public static List<ApplicationSelectorEntry> loadSelectors() {
+        List<ApplicationSelectorEntry> result = new ArrayList<>();
+        try {
+            List<LDAPApplicationSelectorEntry> entries = ldapEntryManager.findEntries(getDnForLDAPApplicationSelectorEntry(null),
+                    LDAPApplicationSelectorEntry.class, null);
+            for (LDAPApplicationSelectorEntry entry : entries) {
+                result.add(entry.getEntry());
+            }
+        } catch (Exception ex) {
+            log.error("Failed to load LDAP configuration ApplicationSelectorEntry list");
+        }
+        return result;
+    }
+    
+    public static List<RequestorEntry> loadRequestorsForPool(String poolID) {
+        List<RequestorEntry> result = new ArrayList<>();
+        try {
+            List<LDAPRequestorEntry> entries = ldapEntryManager.findEntries(getDnForLDAPRequestorEntry(null),
+                    LDAPRequestorEntry.class, null);
+            for (LDAPRequestorEntry entry : entries) {
+                if (poolID.equalsIgnoreCase(entry.getId())) {
+                    result.add(entry.getEntry());
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Failed to load LDAP configuration RequestorEntry list");
+        }
+        return result;
+    }
+    
+    /**
+    * Build DN string for LdapIDPEntry
+    * 
+    * @param inum entry Inum
+    * @return DN string for specified entry or DN for entry branch if inum is null
+    * @throws Exception
+    */
+    public static String getDnForLdapIDPEntry(String inum) {
+        String applianceDn = getDnForAppliance();
+        if (StringHelper.isEmpty(inum)) {
+                return String.format("ou=idps,ou=oxasimba,ou=configuration,%s", applianceDn);
+        }
+        return String.format("inum=%s,ou=idps,ou=oxasimba,ou=configuration,%s", inum, applianceDn);
+    }
+    
+    /**
+    * Build DN string for LDAPApplicationSelectorEntry
+    * 
+    * @param inum entry Inum
+    * @return DN string for specified entry or DN for entry branch if inum is null
+    * @throws Exception
+    */
+    public static String getDnForLDAPApplicationSelectorEntry(String inum) {
+        String applianceDn = getDnForAppliance();
+        if (StringHelper.isEmpty(inum)) {
+                return String.format("ou=selectors,ou=oxasimba,ou=configuration,%s", applianceDn);
+        }
+        return String.format("inum=%s,ou=selectors,ou=oxasimba,ou=configuration,%s", inum, applianceDn);
+    }
+    
+    /**
+    * Build DN string for LDAPRequestorEntry
+    * 
+    * @param inum entry Inum
+    * @return DN string for specified entry or DN for entry branch if inum is null
+    * @throws Exception
+    */
+    public static String getDnForLDAPRequestorEntry(String inum) {
+        String applianceDn = getDnForAppliance();
+        if (StringHelper.isEmpty(inum)) {
+                return String.format("ou=requestors,ou=oxasimba,ou=configuration,%s", applianceDn);
+        }
+        return String.format("inum=%s,ou=requestors,ou=oxasimba,ou=configuration,%s", inum, applianceDn);
+    }
+    
+    /**
+    * Build DN string for LDAPRequestorPoolEntry
+    * 
+    * @param inum entry Inum
+    * @return DN string for specified entry or DN for entry branch if inum is null
+    * @throws Exception
+    */
+    public static String getDnForLDAPRequestorPoolEntry(String inum) {
+        String applianceDn = getDnForAppliance();
+        if (StringHelper.isEmpty(inum)) {
+                return String.format("ou=requestorpools,ou=oxasimba,ou=configuration,%s", applianceDn);
+        }
+        return String.format("inum=%s,ou=requestorpools,ou=oxasimba,ou=configuration,%s", inum, applianceDn);
+    }
+    
+    public static String getDnForAppliance() {
+        //TODO:
+        return "TODO";
+    }
+    
+
 }

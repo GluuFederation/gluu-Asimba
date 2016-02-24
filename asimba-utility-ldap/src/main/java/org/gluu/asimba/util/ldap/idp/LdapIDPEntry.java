@@ -61,8 +61,8 @@ public class LdapIDPEntry extends BaseEntry {
     /**
      * The URL for the sourceId field value calculation.
      */
-    @LdapAttribute(name = "identificationURL")
-    private String identificationURL;
+    //@LdapAttribute(name = "identificationURL")
+    //private String identificationURL;
     
     @LdapAttribute(name = "oxAsimbaEntry")
     @LdapJsonObject
@@ -74,7 +74,7 @@ public class LdapIDPEntry extends BaseEntry {
             this.inum = entry.getInum();
             this.id = entry.getId();
             this.friendlyName = entry.getFriendlyName();
-            this.identificationURL = entry.getIdentificationURL();
+            //this.identificationURL = entry.getIdentificationURL();
         }
     }
     
@@ -93,10 +93,10 @@ public class LdapIDPEntry extends BaseEntry {
         this.entry.setFriendlyName(friendlyName);
     }
     
-    public void setIdentificationURL(String identificationURL) {
-        this.identificationURL = identificationURL;
-        this.entry.setIdentificationURL(identificationURL);
-    }
+//    public void setIdentificationURL(String identificationURL) {
+//        this.identificationURL = identificationURL;
+//        this.entry.setIdentificationURL(identificationURL);
+//    }
     
     public void setUniqueIdentifier(String uniqueIdentifier) {
         setId(uniqueIdentifier);

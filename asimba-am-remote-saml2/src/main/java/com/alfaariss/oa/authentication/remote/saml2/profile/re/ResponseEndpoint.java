@@ -65,7 +65,7 @@ import com.alfaariss.oa.engine.core.idp.storage.IIDP;
 import com.alfaariss.oa.util.logging.RequestorEventLogItem;
 import com.alfaariss.oa.util.saml2.SAML2Exchange;
 import com.alfaariss.oa.util.saml2.SAML2IssueInstantWindow;
-import com.alfaariss.oa.util.saml2.SAML2Requestors;
+import com.alfaariss.oa.util.saml2.ISAML2Requestors;
 import com.alfaariss.oa.util.saml2.SAML2SecurityException;
 import com.alfaariss.oa.util.saml2.binding.AbstractDecodingFactory;
 import com.alfaariss.oa.util.saml2.binding.BindingProperties;
@@ -108,7 +108,7 @@ public class ResponseEndpoint extends AbstractSAML2Profile
      */
     public void init(IConfigurationManager oConfigurationManager,
         Element eConfig, EntityDescriptor entityDescriptor, String sBaseUrl, 
-        String sWebSSOPath, SAML2Requestors requestors, 
+        String sWebSSOPath, ISAML2Requestors requestors, 
         SAML2IssueInstantWindow issueInstantWindow, String sProfileID) 
         throws OAException
     {

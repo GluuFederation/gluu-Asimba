@@ -91,7 +91,7 @@ import com.alfaariss.oa.engine.core.session.factory.ISessionFactory;
 import com.alfaariss.oa.engine.core.tgt.factory.ITGTFactory;
 import com.alfaariss.oa.util.saml2.SAML2IssueInstantWindow;
 import com.alfaariss.oa.util.saml2.SAML2Requestor;
-import com.alfaariss.oa.util.saml2.SAML2Requestors;
+import com.alfaariss.oa.util.saml2.ISAML2Requestors;
 import com.alfaariss.oa.util.saml2.SAML2SecurityException;
 import com.alfaariss.oa.util.saml2.crypto.SAML2CryptoUtils;
 
@@ -131,7 +131,7 @@ public abstract class AbstractSAML2Profile implements ISAML2Profile, IAuthority
     /** EntityDescriptor */
     protected EntityDescriptor _entityDescriptor;
     /** Requestors object */
-    protected SAML2Requestors _requestors;
+    protected ISAML2Requestors _requestors;
     /** Signing is enabled in OA */
     protected boolean _signingEnabled;
     /** IssueInstant accept window object */
@@ -156,7 +156,7 @@ public abstract class AbstractSAML2Profile implements ISAML2Profile, IAuthority
      */
     public void init(IConfigurationManager configurationManager,
         Element config, EntityDescriptor entityDescriptor, 
-        String sBaseUrl, String sWebSSOPath, SAML2Requestors requestors, 
+        String sBaseUrl, String sWebSSOPath, ISAML2Requestors requestors, 
         SAML2IssueInstantWindow issueInstantWindow, String sProfileID) 
         throws OAException
     {

@@ -128,7 +128,8 @@ public class IDPEntry implements Serializable {
     /**
      * The URL for the sourceId field value calculation.
      */
-    private String identificationURL;
+    //@Deprecated
+    //private String identificationURL;
     
     @Override
     public String toString() {
@@ -138,7 +139,6 @@ public class IDPEntry implements Serializable {
             .append(", enabled=").append(enabled).append(", acsIndex=").append(acsIndex).append(", scoping=").append(scoping)
             .append(", nameIdPolicy=").append(nameIdPolicy).append(", allowCreate=").append(allowCreate).append(", nameIdFormat=").append(nameIdFormat)
             .append(", avoidSubjConf=").append(avoidSubjectConfirmations).append(", disableSSO=").append(disableSSOForIDP).append(", dateLastModified=").append(lastModified)
-            .append(", identificationURL=").append(identificationURL)
             .append("]");
         return builder.toString();
     }

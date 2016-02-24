@@ -56,7 +56,7 @@ import com.alfaariss.oa.engine.core.Engine;
 import com.alfaariss.oa.profile.saml2.profile.artifactresolution.protocol.ArtifactResolutionProtocol;
 import com.alfaariss.oa.util.logging.RequestorEventLogItem;
 import com.alfaariss.oa.util.saml2.SAML2IssueInstantWindow;
-import com.alfaariss.oa.util.saml2.SAML2Requestors;
+import com.alfaariss.oa.util.saml2.ISAML2Requestors;
 import com.alfaariss.oa.util.saml2.SAML2SecurityException;
 import com.alfaariss.oa.util.saml2.StatusException;
 import com.alfaariss.oa.util.saml2.binding.AbstractDecodingFactory;
@@ -109,7 +109,7 @@ public class ArtifactResolutionService extends AbstractSAML2Profile
      */
     public void init(IConfigurationManager configurationManager,
         Element config, EntityDescriptor entityDescriptor, 
-        String sBaseUrl, String sWebSSOPath, SAML2Requestors requestors, 
+        String sBaseUrl, String sWebSSOPath, ISAML2Requestors requestors, 
         SAML2IssueInstantWindow issueInstantWindow, String sProfileID) 
         throws OAException
     {

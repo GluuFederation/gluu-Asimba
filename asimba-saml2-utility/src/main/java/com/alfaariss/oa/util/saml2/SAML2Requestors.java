@@ -41,40 +41,40 @@ import com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory;
 /**
  * SAML2 Requestors, used to manage SAML2Requestor instances.
  * 
- * When configured through ConfigManager, the SAML2Requestors are loaded only on startup
- * and SAML2Requestors are maintained in a locally cached HashMap.
- * When configured through other means (JDBC), each time a Requestor is asked for,
- * it is instantiated.
- * 
- *  Note that a SAML2Requestors instance is always tied to a ProfileID, typically the
- *  SAML2 IDP Profile for which the SAML2Requestors are managed. This is necessary to
- *  establish the property-names for a Requestor
- *  
- * Configuration like:
- * <requestors signing="[true/false]">
+ * When configured through ConfigManager, the ISAML2Requestors are loaded only on startup
+ and ISAML2Requestors are maintained in a locally cached HashMap.
+ When configured through other means (JDBC), each time a Requestor is asked for,
+ it is instantiated.
+ 
+  Note that a ISAML2Requestors instance is always tied to a ProfileID, typically the
+  SAML2 IDP Profile for which the ISAML2Requestors are managed. This is necessary to
+  establish the property-names for a Requestor
+  
+ Configuration like:
+ <requestors signing="[true/false]">
  *   <mp_manager id="[id-value]" primary="[true/false]" />
  *   <requestor ...>
  *   	[requestor-configuration]
  *   </requestor>
  * </requestors>
- * 
- * #signing : optional attribute to indicate whether default-signing should be enabled 
- * 		for a SAML2Requestor
- * 
- * mp_manager : optional configuration for metadataprovider manager; if the configuration is
- * 		not provided, a MetadataProviderManager is used by the name of the Profile; if it is
- * 		created, it will also be removed upon destroy() of the SAMLRequestors
- * #id : attribute that indicates the id of the MetadataProviderManager
- * 		that is responsible for managing the MetadataProvider for a SAML2Requestor; when
- * 		mpmanaged_id is not set, the profileId is used to identify the MetadataProviderManager
- * #primary : if true, and if the manager was instantiated, the manager will also be destroyed
- * 		when destroy() of the SAML2Requestors is called. Defaults to false. 
+ 
+ #signing : optional attribute to indicate whether default-signing should be enabled 
+ 		for a SAML2Requestor
+ 
+ mp_manager : optional configuration for metadataprovider manager; if the configuration is
+ 		not provided, a MetadataProviderManager is used by the name of the Profile; if it is
+ 		created, it will also be removed upon destroy() of the SAMLRequestors
+ #id : attribute that indicates the id of the MetadataProviderManager
+ 		that is responsible for managing the MetadataProvider for a SAML2Requestor; when
+ 		mpmanaged_id is not set, the profileId is used to identify the MetadataProviderManager
+ #primary : if true, and if the manager was instantiated, the manager will also be destroyed
+ 		when destroy() of the ISAML2Requestors is called. Defaults to false. 
  *  
  * @author mdobrinic
  * @author MHO
  * @author Alfa & Ariss
  */
-public class SAML2Requestors
+public class SAML2Requestors implements ISAML2Requestors
 {
 	/** Configuration elements */
 	public static final String EL_MPMANAGER = "mp_manager";
@@ -84,15 +84,15 @@ public class SAML2Requestors
 	public static final String ATTR_MPMANAGER_ID = "mpmanager_id";
 	
     /** Local logger instance */
-    private static Log _logger;
+    private static final Log _logger = LogFactory.getLog(ISAML2Requestors.class);
 
-    /** Cache of the instantiated SAML2Requestors, mapping [SAML2Requestor.Id]->[SAML2Requestor-instance] */
+    /** Cache of the instantiated ISAML2Requestors, mapping [SAML2Requestor.Id]->[SAML2Requestor-instance] */
     private Map<String, SAML2Requestor> _mapRequestors;
     
     /** Default Signing property when creating a new SAML2Requestor */
     private boolean _bDefaultSigning;
     
-    /** The SAML2Profile Id for which this SAML2Requestors is used */
+    /** The SAML2Profile Id for which this ISAML2Requestors is used */
     private String _sProfileID;
     
     /** The MetadatProviderManager that manages providers for this Requestor pool */ 
@@ -111,8 +111,6 @@ public class SAML2Requestors
     public SAML2Requestors(IConfigurationManager configurationManager, 
         Element config, String sProfileID) throws OAException
     {
-        _logger = LogFactory.getLog(SAML2Requestors.class);
-        
         _bDefaultSigning = false;
         _sProfileID = sProfileID;
         _mapRequestors = new Hashtable<String, SAML2Requestor>();
@@ -205,6 +203,7 @@ public class SAML2Requestors
     /**
      * Removes the object from memory.
      */
+    @Override
     public void destroy()
     {
         if (_mapRequestors != null)
@@ -220,6 +219,7 @@ public class SAML2Requestors
      * Returns the default singing value. 
      * @return TRUE if signing is enabled.
      */
+    @Override
     public boolean isDefaultSigningEnabled()
     {
         return _bDefaultSigning;
@@ -228,15 +228,16 @@ public class SAML2Requestors
     /**
      * Returns a SAML2 Requestor instance, with SAML2 specific config items.
      * The SAML2Requestor is either instantiated on server startup (through ConfigManager),
-     * or when no SAML2Requestors were estblished on startup using ConfigManager, a new
-     * SAML2Requestor instance is created on the fly (typically when using a JDBC source for 
-     * Requestor configuration)
+ or when no ISAML2Requestors were estblished on startup using ConfigManager, a new
+ SAML2Requestor instance is created on the fly (typically when using a JDBC source for 
+ Requestor configuration)
      *
      * @param oRequestor The OA requestor object.
      * @return SAML2Requestor or <code>null</code> if supplied IRequestor is <code>null</code>.
      * @throws OAException if requestor object could not be created.
      * @since 1.1
      */
+    @Override
     public SAML2Requestor getRequestor(IRequestor oRequestor) throws OAException
     {
         SAML2Requestor oSAML2Requestor = null;
@@ -271,10 +272,10 @@ public class SAML2Requestors
      * 
      * @param oConfigManager ConfigManager for processing configuration
      * @param elConfig requestors-configuration containing &lt;requestor$gt; elements
-     * @return Map of instantiated SAML2Requestors
+     * @return Map of instantiated ISAML2Requestors
      * @throws OAException
      */
-    private Map<String, SAML2Requestor> readRequestors(IConfigurationManager 
+    protected Map<String, SAML2Requestor> readRequestors(IConfigurationManager 
         oConfigManager, Element elConfig) throws OAException
     {
         Map<String, SAML2Requestor> mapRequestors = new Hashtable<String, SAML2Requestor>();
