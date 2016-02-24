@@ -46,7 +46,7 @@ public class RequestorEntry implements Serializable {
     private String inum;
     
     /**
-     * The entity id of the Requestor.
+     * The Requestor ID of this SAML2 requestor. This is the same as the SAML2 EntityID.
      */
     private String id;
     
@@ -57,6 +57,8 @@ public class RequestorEntry implements Serializable {
     
     /**
      * The url of the metadata or NULL if none.
+     * 
+     * Configure the URL where the metadata is retrieved from (preferably a https URL).
      */
     private String metadataUrl;
     
@@ -79,7 +81,9 @@ public class RequestorEntry implements Serializable {
     private Properties properties;
     
     private boolean enabled = true;
-    
+    /**
+     * Configure whether signing is required for this requestor. When set to true, incoming requests without a signature will be rejected.
+     */
     private boolean signing = true;
     
     /**
