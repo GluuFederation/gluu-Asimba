@@ -41,7 +41,7 @@ import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.util.saml2.SAML2IssueInstantWindow;
-import com.alfaariss.oa.util.saml2.SAML2Requestors;
+import com.alfaariss.oa.util.saml2.ISAML2Requestors;
 import com.alfaariss.oa.util.saml2.profile.metadata.AbstractMetadataProfile;
 
 /**
@@ -68,7 +68,7 @@ public class SPMetadata extends AbstractMetadataProfile
      */
     public void init(IConfigurationManager configurationManager,
         Element config, EntityDescriptor entityDescriptor, String baseUrl,
-        String webSSOPath, SAML2Requestors requestors,
+        String webSSOPath, ISAML2Requestors requestors,
         SAML2IssueInstantWindow issueInstantWindow, String profileID)
         throws OAException
     {

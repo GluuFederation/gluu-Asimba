@@ -64,25 +64,35 @@ import org.gluu.asimba.util.ldap.idp.IDPEntry;
  * 
  * @author Dmitry Ognyannikov
  */
-public class IDPStorageLDAP extends AbstractLDAPStorageDerived 
+public class IDPStorageLDAPOld extends AbstractLDAPStorage 
 {
     /** Configuration elements */
     public static final String EL_MPMANAGER = "mp_manager";
+
+    /** Local logger instance */
+    private static final Log _logger = LogFactory.getLog(IDPStorageLDAPOld.class);
 	
     private final static String DEFAULT_ID = "saml2";
     
-
-    /** Local logger instance */
-    private static final Log _logger = LogFactory.getLog(IDPStorageLDAP.class);
+    /** Id of the Storage */
+    protected String _sId;
     
-    private Map<SourceID, SAML2IDP> _mapIDPsOnSourceIDLDAP;
+    /** Id of the MetadataProviderManager that manages metadata for the SAML2IDPs that are
+     * created by this Storage; configurable; defaults to the Id of the Storage (_sId) */
+    protected String _sMPMId;
+    
+    protected boolean _bOwnMPM;
+    
+    
+    private Map<SourceID, SAML2IDP> _mapIDPsOnSourceID;
         
     /**
      * Creates the storage.
      */
-    public IDPStorageLDAP()
+    public IDPStorageLDAPOld()
     {
-        _mapIDPsOnSourceIDLDAP = new Hashtable<SourceID, SAML2IDP>();
+        super();
+        _mapIDPsOnSourceID = new Hashtable<SourceID, SAML2IDP>();
     }
 
     /**
@@ -92,14 +102,67 @@ public class IDPStorageLDAP extends AbstractLDAPStorageDerived
     public void start(IConfigurationManager configManager, Element config)
         throws OAException
     {
+        _sId = configManager.getParam(config, "id");
+        if (_sId == null)
+        {
+            _logger.info("No optional 'id' item for storage configured, using default");
+            _sId = DEFAULT_ID;
+        }
+
+        // Establish MetadataProviderManager Id that refers to existing IMetadataProviderManager
+        Element elMPManager = configManager.getSection(config, EL_MPMANAGER);
+        if (elMPManager == null) {
+        	_logger.info("Using MetadataProviderManager Id from IDPStorage@id: '"+_sId+"'");
+        	_sMPMId = _sId;
+        } else {
+        	_sMPMId = configManager.getParam(elMPManager, "id");
+        	if (_sMPMId == null) {
+        		_logger.error("Missing @id attribute for '"+EL_MPMANAGER+"' configuration");
+        		throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+        	}
+        	_logger.info("Using MetadataProviderManager Id from configuration: '"+_sMPMId+"'");
+        }
+        
+        // Make sure the MetadataProviderManager exists
+        boolean bCreated = MetadataProviderManagerUtil.establishMPM(_sMPMId, configManager, elMPManager);
+        
+        if (elMPManager == null) {
+        	_bOwnMPM = bCreated;
+        } else {
+        	String sPrimary = configManager.getParam(elMPManager, "primary");
+        	if (sPrimary == null ) {
+        		_bOwnMPM = bCreated;	// default: own it when it was created by us
+        	} else {
+        		if ("false".equalsIgnoreCase(sPrimary)) {
+        			_bOwnMPM = false;
+        		} else if ("true".equalsIgnoreCase(sPrimary)) {
+        			_bOwnMPM = true;
+        		} else {
+        			_logger.error("Invalid value for '@primary': '"+sPrimary+"'");
+        			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+        		}
+        	}
+        }
+        
         super.start(configManager, config);
         
-        Enumeration<?> enumIDPs = _htIDPsLDAP.elements();
+        Enumeration<?> enumIDPs = _htIDPs.elements();
         while (enumIDPs.hasMoreElements())
         {
             SAML2IDP saml2IDP = (SAML2IDP)enumIDPs.nextElement();
-            _mapIDPsOnSourceIDLDAP.put(new SourceID(saml2IDP.getSourceID()), saml2IDP);
+            _mapIDPsOnSourceID.put(new SourceID(saml2IDP.getSourceID()), saml2IDP);
         }
+        
+        _logger.info("Started storage with id: " + _sId);
+    }
+    
+    /**
+     * @see com.alfaariss.oa.engine.core.idp.storage.IIDPStorage#getID()
+     */
+    @Override
+    public String getID()
+    {
+        return _sId;
     }
 
     /**
@@ -113,8 +176,8 @@ public class IDPStorageLDAP extends AbstractLDAPStorageDerived
         else if (type.equals(SAML2IDP.TYPE_SOURCEID) && id instanceof byte[])
             return getIDPBySourceID((byte[])id);
 
-        // else not supported - call paent
-        return super.getIDP(id, type);
+        //else not supported
+        return null;
     }
     
     /**
@@ -123,8 +186,14 @@ public class IDPStorageLDAP extends AbstractLDAPStorageDerived
     @Override
     public void stop()
     {
-        if (_mapIDPsOnSourceIDLDAP != null)
-            _mapIDPsOnSourceIDLDAP.clear();
+        if (_mapIDPsOnSourceID != null)
+            _mapIDPsOnSourceID.clear();
+        
+        // Clean up the MetadataProviderManager?
+        if (_bOwnMPM) {
+        	_logger.info("Cleaning up MetadataProviderManager '"+_sMPMId+"'");
+        	MdMgrManager.getInstance().deleteMetadataProviderManager(_sMPMId);
+        }
         
         super.stop();
     }
@@ -168,14 +237,9 @@ public class IDPStorageLDAP extends AbstractLDAPStorageDerived
      * @param baSourceID The SourceID of the organization
      * @return Organization The requested organization object
      */
-    @Override
     protected SAML2IDP getIDPBySourceID(byte[] baSourceID)
     {
-        SourceID key = new SourceID(baSourceID);
-        if (_mapIDPsOnSourceIDLDAP.containsKey(key))
-            return _mapIDPsOnSourceIDLDAP.get(new SourceID(baSourceID));
-        else
-            return super.getIDPBySourceID(baSourceID);
+        return _mapIDPsOnSourceID.get(new SourceID(baSourceID));
     }
 
     private byte[] generateSHA1(String id) throws OAException

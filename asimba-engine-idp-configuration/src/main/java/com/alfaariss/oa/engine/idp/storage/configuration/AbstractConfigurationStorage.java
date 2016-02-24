@@ -48,7 +48,7 @@ import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
 abstract public class AbstractConfigurationStorage<IDP extends IIDP> implements IIDPStorage
 {
     /** System logger */
-    private static Log _logger;
+    private static final Log _logger = LogFactory.getLog(AbstractConfigurationStorage.class);
     /** Hashtable containing all IDP's */
     protected Hashtable<String, IDP> _htIDPs;
     /** List containing all IDP's*/
@@ -59,7 +59,6 @@ abstract public class AbstractConfigurationStorage<IDP extends IIDP> implements 
      */
     public AbstractConfigurationStorage()
     {
-        _logger = LogFactory.getLog(this.getClass());
         _htIDPs = new Hashtable<String, IDP>();
         _listIDPs = new Vector<IIDP>();
     }

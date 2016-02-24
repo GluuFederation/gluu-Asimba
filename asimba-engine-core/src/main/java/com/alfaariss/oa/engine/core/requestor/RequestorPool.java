@@ -63,7 +63,8 @@ public class RequestorPool implements IManagebleItem
     /** properties */
     protected Properties _properties;
     
-    private final List<String> _listAuthenticationProfileIDs;
+    protected final List<String> _listAuthenticationProfileIDs;
+    
     private final Set<IRequestor> _setRequestors;
     
     /**
@@ -285,7 +286,7 @@ public class RequestorPool implements IManagebleItem
      * Add an requestor.
      * @param requestor The requestor that must be added
      */
-    protected void addRequestor(IRequestor requestor)
+    protected final void addRequestor(IRequestor requestor)
     {
         _setRequestors.add(requestor);
     }

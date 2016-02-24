@@ -31,7 +31,7 @@ import org.w3c.dom.Element;
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.util.saml2.SAML2IssueInstantWindow;
-import com.alfaariss.oa.util.saml2.SAML2Requestors;
+import com.alfaariss.oa.util.saml2.ISAML2Requestors;
 
 /**
  * SAML Profile interface.
@@ -66,7 +66,7 @@ public interface ISAML2Profile
      */
     public void init(IConfigurationManager configurationManager, 
         Element config, EntityDescriptor entityDescriptor, String sBaseUrl, 
-        String sWebSSOPath, SAML2Requestors requestors, 
+        String sWebSSOPath, ISAML2Requestors requestors, 
         SAML2IssueInstantWindow issueInstantWindow, String sProfileID) 
         throws OAException;
     

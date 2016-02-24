@@ -62,7 +62,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     /**
      * Creates the object.
      */
-	public ConfigurationFactory()
+    public ConfigurationFactory()
     {
         _logger = LogFactory.getLog(ConfigurationFactory.class);
         _mapPools = new HashMap<String, RequestorPool>();

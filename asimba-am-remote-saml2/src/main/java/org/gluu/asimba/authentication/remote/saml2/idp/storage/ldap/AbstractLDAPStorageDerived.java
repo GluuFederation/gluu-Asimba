@@ -21,12 +21,11 @@
  * gluu-Asimba - Serious Open Source SSO - More information on www.gluu.org
  * 
  */
-package org.gluu.asimba.engine.idp.storage.ldap;
+package org.gluu.asimba.authentication.remote.saml2.idp.storage.ldap;
 
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,8 +34,9 @@ import org.w3c.dom.Element;
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
+import com.alfaariss.oa.authentication.remote.saml2.idp.storage.config.IDPConfigStorage;
 import com.alfaariss.oa.engine.core.idp.storage.IIDP;
-import com.alfaariss.oa.engine.core.idp.storage.IIDPStorage;
+import java.util.ArrayList;
 import org.gluu.asimba.util.ldap.LDAPUtility;
 import org.gluu.asimba.util.ldap.idp.IDPEntry;
 
@@ -45,18 +45,18 @@ import org.gluu.asimba.util.ldap.idp.IDPEntry;
  * 
  * @author Dmitry Ognyannikov
  */
-abstract public class AbstractLDAPStorage<IDP extends IIDP> implements IIDPStorage {
+abstract public class AbstractLDAPStorageDerived<IDP extends IIDP> extends IDPConfigStorage {
     
     /** System logger */
-    private static final Log _logger = LogFactory.getLog(AbstractLDAPStorage.class);;
+    private static final Log _logger = LogFactory.getLog(AbstractLDAPStorageDerived.class);;
     /** Hashtable containing all IDP's */
-    protected Hashtable<String, IDP> _htIDPs;
+    protected Hashtable<String, IDP> _htIDPsLDAP;
     /** List containing all IDP's*/
-    protected List<IIDP> _listIDPs;
+    protected List<IIDP> _listIDPsLDAP;
     
-    public AbstractLDAPStorage() {
-        _htIDPs = new Hashtable<String, IDP>();
-        _listIDPs = new Vector<IIDP>();
+    public AbstractLDAPStorageDerived() {
+        _htIDPsLDAP = new Hashtable<String, IDP>();
+        _listIDPsLDAP = new ArrayList<IIDP>();
     }
 
     /**
@@ -64,7 +64,7 @@ abstract public class AbstractLDAPStorage<IDP extends IIDP> implements IIDPStora
      */
     @Override
     public boolean exists(String id) {
-        return _htIDPs.containsKey(id);
+        return _htIDPsLDAP.containsKey(id) || super.exists(id);
     }
 
     /**
@@ -72,7 +72,16 @@ abstract public class AbstractLDAPStorage<IDP extends IIDP> implements IIDPStora
      */
     @Override
     public List<IIDP> getAll() {
-        return Collections.unmodifiableList(_listIDPs);
+        List<IIDP> result = new ArrayList<>();
+        for (IIDP idp : _listIDPsLDAP) {
+            result.add(idp);
+        }
+        
+        List<IIDP> parent = super.getAll();
+        for (IIDP idp : parent) {
+            result.add(idp);
+        }
+        return Collections.unmodifiableList(result);
     }
 
     /**
@@ -80,7 +89,10 @@ abstract public class AbstractLDAPStorage<IDP extends IIDP> implements IIDPStora
      */
     @Override
     public IIDP getIDP(String id) {
-        return _htIDPs.get(id);
+        if (_htIDPsLDAP.containsKey(id))
+            return _htIDPsLDAP.get(id);
+        else
+            return super.getIDP(id);
     }
 
     /**
@@ -89,19 +101,21 @@ abstract public class AbstractLDAPStorage<IDP extends IIDP> implements IIDPStora
     @Override
     public void start(IConfigurationManager configManager, Element config)
         throws OAException {
+        super.start(configManager, config);
+        
         List<IDPEntry> idpEntries = LDAPUtility.loadIDPs();
         
         for (IDPEntry idpEntry : idpEntries) {
             IDP idp = createIDP(idpEntry);
             
-            if (_htIDPs.containsKey(idp.getID())) {
+            if (_htIDPsLDAP.containsKey(idp.getID())) {
                 _logger.error("Configured IDP is not unique: " + idp.getID());
                 throw new OAException(SystemErrors.ERROR_INIT);
             }
             
             if (idpEntry.isEnabled()) {
-                _htIDPs.put(idp.getID(), idp);
-                _listIDPs.add(idp);
+                _htIDPsLDAP.put(idp.getID(), idp);
+                _listIDPsLDAP.add(idp);
                 
                 _logger.info("Found IDP with ID: " + idp.getID());
             } else  {
@@ -115,11 +129,13 @@ abstract public class AbstractLDAPStorage<IDP extends IIDP> implements IIDPStora
      */
     @Override
     public void stop() {
-        if (_listIDPs != null)
-            _listIDPs.clear();
+        super.stop();
         
-        if (_htIDPs != null)
-            _htIDPs.clear();
+        if (_listIDPsLDAP != null)
+            _listIDPsLDAP.clear();
+        
+        if (_htIDPsLDAP != null)
+            _htIDPsLDAP.clear();
     }
 
     /**

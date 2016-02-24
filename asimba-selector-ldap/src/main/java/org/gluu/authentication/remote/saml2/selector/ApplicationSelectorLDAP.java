@@ -39,24 +39,24 @@ import com.alfaariss.oa.api.session.ISession;
 import com.alfaariss.oa.authentication.remote.saml2.Warnings;
 import com.alfaariss.oa.authentication.remote.saml2.selector.DefaultSelector;
 import com.alfaariss.oa.util.saml2.idp.SAML2IDP;
+import java.util.HashMap;
+import org.gluu.asimba.util.ldap.LDAPUtility;
+import org.gluu.asimba.util.ldap.selector.ApplicationSelectorEntry;
 
 /**
  * Asimba selector based on mapping from LDAP.
  * It do automatic mapping by entityId from request to organizationId 
  * 
- * @author Dmitry Ognyannikov
+ * @author Dmitry Ognyannikov, 2015
  */
 public class ApplicationSelectorLDAP extends DefaultSelector {
 
     private final static Log log = LogFactory.getLog(ApplicationSelectorLDAP.class);;
 
-    private ApplicationSelectorConfigurationLDAP applicationSelectorConfiguration;
     private Map<String, String> applicationMapping;
 
-
-
     public ApplicationSelectorLDAP() {
-        this.applicationSelectorConfiguration = new ApplicationSelectorConfigurationLDAP();
+        applicationMapping = new HashMap<>();
     }
 
     public void start(IConfigurationManager oConfigurationManager, Element eConfig) throws OAException {
@@ -65,8 +65,28 @@ public class ApplicationSelectorLDAP extends DefaultSelector {
     }
 
     private void loadApplicationMapping() throws OAException {
-        this.applicationSelectorConfiguration.loadConfiguration();
-        this.applicationMapping = this.applicationSelectorConfiguration.getApplicationMapping();
+        applicationMapping = new HashMap<>();
+        
+        List<ApplicationSelectorEntry> entries =  LDAPUtility.loadSelectors();
+        // load LDAP entries
+        for (ApplicationSelectorEntry entry : entries) {
+            
+            String entityId = entry.getId();
+            String organizationId = entry.getOrganizationId();
+            
+            if (!entry.isEnabled()) {
+                log.info("ApplicationSelector is disabled. Id: " + entityId + ", organizationId: " + organizationId);
+                continue;
+            }
+            
+            if (applicationMapping.containsKey(entityId)) {
+                log.error("Duplicated ApplicationSelector. Id: " + entityId + ", organizationId: " + organizationId);
+                continue;
+            }
+            
+            log.info("ApplicationSelector loaded. Id: " + entityId + ", organizationId: " + organizationId);
+            applicationMapping.put(entityId, organizationId);
+        }
     }
 
     @Override
@@ -89,9 +109,8 @@ public class ApplicationSelectorLDAP extends DefaultSelector {
             log.debug("Can't find mapping by requestorId: " + requestorId);
         }
 
-        SAML2IDP result = super.resolve(oRequest, oResponse, oSession, listOrganizations, sMethodName, oWarnings);
-
-        return result;
+        // Not found, call super
+        return super.resolve(oRequest, oResponse, oSession, listOrganizations, sMethodName, oWarnings);
     }
 
 

@@ -29,6 +29,11 @@
     	<version>${default.asimba.version}</version>
     </dependency>
     <dependency>
+    	<groupId>org.asimba</groupId>
+    	<artifactId>asimba-engine-requestor-configuration</artifactId>
+    	<version>${default.asimba.version}</version>
+    </dependency>
+    <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
             <version>1.6.2</version>

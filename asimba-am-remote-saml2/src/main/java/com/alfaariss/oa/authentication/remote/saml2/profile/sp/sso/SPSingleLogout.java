@@ -96,7 +96,7 @@ import com.alfaariss.oa.util.logging.RequestorEventLogItem;
 import com.alfaariss.oa.util.logging.UserEventLogItem;
 import com.alfaariss.oa.util.saml2.NameIDFormatter;
 import com.alfaariss.oa.util.saml2.SAML2IssueInstantWindow;
-import com.alfaariss.oa.util.saml2.SAML2Requestors;
+import com.alfaariss.oa.util.saml2.ISAML2Requestors;
 import com.alfaariss.oa.util.saml2.SAML2SecurityException;
 import com.alfaariss.oa.util.saml2.StatusException;
 import com.alfaariss.oa.util.saml2.binding.AbstractDecodingFactory;
@@ -149,7 +149,7 @@ public class SPSingleLogout extends AbstractSAML2Profile
      */
     public void init(IConfigurationManager oConfigurationManager,
         Element eConfig, EntityDescriptor entityDescriptor, String sBaseUrl, 
-        String sWebSSOPath, SAML2Requestors requestors, 
+        String sWebSSOPath, ISAML2Requestors requestors, 
         SAML2IssueInstantWindow issueInstantWindow, String sProfileID) 
         throws OAException
     {

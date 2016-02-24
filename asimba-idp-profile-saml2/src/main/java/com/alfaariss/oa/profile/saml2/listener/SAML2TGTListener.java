@@ -55,7 +55,7 @@ import com.alfaariss.oa.profile.saml2.listener.slo.SynchronousSingleLogout;
 import com.alfaariss.oa.util.logging.UserEventLogItem;
 import com.alfaariss.oa.util.saml2.NameIDFormatter;
 import com.alfaariss.oa.util.saml2.SAML2Requestor;
-import com.alfaariss.oa.util.saml2.SAML2Requestors;
+import com.alfaariss.oa.util.saml2.ISAML2Requestors;
 
 /**
  * Sends logout requests to SPs, when TGT factory indicates that a TGT has expired.
@@ -77,7 +77,7 @@ public class SAML2TGTListener implements ITGTListener, IAuthority
     private boolean _bEnabled;
     private String _sProfileID;
     private ITGTAliasStore _spAliasStore;
-    private SAML2Requestors _saml2Requestors;
+    private ISAML2Requestors _saml2Requestors;
     private IRequestorPoolFactory _requestorPoolFactory;
     private SynchronousSingleLogout _singleLogout;
     
@@ -92,7 +92,7 @@ public class SAML2TGTListener implements ITGTListener, IAuthority
      * @throws OAException If configuration is invalid
      */
     public SAML2TGTListener(IConfigurationManager configurationManager, 
-        Element config, String profileID, SAML2Requestors requestors, 
+        Element config, String profileID, ISAML2Requestors requestors, 
         EntityDescriptor entityDescriptor) throws OAException
     {
         _logger = LogFactory.getLog(SAML2TGTListener.class);

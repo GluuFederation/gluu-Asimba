@@ -32,10 +32,6 @@ import java.util.Map;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -61,7 +57,8 @@ import com.alfaariss.oa.engine.core.crypto.CryptoManager;
 import com.alfaariss.oa.profile.saml2.listener.SAML2TGTListener;
 import com.alfaariss.oa.util.saml2.SAML2Constants;
 import com.alfaariss.oa.util.saml2.SAML2IssueInstantWindow;
-import com.alfaariss.oa.util.saml2.SAML2Requestors;
+import com.alfaariss.oa.util.saml2.ISAML2Requestors;
+import com.alfaariss.oa.util.saml2.SAML2RequestorsLDAP;
 import com.alfaariss.oa.util.saml2.metadata.MetaDataDirector;
 import com.alfaariss.oa.util.saml2.metadata.entitydescriptor.EntityDescriptorBuilder;
 import com.alfaariss.oa.util.saml2.metadata.role.IRoleDescriptorBuilder;
@@ -87,7 +84,7 @@ public class SAML2Profile implements IRequestorProfile, IService
     private Log _logger;
 
     private Map<String, ISAML2Profile> _processors;
-    private SAML2Requestors _requestors;
+    private ISAML2Requestors _requestors;
     private String _sID;
     
     /** The metadata EntityDescriptor */
@@ -127,10 +124,10 @@ public class SAML2Profile implements IRequestorProfile, IService
     
     
     /**
-     * Returns the configured SAML2Requestors instance for this profile
+     * Returns the configured ISAML2Requestors instance for this profile
      * @return
      */
-    public SAML2Requestors getSAML2Requestors() {
+    public ISAML2Requestors getSAML2Requestors() {
     	return _requestors;
     }
    
@@ -203,7 +200,8 @@ public class SAML2Profile implements IRequestorProfile, IService
                 _logger.info("No optional 'requestors' section found in 'profile' section in configuration with profile id: "+ _sID);
             }
             // SAML2Requestors constructor can handle null for empty requestors section:
-            _requestors = new SAML2Requestors(configurationManager, eRequestors, _sID);
+            // Use SAML2RequestorsLDAP for load both XML and LDAP requestors.
+            _requestors = new SAML2RequestorsLDAP(configurationManager, eRequestors, _sID);
             
             //read profiles config
             Element eProfiles = configurationManager.getSection(config, "profiles");
