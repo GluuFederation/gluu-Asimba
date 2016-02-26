@@ -26,7 +26,6 @@ package org.gluu.asimba.util.ldap;
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import java.io.File;
-import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -43,7 +42,10 @@ import org.gluu.asimba.util.ldap.sp.RequestorPoolEntry;
 import org.gluu.site.ldap.LDAPConnectionProvider;
 import org.gluu.site.ldap.OperationsFacade;
 import org.gluu.site.ldap.persistence.LdapEntryManager;
+import org.xdi.model.ldap.GluuLdapConfiguration;
 import org.xdi.util.StringHelper;
+import org.xdi.util.properties.FileConfiguration;
+import org.xdi.util.security.StringEncrypter;
 
 /**
  * LDAP utility functions.
@@ -56,47 +58,114 @@ public class LDAPUtility {
     
     private static final String ASIMBA_LDAP_CONFIGURATION_FILENAME = "oxasimba-ldap.properties";
     
+    private static final String SALT_FILE_NAME = "salt";
+    
     private static final LdapEntryManager ldapEntryManager = getLDAPEntryManagerSafe();
     
-    public static String getLDAPConfigurationFilePath() {
-        String tomcatHome = System.getProperty("catalina.home");
-        if (tomcatHome == null) {
-            log.error("Failed to load configuration from '" + ASIMBA_LDAP_CONFIGURATION_FILENAME + "'. The environment variable catalina.home isn't defined");
+    private static String configurationEntryDN;
+    
+    private static String getBaseDirectory() {
+        if ((System.getProperty("catalina.base") != null) && (System.getProperty("catalina.base.ignore") == null)) {
+            return System.getProperty("catalina.base");
+        } else if (System.getProperty("catalina.home") != null) {
+            return System.getProperty("catalina.home");
+        } else if (System.getProperty("jboss.home.dir") != null) {
+            return System.getProperty("jboss.home.dir");
+        } else {
             return null;
         }
-
-        String confPath = System.getProperty("catalina.home") + File.separator + "conf" + File.separator + ASIMBA_LDAP_CONFIGURATION_FILENAME;
-        log.info("Reading configuration from: " + confPath);
-
-        return confPath;
     }
     
-    public static Properties getLDAPConfigurationProperties() throws OAException {
-        String path = getLDAPConfigurationFilePath();
+    private static String getConfigurationFilePath() {
+        return getBaseDirectory() + File.separator + "conf" + File.separator + ASIMBA_LDAP_CONFIGURATION_FILENAME;
+    }
+    
+    private static String getSaltFilePath() {
+        return getBaseDirectory() + File.separator + "conf" + File.separator + SALT_FILE_NAME;
+    }
+    
+    private static FileConfiguration createFileConfiguration(String fileName, boolean isMandatory) throws OAException {
+        try {
+            FileConfiguration fileConfiguration = new FileConfiguration(fileName);
+            if (fileConfiguration.isLoaded()) {
+                    return fileConfiguration;
+            }
+        } catch (Exception ex) {
+            if (isMandatory) {
+                log.error("Failed to load configuration from " + fileName, ex);
+                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+            }
+        }
+
+        return null;
+    }
+    
+    private static String loadCryptoConfigurationSalt() {
         
-        if (path == null) {
-            log.error("Failed to load configuration. path == null");
+        try {
+            FileConfiguration cryptoConfiguration = createFileConfiguration(getSaltFilePath(), true);
+
+            return cryptoConfiguration.getString("encodeSalt");
+        } catch (Exception ex) {
+            log.error("Failed to loadCryptoConfigurationSalt() from: " + getSaltFilePath());
             return null;
         }
-        try (FileInputStream input = new FileInputStream(path)) {
-            Properties result = new Properties();
-            result.load(input);
-            return result;
-        } catch (IOException e) {
-            log.error("Failed to load configuration from path: " + path, e);
-            throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+    }
+    
+    public static boolean testLdapConnection() {
+        try {
+            log.info("testLdapConnection(), file path: " + getConfigurationFilePath());
+            FileConfiguration configuration = createFileConfiguration(getConfigurationFilePath(), false);
+            
+            final String dn = configuration.getString("configurationEntryDN");
+            log.info("configurationEntryDN: " + dn);
+            
+            final String cryptoConfigurationSalt = loadCryptoConfigurationSalt();
+            
+            GluuLdapConfiguration ldapConfig = new GluuLdapConfiguration();
+            
+            Properties properties = configuration.getProperties();
+            properties.setProperty("bindDN", configuration.getString("bindDN"));
+            properties.setProperty("bindPassword", StringEncrypter.defaultInstance().decrypt(configuration.getString("bindPassword"), cryptoConfigurationSalt));
+            properties.setProperty("servers", configuration.getString("servers"));
+            properties.setProperty("useSSL", configuration.getString("useSSL"));
+            
+            //LDAPConnectionProvider connectionProvider = new LDAPConnectionProvider(PropertiesDecrypter.decryptProperties(properties, cryptoConfigurationSalt));
+            LDAPConnectionProvider connectionProvider = new LDAPConnectionProvider(properties);
+            if (connectionProvider.isConnected()) {
+                log.info("testLdapConnection() result: success");
+                connectionProvider.closeConnectionPool();
+                return true;
+            }
+            log.info("testLdapConnection() result: fail");
+            connectionProvider.closeConnectionPool();
+            return false;
+
+        } catch (Exception ex) {
+                log.error("Could not connect to LDAP", ex);
+                return false;
         }
     }
     
     public static LdapEntryManager getLDAPEntryManager() throws OAException {
-        final LDAPConnectionProvider provider;
-        final OperationsFacade ops;
-        
         // connect
         try {
-            Properties props = LDAPUtility.getLDAPConfigurationProperties();
-            provider = new LDAPConnectionProvider(props);
-            ops = new OperationsFacade(provider, null);
+            FileConfiguration configuration = createFileConfiguration(getConfigurationFilePath(), false);
+            
+            configurationEntryDN = configuration.getString("configurationEntryDN");
+            
+            final String cryptoConfigurationSalt = loadCryptoConfigurationSalt();
+            
+            GluuLdapConfiguration ldapConfig = new GluuLdapConfiguration();
+            
+            Properties properties = configuration.getProperties();
+            properties.setProperty("bindDN", configuration.getString("bindDN"));
+            properties.setProperty("bindPassword", StringEncrypter.defaultInstance().decrypt(configuration.getString("bindPassword"), cryptoConfigurationSalt));
+            properties.setProperty("servers", configuration.getString("servers"));
+            properties.setProperty("useSSL", configuration.getString("useSSL"));
+            
+            final LDAPConnectionProvider provider = new LDAPConnectionProvider(properties);
+            final OperationsFacade ops = new OperationsFacade(provider, null);
             return new LdapEntryManager(ops);
         } catch (Exception e) {
             log.error("cannot open LdapEntryManager", e);
@@ -106,6 +175,8 @@ public class LDAPUtility {
     
     private static LdapEntryManager getLDAPEntryManagerSafe() {
         try {
+            testLdapConnection();
+            
             return getLDAPEntryManager();
         } catch (Exception e) {
             log.error(e);
@@ -202,9 +273,9 @@ public class LDAPUtility {
     public static String getDnForLdapIDPEntry(String inum) {
         String applianceDn = getDnForAppliance();
         if (StringHelper.isEmpty(inum)) {
-                return String.format("ou=idps,ou=oxasimba,ou=configuration,%s", applianceDn);
+                return String.format("ou=idps,%s", applianceDn);
         }
-        return String.format("inum=%s,ou=idps,ou=oxasimba,ou=configuration,%s", inum, applianceDn);
+        return String.format("inum=%s,ou=idps,%s", inum, applianceDn);
     }
     
     /**
@@ -217,9 +288,9 @@ public class LDAPUtility {
     public static String getDnForLDAPApplicationSelectorEntry(String inum) {
         String applianceDn = getDnForAppliance();
         if (StringHelper.isEmpty(inum)) {
-                return String.format("ou=selectors,ou=oxasimba,ou=configuration,%s", applianceDn);
+                return String.format("ou=selectors,%s", applianceDn);
         }
-        return String.format("inum=%s,ou=selectors,ou=oxasimba,ou=configuration,%s", inum, applianceDn);
+        return String.format("inum=%s,ou=selectors,%s", inum, applianceDn);
     }
     
     /**
@@ -232,9 +303,9 @@ public class LDAPUtility {
     public static String getDnForLDAPRequestorEntry(String inum) {
         String applianceDn = getDnForAppliance();
         if (StringHelper.isEmpty(inum)) {
-                return String.format("ou=requestors,ou=oxasimba,ou=configuration,%s", applianceDn);
+                return String.format("ou=requestors,%s", applianceDn);
         }
-        return String.format("inum=%s,ou=requestors,ou=oxasimba,ou=configuration,%s", inum, applianceDn);
+        return String.format("inum=%s,ou=requestors,%s", inum, applianceDn);
     }
     
     /**
@@ -247,14 +318,13 @@ public class LDAPUtility {
     public static String getDnForLDAPRequestorPoolEntry(String inum) {
         String applianceDn = getDnForAppliance();
         if (StringHelper.isEmpty(inum)) {
-                return String.format("ou=requestorpools,ou=oxasimba,ou=configuration,%s", applianceDn);
+                return String.format("ou=requestorpools,%s", applianceDn);
         }
-        return String.format("inum=%s,ou=requestorpools,ou=oxasimba,ou=configuration,%s", inum, applianceDn);
+        return String.format("inum=%s,ou=requestorpools,%s", inum, applianceDn);
     }
     
     public static String getDnForAppliance() {
-        //TODO:
-        return "TODO";
+        return configurationEntryDN;
     }
     
 
