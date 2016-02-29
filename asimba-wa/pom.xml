@@ -363,6 +363,11 @@
 			<artifactId>oxasimba-selector</artifactId>
 			<version>2.4.2.Final</version>
 		</dependency>
+                <dependency>
+			<groupId>org.xdi</groupId>
+			<artifactId>oxasimba-selector-ldap</artifactId>
+			<version>3.0.3-SNAPSHOT</version>
+		</dependency>
 		<dependency>
 			<groupId>org.xdi</groupId>
 			<artifactId>oxasimba-proxy</artifactId>
