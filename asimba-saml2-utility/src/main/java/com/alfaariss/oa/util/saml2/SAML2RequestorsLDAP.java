@@ -73,7 +73,7 @@ public class SAML2RequestorsLDAP extends SAML2Requestors {
                 Properties properties = requestorEntry.getProperties();
                 if (properties == null)
                     properties = new Properties();
-                Requestor oRequestor = new Requestor(requestorEntry.getId(), requestorEntry.getFriendlyName(), requestorEntry.isEnabled(), requestorEntry.getProperties(), requestorEntry.getLastModified());
+                Requestor oRequestor = new Requestor(requestorEntry.getId(), requestorEntry.getFriendlyName(), requestorEntry.isEnabled(), properties, requestorEntry.getLastModified());
                 SAML2Requestor oSAML2Requestor = super.getRequestor(oRequestor);
                 _mapRequestors.put(oSAML2Requestor.getID(), oSAML2Requestor);
             } catch (Exception e) {
