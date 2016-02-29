@@ -37,7 +37,6 @@ import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.session.ISession;
 import com.alfaariss.oa.authentication.remote.saml2.Warnings;
-import com.alfaariss.oa.authentication.remote.saml2.selector.DefaultSelector;
 import com.alfaariss.oa.util.saml2.idp.SAML2IDP;
 import java.util.HashMap;
 import org.gluu.asimba.util.ldap.LDAPUtility;
@@ -49,7 +48,7 @@ import org.gluu.asimba.util.ldap.selector.ApplicationSelectorEntry;
  * 
  * @author Dmitry Ognyannikov, 2015
  */
-public class ApplicationSelectorLDAP extends DefaultSelector {
+public class ApplicationSelectorLDAP extends ApplicationSelector {
 
     private final static Log log = LogFactory.getLog(ApplicationSelectorLDAP.class);;
 
@@ -59,33 +58,37 @@ public class ApplicationSelectorLDAP extends DefaultSelector {
         applicationMapping = new HashMap<>();
     }
 
+    @Override
     public void start(IConfigurationManager oConfigurationManager, Element eConfig) throws OAException {
         super.start(oConfigurationManager, eConfig);
-        loadApplicationMapping();
+        loadApplicationMappingLDAP();
     }
 
-    private void loadApplicationMapping() throws OAException {
+    private void loadApplicationMappingLDAP() throws OAException {
         applicationMapping = new HashMap<>();
         
         List<ApplicationSelectorEntry> entries =  LDAPUtility.loadSelectors();
         // load LDAP entries
         for (ApplicationSelectorEntry entry : entries) {
-            
-            String entityId = entry.getId();
-            String organizationId = entry.getOrganizationId();
-            
-            if (!entry.isEnabled()) {
-                log.info("ApplicationSelector is disabled. Id: " + entityId + ", organizationId: " + organizationId);
-                continue;
+            try {
+                String entityId = entry.getId();
+                String organizationId = entry.getOrganizationId();
+
+                if (!entry.isEnabled()) {
+                    log.info("ApplicationSelector is disabled. Id: " + entityId + ", organizationId: " + organizationId);
+                    continue;
+                }
+
+                if (applicationMapping.containsKey(entityId)) {
+                    log.error("Duplicated ApplicationSelector. Id: " + entityId + ", organizationId: " + organizationId);
+                    continue;
+                }
+
+                log.info("ApplicationSelector loaded. Id: " + entityId + ", organizationId: " + organizationId);
+                applicationMapping.put(entityId, organizationId);
+            } catch (Exception e) {
+                log.error("Cannot read LDAP Selector, id: " + entry.getId(), e);
             }
-            
-            if (applicationMapping.containsKey(entityId)) {
-                log.error("Duplicated ApplicationSelector. Id: " + entityId + ", organizationId: " + organizationId);
-                continue;
-            }
-            
-            log.info("ApplicationSelector loaded. Id: " + entityId + ", organizationId: " + organizationId);
-            applicationMapping.put(entityId, organizationId);
         }
     }
 

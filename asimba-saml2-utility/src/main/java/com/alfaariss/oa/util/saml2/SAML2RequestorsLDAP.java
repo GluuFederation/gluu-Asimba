@@ -31,6 +31,7 @@ import com.alfaariss.oa.engine.core.requestor.Requestor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.gluu.asimba.util.ldap.LDAPUtility;
@@ -68,9 +69,16 @@ public class SAML2RequestorsLDAP extends SAML2Requestors {
         List<RequestorEntry> requestors = LDAPUtility.loadRequestors();
         
         for (RequestorEntry requestorEntry : requestors) {
-            Requestor oRequestor = new Requestor(requestorEntry.getId(), requestorEntry.getFriendlyName(), requestorEntry.isEnabled(), requestorEntry.getProperties(), requestorEntry.getLastModified());
-            SAML2Requestor oSAML2Requestor = super.getRequestor(oRequestor);
-            _mapRequestors.put(oSAML2Requestor.getID(), oSAML2Requestor);
+            try {
+                Properties properties = requestorEntry.getProperties();
+                if (properties == null)
+                    properties = new Properties();
+                Requestor oRequestor = new Requestor(requestorEntry.getId(), requestorEntry.getFriendlyName(), requestorEntry.isEnabled(), requestorEntry.getProperties(), requestorEntry.getLastModified());
+                SAML2Requestor oSAML2Requestor = super.getRequestor(oRequestor);
+                _mapRequestors.put(oSAML2Requestor.getID(), oSAML2Requestor);
+            } catch (Exception e) {
+                _logger.error("Cannot read LDAP Requestor, id: " + requestorEntry.getId(), e);
+            }
         }
     }
 
