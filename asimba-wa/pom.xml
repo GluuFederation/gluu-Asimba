@@ -361,17 +361,17 @@
 		<dependency>
 			<groupId>org.xdi</groupId>
 			<artifactId>oxasimba-selector</artifactId>
-			<version>3.0.3-SNAPSHOT</version>
+			<version>${asimba.version}</version>
 		</dependency>
                 <dependency>
 			<groupId>org.xdi</groupId>
 			<artifactId>oxasimba-selector-ldap</artifactId>
-			<version>3.0.3-SNAPSHOT</version>
+			<version>${asimba.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.xdi</groupId>
 			<artifactId>oxasimba-proxy</artifactId>
-			<version>3.0.3-SNAPSHOT</version>
+			<version>${asimba.version}</version>
 		</dependency>
 
 		<dependency>
