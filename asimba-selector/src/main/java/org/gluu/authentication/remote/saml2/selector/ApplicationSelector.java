@@ -58,6 +58,7 @@ public class ApplicationSelector extends DefaultSelector {
 		this.applicationSelectorConfiguration = new ApplicationSelectorConfiguration();
 	}
 
+        @Override
 	public void start(IConfigurationManager oConfigurationManager, Element eConfig) throws OAException {
 		super.start(oConfigurationManager, eConfig);
 		loadApplicationMapping();

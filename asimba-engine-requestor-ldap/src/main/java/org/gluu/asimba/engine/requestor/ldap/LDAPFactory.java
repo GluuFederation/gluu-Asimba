@@ -124,47 +124,47 @@ public class LDAPFactory extends ConfigurationFactory {
             List<RequestorPoolEntry> poolEntries = LDAPUtility.loadRequestorPools();
 
             for (RequestorPoolEntry entry : poolEntries) {
+                try {
+                    String entityId = entry.getId();
 
-                String entityId = entry.getId();
-
-                if (!entry.isEnabled()) {
-                    _logger.info("RequestorPool is disabled. Id: " + entityId + ", friendlyName: " + entry.getFriendlyName());
-                    continue;
-                }
-
-                if (pools.containsKey(entityId)) {
-                    _logger.error("Dublicated RequestorPool. Id: " + entityId + ", friendlyName: " + entry.getFriendlyName());
-                    continue;
-                }
-
-                _logger.info("RequestorPool loaded. Id: " + entityId + ", friendlyName: " + entry.getFriendlyName());
-
-                RequestorPool oRequestorPool = new LDAPRequestorPool(entry);
-
-                // add pool
-                pools.put(oRequestorPool.getID(), oRequestorPool);
-
-                // add pool's requestors
-                Set<IRequestor> poolRequestors = oRequestorPool.getRequestors();
-                for (IRequestor requestor : poolRequestors) {
-                    if (!requestor.isEnabled()) {
-                        _logger.info("Requestor is disabled. Id: " + requestor.getID() + ", friendlyName: " + requestor.getFriendlyName());
+                    if (!entry.isEnabled()) {
+                        _logger.info("RequestorPool is disabled. Id: " + entityId + ", friendlyName: " + entry.getFriendlyName());
+                        continue;
                     }
-                    
-                    if (requestors.containsKey(requestor.getID())) {
-                        _logger.info("Dublicated Requestor. Id: " + requestor.getID() + ", friendlyName: " + requestor.getFriendlyName());
+
+                    if (pools.containsKey(entityId)) {
+                        _logger.error("Dublicated RequestorPool. Id: " + entityId + ", friendlyName: " + entry.getFriendlyName());
+                        continue;
                     }
-                    requestors.put(requestor.getID(), requestor);
+
+                    _logger.info("RequestorPool loaded. Id: " + entityId + ", friendlyName: " + entry.getFriendlyName());
+
+                    RequestorPool oRequestorPool = new LDAPRequestorPool(entry);
+
+                    // add pool
+                    pools.put(oRequestorPool.getID(), oRequestorPool);
+
+                    // add pool's requestors
+                    Set<IRequestor> poolRequestors = oRequestorPool.getRequestors();
+                    for (IRequestor requestor : poolRequestors) {
+                        if (!requestor.isEnabled()) {
+                            _logger.info("Requestor is disabled. Id: " + requestor.getID() + ", friendlyName: " + requestor.getFriendlyName());
+                        }
+
+                        if (requestors.containsKey(requestor.getID())) {
+                            _logger.info("Dublicated Requestor. Id: " + requestor.getID() + ", friendlyName: " + requestor.getFriendlyName());
+                        }
+                        requestors.put(requestor.getID(), requestor);
+                    }
+                } catch (Exception e) {
+                    _logger.error("LDAPFactory Internal error while reading requestor pool: " + entry.getId());
                 }
             }              
 
             _mapPools = pools;
             _mapRequestors = requestors;
-        } catch (RequestorException e) {
-            _logger.error("Internal error during initialization from LDAP settings", e);
-            throw e;
         } catch (Exception e) {
-            _logger.fatal("Internal error during initialization LDAP settings", e);
+            _logger.fatal("Internal error during initialization from LDAP settings", e);
             throw new RequestorException(SystemErrors.ERROR_INTERNAL);
         }
     }
