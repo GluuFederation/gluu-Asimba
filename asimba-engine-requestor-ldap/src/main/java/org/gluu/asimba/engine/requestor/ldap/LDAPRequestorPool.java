@@ -103,7 +103,9 @@ public class LDAPRequestorPool extends RequestorPool {
             List<RequestorEntry> requestors = LDAPUtility.loadRequestorsForPool(_sID);
             for (RequestorEntry rEntry : requestors) {
                 try {
-                    addRequestor(createRequestor(rEntry));   
+                    addRequestor(createRequestor(rEntry));
+                    _logger.info("Requestor has been loded to LDAPRequestorPool, id: " + rEntry.getId() + 
+                            ", LDAPRequestorPool id: " + _sID);
                 } catch (Exception e) {
                     _logger.error("LDAPRequestorPool Internal error while reading requestor: " + entry.getId());
                 }
