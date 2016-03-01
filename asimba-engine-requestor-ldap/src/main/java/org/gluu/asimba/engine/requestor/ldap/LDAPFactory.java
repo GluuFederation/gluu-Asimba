@@ -155,6 +155,8 @@ public class LDAPFactory extends ConfigurationFactory {
                         if (requestors.containsKey(requestor.getID())) {
                             _logger.info("Dublicated Requestor. Id: " + requestor.getID() + ", friendlyName: " + requestor.getFriendlyName());
                         }
+                        
+                        _logger.info("Requestor has been registered to LDAPRequestorPool, id: " + requestor.getID());
                         requestors.put(requestor.getID(), requestor);
                     }
                 } catch (Exception e) {
