@@ -67,28 +67,32 @@ public class ApplicationSelectorLDAP extends ApplicationSelector {
     private void loadApplicationMappingLDAP() throws OAException {
         applicationMappingLDAP = new HashMap<>();
         
-        List<ApplicationSelectorEntry> entries =  LDAPUtility.loadSelectors();
-        // load LDAP entries
-        for (ApplicationSelectorEntry entry : entries) {
-            try {
-                String entityId = entry.getId();
-                String organizationId = entry.getOrganizationId();
+        try {
+            List<ApplicationSelectorEntry> entries =  LDAPUtility.loadSelectors();
+            // load LDAP entries
+            for (ApplicationSelectorEntry entry : entries) {
+                try {
+                    String entityId = entry.getId();
+                    String organizationId = entry.getOrganizationId();
 
-                if (!entry.isEnabled()) {
-                    log.info("ApplicationSelector is disabled. Id: " + entityId + ", organizationId: " + organizationId);
-                    continue;
+                    if (!entry.isEnabled()) {
+                        log.info("ApplicationSelector is disabled. Id: " + entityId + ", organizationId: " + organizationId);
+                        continue;
+                    }
+
+                    if (applicationMappingLDAP.containsKey(entityId)) {
+                        log.error("Duplicated ApplicationSelector. Id: " + entityId + ", organizationId: " + organizationId);
+                        continue;
+                    }
+
+                    log.info("ApplicationSelector loaded. Id: " + entityId + ", organizationId: " + organizationId);
+                    applicationMappingLDAP.put(entityId, organizationId);
+                } catch (Exception e) {
+                    log.error("Cannot read LDAP Selector, id: " + entry.getId(), e);
                 }
-
-                if (applicationMappingLDAP.containsKey(entityId)) {
-                    log.error("Duplicated ApplicationSelector. Id: " + entityId + ", organizationId: " + organizationId);
-                    continue;
-                }
-
-                log.info("ApplicationSelector loaded. Id: " + entityId + ", organizationId: " + organizationId);
-                applicationMappingLDAP.put(entityId, organizationId);
-            } catch (Exception e) {
-                log.error("Cannot read LDAP Selector, id: " + entry.getId(), e);
             }
+        } catch (Exception e) {
+            log.error("Cannot read LDAP Selectors)");
         }
     }
 
