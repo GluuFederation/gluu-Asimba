@@ -52,10 +52,10 @@ public class ApplicationSelectorLDAP extends ApplicationSelector {
 
     private final static Log log = LogFactory.getLog(ApplicationSelectorLDAP.class);;
 
-    private Map<String, String> applicationMapping;
+    private Map<String, String> applicationMappingLDAP;
 
     public ApplicationSelectorLDAP() {
-        applicationMapping = new HashMap<>();
+        applicationMappingLDAP = new HashMap<>();
     }
 
     @Override
@@ -65,7 +65,7 @@ public class ApplicationSelectorLDAP extends ApplicationSelector {
     }
 
     private void loadApplicationMappingLDAP() throws OAException {
-        applicationMapping = new HashMap<>();
+        applicationMappingLDAP = new HashMap<>();
         
         List<ApplicationSelectorEntry> entries =  LDAPUtility.loadSelectors();
         // load LDAP entries
@@ -79,13 +79,13 @@ public class ApplicationSelectorLDAP extends ApplicationSelector {
                     continue;
                 }
 
-                if (applicationMapping.containsKey(entityId)) {
+                if (applicationMappingLDAP.containsKey(entityId)) {
                     log.error("Duplicated ApplicationSelector. Id: " + entityId + ", organizationId: " + organizationId);
                     continue;
                 }
 
                 log.info("ApplicationSelector loaded. Id: " + entityId + ", organizationId: " + organizationId);
-                applicationMapping.put(entityId, organizationId);
+                applicationMappingLDAP.put(entityId, organizationId);
             } catch (Exception e) {
                 log.error("Cannot read LDAP Selector, id: " + entry.getId(), e);
             }
@@ -99,7 +99,7 @@ public class ApplicationSelectorLDAP extends ApplicationSelector {
         String requestorId = oSession.getRequestorId();
         log.debug("Attempting to find mapping by requestorId: " + requestorId);
 
-        String organizationId = this.applicationMapping.get(requestorId);
+        String organizationId = this.applicationMappingLDAP.get(requestorId);
         if (organizationId != null) {
             log.debug("Found organizationId: " + organizationId + " by requestorId: " + requestorId);
 

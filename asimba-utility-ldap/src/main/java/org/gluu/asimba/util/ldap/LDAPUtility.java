@@ -112,42 +112,7 @@ public class LDAPUtility {
         }
     }
     
-    public static boolean testLdapConnection() {
-        try {
-            log.info("testLdapConnection(), file path: " + getConfigurationFilePath());
-            FileConfiguration configuration = createFileConfiguration(getConfigurationFilePath(), false);
-            
-            final String dn = configuration.getString("configurationEntryDN");
-            log.info("configurationEntryDN: " + dn);
-            
-            final String cryptoConfigurationSalt = loadCryptoConfigurationSalt();
-            
-            GluuLdapConfiguration ldapConfig = new GluuLdapConfiguration();
-            
-            Properties properties = configuration.getProperties();
-            properties.setProperty("bindDN", configuration.getString("bindDN"));
-            properties.setProperty("bindPassword", StringEncrypter.defaultInstance().decrypt(configuration.getString("bindPassword"), cryptoConfigurationSalt));
-            properties.setProperty("servers", configuration.getString("servers"));
-            properties.setProperty("useSSL", configuration.getString("useSSL"));
-            
-            //LDAPConnectionProvider connectionProvider = new LDAPConnectionProvider(PropertiesDecrypter.decryptProperties(properties, cryptoConfigurationSalt));
-            LDAPConnectionProvider connectionProvider = new LDAPConnectionProvider(properties);
-            if (connectionProvider.isConnected()) {
-                log.info("testLdapConnection() result: success");
-                connectionProvider.closeConnectionPool();
-                return true;
-            }
-            log.info("testLdapConnection() result: fail");
-            connectionProvider.closeConnectionPool();
-            return false;
-
-        } catch (Exception ex) {
-                log.error("Could not connect to LDAP", ex);
-                return false;
-        }
-    }
-    
-    public static LdapEntryManager getLDAPEntryManager() throws OAException {
+    public static synchronized LdapEntryManager getLDAPEntryManager() throws OAException {
         // connect
         try {
             FileConfiguration configuration = createFileConfiguration(getConfigurationFilePath(), false);
@@ -155,8 +120,6 @@ public class LDAPUtility {
             configurationEntryDN = configuration.getString("configurationEntryDN");
             
             final String cryptoConfigurationSalt = loadCryptoConfigurationSalt();
-            
-            GluuLdapConfiguration ldapConfig = new GluuLdapConfiguration();
             
             Properties properties = configuration.getProperties();
             properties.setProperty("bindDN", configuration.getString("bindDN"));
@@ -175,8 +138,6 @@ public class LDAPUtility {
     
     private static LdapEntryManager getLDAPEntryManagerSafe() {
         try {
-            testLdapConnection();
-            
             return getLDAPEntryManager();
         } catch (Exception e) {
             log.error(e);
@@ -184,14 +145,14 @@ public class LDAPUtility {
         }
     }
     
-    public static LdapConfigurationEntry loadAsimbaConfiguration() {
+    public static synchronized LdapConfigurationEntry loadAsimbaConfiguration() {
         String applianceDn = getDnForAppliance();
         LdapConfigurationEntry ldapConfiguration = ldapEntryManager.find(LdapConfigurationEntry.class, "ou=oxasimba,ou=configuration,"+applianceDn, null);
         
         return ldapConfiguration;
     }
     
-    public static List<IDPEntry> loadIDPs() {
+    public static synchronized List<IDPEntry> loadIDPs() {
         List<IDPEntry> result = new ArrayList<>();
         try {
             List<LdapIDPEntry> entries = ldapEntryManager.findEntries(getDnForLdapIDPEntry(null), LdapIDPEntry.class, null);
@@ -205,7 +166,7 @@ public class LDAPUtility {
         return result;
     }
     
-    public static List<RequestorPoolEntry> loadRequestorPools() {
+    public static synchronized List<RequestorPoolEntry> loadRequestorPools() {
         List<RequestorPoolEntry> result = new ArrayList<>();
         try {
             List<LDAPRequestorPoolEntry> entries = ldapEntryManager.findEntries(getDnForLDAPRequestorPoolEntry(null), 
@@ -219,7 +180,7 @@ public class LDAPUtility {
         return result;
     }
     
-    public static List<RequestorEntry> loadRequestors() {
+    public static synchronized List<RequestorEntry> loadRequestors() {
         List<RequestorEntry> result = new ArrayList<>();
         try {
             List<LDAPRequestorEntry> entries = ldapEntryManager.findEntries(getDnForLDAPRequestorEntry(null),
@@ -233,7 +194,7 @@ public class LDAPUtility {
         return result;
     }
     
-    public static List<ApplicationSelectorEntry> loadSelectors() {
+    public static synchronized List<ApplicationSelectorEntry> loadSelectors() {
         List<ApplicationSelectorEntry> result = new ArrayList<>();
         try {
             List<LDAPApplicationSelectorEntry> entries = ldapEntryManager.findEntries(getDnForLDAPApplicationSelectorEntry(null),
@@ -247,7 +208,7 @@ public class LDAPUtility {
         return result;
     }
     
-    public static List<RequestorEntry> loadRequestorsForPool(String poolID) {
+    public static synchronized List<RequestorEntry> loadRequestorsForPool(String poolID) {
         List<RequestorEntry> result = new ArrayList<>();
         try {
             List<LDAPRequestorEntry> entries = ldapEntryManager.findEntries(getDnForLDAPRequestorEntry(null),

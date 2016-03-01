@@ -106,20 +106,24 @@ abstract public class AbstractLDAPStorageDerived<IDP extends IIDP> extends IDPCo
         List<IDPEntry> idpEntries = LDAPUtility.loadIDPs();
         
         for (IDPEntry idpEntry : idpEntries) {
-            IDP idp = createIDP(idpEntry);
-            
-            if (_htIDPsLDAP.containsKey(idp.getID())) {
-                _logger.error("Configured IDP is not unique: " + idp.getID());
-                throw new OAException(SystemErrors.ERROR_INIT);
-            }
-            
-            if (idpEntry.isEnabled()) {
-                _htIDPsLDAP.put(idp.getID(), idp);
-                _listIDPsLDAP.add(idp);
-                
-                _logger.info("Found IDP with ID: " + idp.getID());
-            } else  {
-                _logger.info("IDP disabled: " + idp.getID());
+            try {
+                IDP idp = createIDP(idpEntry);
+
+                if (_htIDPsLDAP.containsKey(idp.getID())) {
+                    _logger.error("Configured IDP is not unique: " + idp.getID());
+                    throw new OAException(SystemErrors.ERROR_INIT);
+                }
+
+                if (idpEntry.isEnabled()) {
+                    _htIDPsLDAP.put(idp.getID(), idp);
+                    _listIDPsLDAP.add(idp);
+
+                    _logger.info("Found IDP with ID: " + idp.getID());
+                } else  {
+                    _logger.info("IDP disabled: " + idp.getID());
+                }
+            } catch (Exception e) {
+                _logger.error("Cannot read LDAP IDPEntry, id: " + idpEntry.getId(), e);
             }
         }
     }

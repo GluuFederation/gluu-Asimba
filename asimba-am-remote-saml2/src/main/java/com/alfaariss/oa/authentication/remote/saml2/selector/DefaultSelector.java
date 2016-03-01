@@ -56,7 +56,7 @@ public class DefaultSelector implements ISAMLOrganizationSelector
     private final static String DEFAULT_ID_PARAM = "saml_organization_id";
     private final static String REQUEST_PARAM_IDPS = "organizations";
     private static final String DEFAULT_JSP_SELECTION = "/ui/sso/authn/saml2/saml_selector.jsp";
-    private Log _logger;
+    private static final Log _logger = LogFactory.getLog(DefaultSelector.class);;
     private String _sTemplatePath;
     private String _sIdParameter;
     private boolean _bShowAlways;
@@ -66,12 +66,12 @@ public class DefaultSelector implements ISAMLOrganizationSelector
      */
     public DefaultSelector()
     {
-        _logger = LogFactory.getLog(DefaultSelector.class);
     }
 
     /**
      * @see ISAMLOrganizationSelector#start(IConfigurationManager, org.w3c.dom.Element)
      */
+    @Override
     public void start(IConfigurationManager oConfigurationManager,
         Element eConfig) throws OAException
     {
@@ -135,6 +135,7 @@ public class DefaultSelector implements ISAMLOrganizationSelector
     /**
      * @see ISAMLOrganizationSelector#stop()
      */
+    @Override
     public void stop()
     {
         //do nothing
@@ -145,6 +146,7 @@ public class DefaultSelector implements ISAMLOrganizationSelector
      * 
      * @see com.alfaariss.oa.authentication.remote.saml2.selector.ISAMLOrganizationSelector#resolve(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, com.alfaariss.oa.api.session.ISession, java.util.List, java.lang.String, java.util.List)
      */
+    @Override
     public SAML2IDP resolve(HttpServletRequest oRequest, 
         HttpServletResponse oResponse, ISession oSession,
         List<SAML2IDP> listOrganizations, String sMethodName, 

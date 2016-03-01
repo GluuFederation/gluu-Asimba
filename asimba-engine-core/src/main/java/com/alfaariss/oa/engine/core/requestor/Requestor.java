@@ -74,12 +74,16 @@ public class Requestor implements IRequestor
         this._bEnabled = enabled;
         this._dLastModified = dLastModified;
         
-        _properties = properties;
+        if (properties != null)
+            _properties = properties;
+        else
+            _properties = new Properties();
     }
     
     /**
      * @see com.alfaariss.oa.api.IManagebleItem#isEnabled()
      */
+    @Override
     public boolean isEnabled()
     {
         return _bEnabled;
@@ -88,6 +92,7 @@ public class Requestor implements IRequestor
     /**
      * @see com.alfaariss.oa.api.IManagebleItem#getFriendlyName()
      */
+    @Override
     public String getFriendlyName()
     {
         return _sFriendlyName;
@@ -96,6 +101,7 @@ public class Requestor implements IRequestor
     /**
      * @see com.alfaariss.oa.api.IManagebleItem#getID()
      */
+    @Override
     public String getID()
     {
         return _sID;
@@ -105,6 +111,7 @@ public class Requestor implements IRequestor
      * Returns the unmodifiable properties Map.
      * @see IRequestor#getProperties()
      */
+    @Override
     public Map getProperties()
     {
         return Collections.unmodifiableMap(_properties);
@@ -113,6 +120,7 @@ public class Requestor implements IRequestor
     /**
      * @see IRequestor#getProperty(java.lang.String)
      */
+    @Override
     public Object getProperty(String name)
     {
         return _properties.get(name);
@@ -121,6 +129,7 @@ public class Requestor implements IRequestor
     /**
      * @see IRequestor#isProperty(java.lang.String)
      */
+    @Override
     public boolean isProperty(String name)
     {
         return _properties.containsKey(name);
@@ -129,6 +138,7 @@ public class Requestor implements IRequestor
     /**
      * @see IRequestor#getLastModified() 
      */
+    @Override
     public Date getLastModified() {
     	return _dLastModified;
     }
@@ -137,6 +147,7 @@ public class Requestor implements IRequestor
      * @see IRequestor#setLastModified()
      * @param dLastModified
      */
+    @Override
     public void setLastModified(Date dLastModified) {
     	_dLastModified = dLastModified;
     }
@@ -145,6 +156,7 @@ public class Requestor implements IRequestor
      * The {@link java.lang.Object#hashCode()} of the ID.
      * @see java.lang.Object#hashCode()
      */
+    @Override
     public int hashCode()
     {
         return _sID.hashCode();
@@ -154,6 +166,7 @@ public class Requestor implements IRequestor
      * Returns <code>ID.equals(other.ID)</code>.
      * @see java.lang.Object#equals(java.lang.Object)
      */
+    @Override
     public boolean equals(Object other)
     {
         if(!(other instanceof Requestor))
@@ -164,6 +177,7 @@ public class Requestor implements IRequestor
     /**
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString()
     {
         StringBuffer sbInfo = new StringBuffer(_sFriendlyName);
