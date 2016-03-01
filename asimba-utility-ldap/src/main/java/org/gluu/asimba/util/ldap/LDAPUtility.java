@@ -214,7 +214,7 @@ public class LDAPUtility {
             List<LDAPRequestorEntry> entries = ldapEntryManager.findEntries(getDnForLDAPRequestorEntry(null),
                     LDAPRequestorEntry.class, null);
             for (LDAPRequestorEntry entry : entries) {
-                if (poolID.equalsIgnoreCase(entry.getId())) {
+                if (poolID.equalsIgnoreCase(entry.getEntry().getPoolID())) {
                     result.add(entry.getEntry());
                 }
             }
