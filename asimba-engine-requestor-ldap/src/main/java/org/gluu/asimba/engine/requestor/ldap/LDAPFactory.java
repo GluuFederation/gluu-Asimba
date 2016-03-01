@@ -143,6 +143,7 @@ public class LDAPFactory extends ConfigurationFactory {
 
                     // add pool
                     pools.put(oRequestorPool.getID(), oRequestorPool);
+                    _logger.info("RequestorPool has been loded to LDAPFactory, id: " + entry.getId());
 
                     // add pool's requestors
                     Set<IRequestor> poolRequestors = oRequestorPool.getRequestors();

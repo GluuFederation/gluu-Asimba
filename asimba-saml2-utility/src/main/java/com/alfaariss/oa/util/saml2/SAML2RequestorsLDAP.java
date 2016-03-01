@@ -76,6 +76,8 @@ public class SAML2RequestorsLDAP extends SAML2Requestors {
                 Requestor oRequestor = new Requestor(requestorEntry.getId(), requestorEntry.getFriendlyName(), requestorEntry.isEnabled(), properties, requestorEntry.getLastModified());
                 SAML2Requestor oSAML2Requestor = super.getRequestor(oRequestor);
                 _mapRequestors.put(oSAML2Requestor.getID(), oSAML2Requestor);
+                
+                _logger.info("SAML2Requestor has been loded to SAML2RequestorsLDAP, id: " + requestorEntry.getId());
             } catch (Exception e) {
                 _logger.error("Cannot read LDAP Requestor, id: " + requestorEntry.getId(), e);
             }
