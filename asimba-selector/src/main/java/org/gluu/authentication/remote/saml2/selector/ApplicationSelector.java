@@ -65,8 +65,12 @@ public class ApplicationSelector extends DefaultSelector {
 	}
 
 	private void loadApplicationMapping() {
+            try {
 		this.applicationSelectorConfiguration.loadConfiguration();
 		this.applicationMapping = this.applicationSelectorConfiguration.getApplicationMapping();
+            } catch (Exception e) {
+                log.error("Cannot read asimba-selector.xml configuration", e);
+            }
 	}
 
 	@Override
