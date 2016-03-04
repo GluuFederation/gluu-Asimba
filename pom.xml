@@ -105,7 +105,6 @@
     <module>asimba-engine-user-provisioning</module>
     <module>asimba-engine-idp-configuration</module>
     <module>asimba-engine-idp-jdbc</module>
-    <module>asimba-engine-idp-ldap</module>
     <module>asimba-helper-stylesheet</module>
     <module>asimba-am-password</module>
     <module>asimba-am-password-jdbc</module>

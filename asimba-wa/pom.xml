@@ -172,11 +172,6 @@
 		</dependency>
 		<dependency>
 			<groupId>org.asimba</groupId>
-			<artifactId>asimba-engine-idp-ldap</artifactId>
-			<version>${asimba.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.asimba</groupId>
 			<artifactId>asimba-am-password</artifactId>
 			<version>${asimba.version}</version>
 		</dependency>
