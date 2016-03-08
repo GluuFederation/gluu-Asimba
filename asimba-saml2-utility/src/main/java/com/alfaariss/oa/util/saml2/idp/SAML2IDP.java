@@ -226,9 +226,9 @@ public class SAML2IDP extends AbstractIDP
         		throws OAException
     {        
     	_baSourceID = baSourceID;
+        
         _sMetadataFile = sMetadataFile;
-        if (_sMetadataFile != null && !"".equals(_sMetadataFile))
-        {
+        if (_sMetadataFile != null && !"".equals(_sMetadataFile)) {
             File fMetadata = new File(_sMetadataFile);
             if (!fMetadata.exists())
             {
@@ -239,11 +239,13 @@ public class SAML2IDP extends AbstractIDP
                 _oLogger.error(sbError.toString());
                 throw new OAException(SystemErrors.ERROR_INTERNAL);
             }
+        } else {
+            // set null to prevent empty string
+            _sMetadataFile = null;
         }
         
         _sMetadataURL = sMetadataURL;
-        if (_sMetadataURL != null && !"".equals(_sMetadataURL))
-        {
+        if (_sMetadataURL != null && !"".equals(_sMetadataURL)) {
             try
             {
                 new URL(_sMetadataURL);
@@ -257,6 +259,9 @@ public class SAML2IDP extends AbstractIDP
                 _oLogger.error(sbError.toString(), e);
                 throw new OAException(SystemErrors.ERROR_INTERNAL);
             }
+        }  else {
+            // set null to prevent empty string
+            _sMetadataURL = null;
         }
         
         _iMetadataTimeout = iMetadataTimeout;
@@ -364,7 +369,7 @@ public class SAML2IDP extends AbstractIDP
 		
     	// First time a MetadataProvider request is being handled for this SAML2IDP instance:
     	MetadataProviderConfiguration oMPC = new MetadataProviderConfiguration(
-    			_sMetadataURL, 0, _sMetadataFile, _sMetadata);
+    			_sMetadataURL, _iMetadataTimeout, _sMetadataFile, _sMetadata);
     	String sConfiguredProviderFingerprint = oMPC.getFingerprint();
     	
     	IMetadataProviderManager oMPM = null;
