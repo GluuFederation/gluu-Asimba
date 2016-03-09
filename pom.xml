@@ -49,63 +49,62 @@
   </developers>
 
   <issueManagement>
-  	<system>SourceForge Tickets</system>
-  	<url>https://sourceforge.net/p/asimba/tickets/</url>
+  	<system>GitHub Tickets</system>
+  	<url>https://github.com/GluuFederation/gluu-Asimba/issues</url>
   </issueManagement>
   
   <scm>
-  	<url>https://sourceforge.net/p/asimba/code</url>
-  	<connection>scm:svn:http://svn.code.sf.net/p/asimba/code/trunk</connection>
-  	<developerConnection>scm:svn:svn+ssh://svn.code.sf.net/p/asimba/code/trunk</developerConnection>
+  	<url>https://github.com/GluuFederation/gluu-Asimba.git</url>
+  	<connection>https://github.com/GluuFederation/gluu-Asimba.git</connection>
+  	<developerConnection>git@github.com:GluuFederation/gluu-Asimba.git</developerConnection>
   </scm>
   
   <distributionManagement>
     <site>
-      <id>asimba-site</id>
-      <name>Asimba Maven Site</name>
-      <url>scpexe://www.asimba.org/var/www/www.asimba.org/maven/site</url>
+      <id>gluu-asimba-site</id>
+      <name>Gluu Maven Site</name>
+      <url>http://ox.gluu.org</url>
     </site>
     <repository>
-      <id>asimba-artifact-repository</id>
-      <name>Asimba Artifact Repository</name>
-      <url>scpexe://www.asimba.org/var/www/www.asimba.org/maven/repo</url>
+      <id>gluu-asimba-artifact-repository</id>
+      <name>Gluu Asimba Artifact Repository</name>
+      <url>https://ox.gluu.org/maven/</url>
     </repository>
   </distributionManagement>
 
 
   <!-- define the modules that are pare of the baseline release of Asimba -->
   <modules>
-  	<module>asimba-api</module>
-  	<module>asimba-utility</module>
-  	<module>asimba-engine-core</module>
-  	<module>asimba-engine-sso</module>
-  	<module>asimba-wa</module>
-  	<module>asimba-sso-web</module>
+    <module>asimba-api</module>
+    <module>asimba-utility</module>
+    <module>asimba-engine-core</module>
+    <module>asimba-engine-sso</module>
+    <module>asimba-wa</module>
+    <module>asimba-sso-web</module>
     <module>asimba-sso-profile-ssoquery</module>
     <module>asimba-authorization-web</module>
-  	<module>asimba-engine-storage</module>
-  	<module>asimba-engine-crypto-keystore</module>
-  	<module>asimba-engine-tgt-memory</module>
+    <module>asimba-engine-storage</module>
+    <module>asimba-engine-crypto-keystore</module>
+    <module>asimba-engine-tgt-memory</module>
     <module>asimba-engine-tgt-jdbc</module>
-  	<module>asimba-engine-session-memory</module>
+    <module>asimba-engine-session-memory</module>
     <module>asimba-engine-session-jdbc</module>
-  	<module>asimba-engine-attribute-gather-file</module>
+    <module>asimba-engine-attribute-gather-file</module>
     <module>asimba-engine-attribute-gather-jdbc</module>
     <module>asimba-engine-attribute-gather-jndi</module>
-  	<module>asimba-engine-requestor-configuration</module>
-	<module>asimba-engine-requestor-jdbc</module>
-	<module>asimba-engine-requestor-ldap</module>
-  	<module>asimba-engine-authentication-configuration</module>
+    <module>asimba-engine-requestor-configuration</module>
+    <module>asimba-engine-requestor-jdbc</module>
+    <module>asimba-engine-requestor-ldap</module>
+    <module>asimba-engine-authentication-configuration</module>
     <module>asimba-engine-authentication-jdbc</module>
-  	<module>asimba-engine-authorization-configuration</module>
+    <module>asimba-engine-authorization-configuration</module>
     <module>asimba-engine-authorization-jdbc</module>
     <module>asimba-engine-action</module>
-  	<module>asimba-engine-attribute-release-configuration</module>
+    <module>asimba-engine-attribute-release-configuration</module>
     <module>asimba-engine-attribute-release-jdbc</module>
-  	<module>asimba-engine-user-provisioning</module>
+    <module>asimba-engine-user-provisioning</module>
     <module>asimba-engine-idp-configuration</module>
     <module>asimba-engine-idp-jdbc</module>
-    <module>asimba-engine-idp-ldap</module>
     <module>asimba-helper-stylesheet</module>
     <module>asimba-am-password</module>
     <module>asimba-am-password-jdbc</module>

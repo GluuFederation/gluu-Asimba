@@ -32,8 +32,6 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.asimba.util.saml2.metadata.provider.management.MdMgrManager;
-import org.asimba.util.saml2.metadata.provider.management.MetadataProviderManagerUtil;
 import org.w3c.dom.Element;
 
 import com.alfaariss.oa.OAException;
@@ -42,7 +40,6 @@ import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.authentication.remote.saml2.idp.storage.config.SourceID;
 import com.alfaariss.oa.engine.core.idp.storage.IIDP;
 import com.alfaariss.oa.util.saml2.idp.SAML2IDP;
-import org.gluu.asimba.engine.idp.storage.ldap.AbstractLDAPStorage;
 import org.gluu.asimba.util.ldap.idp.IDPEntry;
 
 /**

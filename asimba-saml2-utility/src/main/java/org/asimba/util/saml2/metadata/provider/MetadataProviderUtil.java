@@ -475,7 +475,7 @@ public class MetadataProviderUtil {
         // Check valid and existing destination (with configured timeout settings)
         try {
             URLConnection oURLConnection = oURLTarget.openConnection();
-            if (iTimeout == 0) {
+            if (iTimeout <= 0) {
 	            oURLConnection.setConnectTimeout(3000);
 	            oURLConnection.setReadTimeout(3000);
             } else {

@@ -53,6 +53,9 @@ public class SAML2RequestorsLDAP extends SAML2Requestors {
     /** Cache of the instantiated ISAML2Requestors, mapping [SAML2Requestor.Id]->[SAML2Requestor-instance] */
     private Map<String, SAML2Requestor> _mapRequestors;
     
+    /** Cache of the instantiated requestor entities, mapping [SAML2Requestor.Id]->[RequestorEntryu] */
+    private Map<String, RequestorEntry> _mapRequestorEntries;
+    
     /**
      * Constructor.
      * @param configurationManager The config manager.
@@ -66,15 +69,18 @@ public class SAML2RequestorsLDAP extends SAML2Requestors {
         
         // init cash - read LDAP mapRequestors
         _mapRequestors = new HashMap<>();
+        _mapRequestorEntries = new HashMap<>();
         List<RequestorEntry> requestors = LDAPUtility.loadRequestors();
         
         for (RequestorEntry requestorEntry : requestors) {
             try {
+                _mapRequestorEntries.put(requestorEntry.getId(), requestorEntry);
+                
                 Properties properties = requestorEntry.getProperties();
                 if (properties == null)
                     properties = new Properties();
                 Requestor oRequestor = new Requestor(requestorEntry.getId(), requestorEntry.getFriendlyName(), requestorEntry.isEnabled(), properties, requestorEntry.getLastModified());
-                SAML2Requestor oSAML2Requestor = super.getRequestor(oRequestor);
+                SAML2Requestor oSAML2Requestor = getRequestor(oRequestor);
                 _mapRequestors.put(oSAML2Requestor.getID(), oSAML2Requestor);
                 
                 _logger.info("SAML2Requestor has been loded to SAML2RequestorsLDAP, id: " + requestorEntry.getId());
@@ -129,7 +135,12 @@ public class SAML2RequestorsLDAP extends SAML2Requestors {
                 return null;
             
             oSAML2Requestor = _mapRequestors.get(oRequestor.getID());
-            if (oSAML2Requestor == null) {
+            
+            if (oSAML2Requestor == null && _mapRequestorEntries.containsKey(oRequestor.getID())) {
+                // init from LDAP entry
+                oSAML2Requestor = new SAML2Requestor(oRequestor, _mapRequestorEntries.get(oRequestor.getID()), isbDefaultSigning(), getsProfileID(), getsMPMId());  
+            } else if (oSAML2Requestor == null) {
+                // try to get from XML configuration
                 oSAML2Requestor = super.getRequestor(oRequestor);
             } 
             

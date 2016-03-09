@@ -65,8 +65,8 @@ import org.gluu.asimba.util.ldap.idp.IDPEntry;
 public class SAML2IDP extends AbstractIDP
 	implements Serializable
 {
-	/** Local logger instance */
-	private static Log _oLogger;
+    /** Local logger instance */
+    private static final Log _oLogger = LogFactory.getLog(SAML2IDP.class);;
 	
     /** Type: id */
     public final static String TYPE_ID = "id";
@@ -225,12 +225,10 @@ public class SAML2IDP extends AbstractIDP
         Date dLastModified, String sMPMId) 
         		throws OAException
     {        
-    	_oLogger = LogFactory.getLog(SAML2IDP.class);
-    	
-        _baSourceID = baSourceID;
+    	_baSourceID = baSourceID;
+        
         _sMetadataFile = sMetadataFile;
-        if (_sMetadataFile != null)
-        {
+        if (_sMetadataFile != null && !"".equals(_sMetadataFile)) {
             File fMetadata = new File(_sMetadataFile);
             if (!fMetadata.exists())
             {
@@ -241,11 +239,13 @@ public class SAML2IDP extends AbstractIDP
                 _oLogger.error(sbError.toString());
                 throw new OAException(SystemErrors.ERROR_INTERNAL);
             }
+        } else {
+            // set null to prevent empty string
+            _sMetadataFile = null;
         }
         
         _sMetadataURL = sMetadataURL;
-        if (_sMetadataURL != null)
-        {
+        if (_sMetadataURL != null && !"".equals(_sMetadataURL)) {
             try
             {
                 new URL(_sMetadataURL);
@@ -259,16 +259,19 @@ public class SAML2IDP extends AbstractIDP
                 _oLogger.error(sbError.toString(), e);
                 throw new OAException(SystemErrors.ERROR_INTERNAL);
             }
+        }  else {
+            // set null to prevent empty string
+            _sMetadataURL = null;
         }
         
         _iMetadataTimeout = iMetadataTimeout;
-        if (_iMetadataTimeout < 0)
+        if (_iMetadataTimeout <= 0)
         {
             _iMetadataTimeout = HTTP_METADATA_REQUEST_TIMEOUT;
             
             StringBuffer sbDebug = new StringBuffer("Supplied HTTP metadata timeout for organization '" );
             sbDebug.append(_sID);
-            sbDebug.append("' is smaller then zero, using default: ");
+            sbDebug.append("' is equal or smaller then zero, using default: ");
             sbDebug.append(_iMetadataTimeout);
             _oLogger.debug(sbDebug.toString());
         }
@@ -366,7 +369,7 @@ public class SAML2IDP extends AbstractIDP
 		
     	// First time a MetadataProvider request is being handled for this SAML2IDP instance:
     	MetadataProviderConfiguration oMPC = new MetadataProviderConfiguration(
-    			_sMetadataURL, 0, _sMetadataFile, _sMetadata);
+    			_sMetadataURL, _iMetadataTimeout, _sMetadataFile, _sMetadata);
     	String sConfiguredProviderFingerprint = oMPC.getFingerprint();
     	
     	IMetadataProviderManager oMPM = null;

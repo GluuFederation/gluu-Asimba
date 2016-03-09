@@ -96,7 +96,7 @@ public class SAML2Requestors implements ISAML2Requestors
     private String _sProfileID;
     
     /** The MetadatProviderManager that manages providers for this Requestor pool */ 
-    protected String _sMPMId;
+    private String _sMPMId;
 
     /** Configurable whether the MetadataProvider must be removed upon destroy() */
     protected boolean _bOwnMPM;
@@ -210,8 +210,8 @@ public class SAML2Requestors implements ISAML2Requestors
             _mapRequestors.clear();
         
         if (_bOwnMPM) {
-        	_logger.info("Cleaning up MetadataProviderManager '"+_sMPMId+"'");
-        	MdMgrManager.getInstance().deleteMetadataProviderManager(_sMPMId);
+        	_logger.info("Cleaning up MetadataProviderManager '"+getsMPMId()+"'");
+        	MdMgrManager.getInstance().deleteMetadataProviderManager(getsMPMId());
         }
     }
     
@@ -222,7 +222,7 @@ public class SAML2Requestors implements ISAML2Requestors
     @Override
     public boolean isDefaultSigningEnabled()
     {
-        return _bDefaultSigning;
+        return isbDefaultSigning();
     }
     
     /**
@@ -248,7 +248,7 @@ public class SAML2Requestors implements ISAML2Requestors
             
             oSAML2Requestor = _mapRequestors.get(oRequestor.getID());
             if (oSAML2Requestor == null) {
-                oSAML2Requestor = new SAML2Requestor(oRequestor, _bDefaultSigning, _sProfileID, _sMPMId);
+                oSAML2Requestor = new SAML2Requestor(oRequestor, isbDefaultSigning(), getsProfileID(), getsMPMId());
             }
         }
         catch (OAException e)
@@ -287,7 +287,7 @@ public class SAML2Requestors implements ISAML2Requestors
             Element eRequestor = oConfigManager.getSection(elConfig, EL_REQUESTOR);
             while (eRequestor != null) {
                 SAML2Requestor requestor = new SAML2Requestor(oConfigManager, 
-                    eRequestor, _bDefaultSigning, _sMPMId);
+                    eRequestor, isbDefaultSigning(), getsMPMId());
 
                 // Integrity checking:
                 if (requestorPoolFactory.getRequestor(requestor.getID()) == null) {
@@ -314,5 +314,26 @@ public class SAML2Requestors implements ISAML2Requestors
         }
         
         return mapRequestors;
+    }
+
+    /**
+     * @return the _bDefaultSigning
+     */
+    public boolean isbDefaultSigning() {
+        return _bDefaultSigning;
+    }
+
+    /**
+     * @return the _sProfileID
+     */
+    public String getsProfileID() {
+        return _sProfileID;
+    }
+
+    /**
+     * @return the _sMPMId
+     */
+    public String getsMPMId() {
+        return _sMPMId;
     }
 }

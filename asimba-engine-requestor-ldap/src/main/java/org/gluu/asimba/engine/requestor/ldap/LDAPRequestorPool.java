@@ -35,10 +35,10 @@ import com.alfaariss.oa.engine.core.requestor.RequestorPool;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import org.gluu.asimba.util.ldap.LDAPUtility;
 import org.gluu.asimba.util.ldap.sp.RequestorPoolEntry;
 import org.gluu.asimba.util.ldap.sp.RequestorEntry;
+
 /**
  * Requestor pool factory.
  *

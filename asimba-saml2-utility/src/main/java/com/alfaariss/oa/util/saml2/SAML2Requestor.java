@@ -44,6 +44,7 @@ import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.configuration.ConfigurationException;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.requestor.IRequestor;
+import org.gluu.asimba.util.ldap.sp.RequestorEntry;
 
 /**
  * Requestor object containing requestor specific configuration items.
@@ -179,6 +180,42 @@ public class SAML2Requestor implements Serializable
         }
     }
     
+     /**
+     * Constructor which uses business logic requestor properties.
+     *  
+     * @param oRequestor The OA Requestor object
+     * @param bSigning Default signing boolean.
+     * @param sProfileId The SAML2 OA Profile id for resolving the attributes.
+     * @param sMPMId The name of the MetadataProviderManager that manages the MetadataProvider
+     *   for this SAML2Requestor
+     * @throws OAException If creation fails.
+     * @since 1.1
+     */
+    public SAML2Requestor(IRequestor oRequestor, RequestorEntry requestor, boolean bSigning, String sProfileId, String sMPMId) 
+        throws OAException
+    {
+        try {
+            _sID = oRequestor.getID();
+
+            // Keep reference to the MetadataProviderManager
+            _sMPMId = sMPMId;
+
+            // Do some integrity checking:
+            IMetadataProviderManager oMPM = MdMgrManager.getInstance().getMetadataProviderManager(_sMPMId);
+            if (oMPM == null) _logger.warn("The MetadataProviderManager '"+_sMPMId+"' does not (yet?) exist!");
+
+            // Initialize MetadataProvider
+            _oMetadataProviderConfig = getMetadataConfigFromLDAPRequestor(requestor);
+        } catch (OAException oae) {
+    		_logger.error("Exception when initializing MetadataProvider: "+oae.getMessage());
+    		throw oae;
+        } catch(Exception e) {
+            _logger.fatal("Internal error while reading SAML2 attributes for requestor: " 
+                + oRequestor.getID(), e);
+            throw new OAException(SystemErrors.ERROR_INTERNAL);
+        }
+    }
+    
     
     /**
      * Constructor which uses business logic requestor properties.
@@ -208,7 +245,7 @@ public class SAML2Requestor implements Serializable
             IMetadataProviderManager oMPM = MdMgrManager.getInstance().getMetadataProviderManager(_sMPMId);
             if (oMPM == null) _logger.warn("The MetadataProviderManager '"+_sMPMId+"' does not (yet?) exist!");
 
-            // Initialize MetadataProviderC
+            // Initialize MetadataProvider
             _oMetadataProviderConfig = getMetadataConfigFromProperties(mProperties, sProfileId);
             
             // Lazy initialization of actual MetadataProvider
@@ -450,6 +487,73 @@ public class SAML2Requestor implements Serializable
                 throw new OAException(SystemErrors.ERROR_CONFIG_READ);
             }
         }
+
+        return oMPC;
+    }
+    
+    
+    
+    
+    /**
+     * Establish Metadata Provider configuration from requestor properties
+     * @param oProperties The set of Requestor Properties
+     * @param sProfileId The SAML2 IDP ProfileId to use to look up properties
+     * @return
+     * @throws OAException 
+     */
+    protected MetadataProviderConfiguration getMetadataConfigFromLDAPRequestor (
+    		Map<?, ?> mProperties, String sProfileId) throws OAException
+    {
+    	MetadataProviderConfiguration oMPC = new MetadataProviderConfiguration();
+
+    	// Establish full qualified filename
+        String sFilename = (String)mProperties.get(sProfileId + METADATA_FILE);
+        if (sFilename != null) sFilename = PathTranslator.getInstance().map(sFilename);
+        oMPC._sFilename = sFilename;
+        
+        // Establish metadata from properties
+        oMPC._sMetadata = (String)mProperties.get(sProfileId + METADATA);
+        
+        // Establish HTTP/URL settings
+        oMPC._sURL = (String)mProperties.get(sProfileId + PROPERTY_METADATA_HTTP_URL);
+        
+        String sTimeout = (String)mProperties.get(sProfileId + PROPERTY_METADATA_HTTP_TIMEOUT);
+        if (sTimeout != null) {
+        	try {
+                oMPC._iTimeout = Integer.parseInt(sTimeout);
+            } catch (NumberFormatException e) {
+                _logger.error("Invalid value for "+sProfileId + PROPERTY_METADATA_HTTP_TIMEOUT+" property: " + sTimeout, e);
+                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+            }
+        }
+
+        return oMPC;
+    }
+    
+    /**
+     * Establish Metadata Provider configuration from requestor properties
+     * @param oProperties The set of Requestor Properties
+     * @param sProfileId The SAML2 IDP ProfileId to use to look up properties
+     * @return
+     * @throws OAException 
+     */
+    protected MetadataProviderConfiguration getMetadataConfigFromLDAPRequestor(RequestorEntry requestor) throws OAException
+    {
+    	MetadataProviderConfiguration oMPC = new MetadataProviderConfiguration();
+
+    	// Establish full qualified filename
+        if (requestor.getMetadataFile() != null && !"".equals(requestor.getMetadataFile())) 
+            oMPC._sFilename = PathTranslator.getInstance().map(requestor.getMetadataFile());            
+        
+        // Establish metadata 
+        oMPC._sMetadata = null;
+        
+        // Establish HTTP/URL settings
+        if (requestor.getMetadataUrl() != null && !"".equals(requestor.getMetadataUrl())) 
+        oMPC._sURL = requestor.getMetadataUrl();
+        
+        oMPC._iTimeout = requestor.getMetadataTimeout();
+
 
         return oMPC;
     }

@@ -154,6 +154,7 @@ public abstract class AbstractSAML2Profile implements ISAML2Profile, IAuthority
     /**
      * @see com.alfaariss.oa.util.saml2.profile.ISAML2Profile#init(com.alfaariss.oa.api.configuration.IConfigurationManager, org.w3c.dom.Element, org.opensaml.saml2.metadata.EntityDescriptor, java.lang.String, java.lang.String, com.alfaariss.oa.util.saml2.SAML2Requestors, com.alfaariss.oa.util.saml2.SAML2IssueInstantWindow, java.lang.String)
      */
+    @Override
     public void init(IConfigurationManager configurationManager,
         Element config, EntityDescriptor entityDescriptor, 
         String sBaseUrl, String sWebSSOPath, ISAML2Requestors requestors, 
@@ -246,6 +247,7 @@ public abstract class AbstractSAML2Profile implements ISAML2Profile, IAuthority
     /**
      * @see ISAML2Profile#destroy()
      */
+    @Override
     public void destroy()
     {
         
@@ -254,6 +256,7 @@ public abstract class AbstractSAML2Profile implements ISAML2Profile, IAuthority
     /**
      * @see com.alfaariss.oa.util.saml2.profile.ISAML2Profile#getID()
      */
+    @Override
     public String getID()
     {
         return _sID;
@@ -263,6 +266,7 @@ public abstract class AbstractSAML2Profile implements ISAML2Profile, IAuthority
     /**
      * @see com.alfaariss.oa.api.logging.IAuthority#getAuthority()
      */
+    @Override
     public String getAuthority()
     {
         return AUTHORITY_NAME;
