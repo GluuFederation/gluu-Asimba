@@ -184,6 +184,7 @@ public class SAML2Requestor implements Serializable
      * Constructor which uses business logic requestor properties.
      *  
      * @param oRequestor The OA Requestor object
+     * @param  requestor The SAML SP Requestor entry
      * @param bSigning Default signing boolean.
      * @param sProfileId The SAML2 OA Profile id for resolving the attributes.
      * @param sMPMId The name of the MetadataProviderManager that manages the MetadataProvider
@@ -462,46 +463,7 @@ public class SAML2Requestor implements Serializable
      * @return
      * @throws OAException 
      */
-    protected MetadataProviderConfiguration getMetadataConfigFromProperties(
-    		Map<?, ?> mProperties, String sProfileId) throws OAException
-    {
-    	MetadataProviderConfiguration oMPC = new MetadataProviderConfiguration();
-
-    	// Establish full qualified filename
-        String sFilename = (String)mProperties.get(sProfileId + METADATA_FILE);
-        if (sFilename != null) sFilename = PathTranslator.getInstance().map(sFilename);
-        oMPC._sFilename = sFilename;
-        
-        // Establish metadata from properties
-        oMPC._sMetadata = (String)mProperties.get(sProfileId + METADATA);
-        
-        // Establish HTTP/URL settings
-        oMPC._sURL = (String)mProperties.get(sProfileId + PROPERTY_METADATA_HTTP_URL);
-        
-        String sTimeout = (String)mProperties.get(sProfileId + PROPERTY_METADATA_HTTP_TIMEOUT);
-        if (sTimeout != null) {
-        	try {
-                oMPC._iTimeout = Integer.parseInt(sTimeout);
-            } catch (NumberFormatException e) {
-                _logger.error("Invalid value for "+sProfileId + PROPERTY_METADATA_HTTP_TIMEOUT+" property: " + sTimeout, e);
-                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-            }
-        }
-
-        return oMPC;
-    }
-    
-    
-    
-    
-    /**
-     * Establish Metadata Provider configuration from requestor properties
-     * @param oProperties The set of Requestor Properties
-     * @param sProfileId The SAML2 IDP ProfileId to use to look up properties
-     * @return
-     * @throws OAException 
-     */
-    protected MetadataProviderConfiguration getMetadataConfigFromLDAPRequestor (
+    private MetadataProviderConfiguration getMetadataConfigFromProperties(
     		Map<?, ?> mProperties, String sProfileId) throws OAException
     {
     	MetadataProviderConfiguration oMPC = new MetadataProviderConfiguration();
@@ -537,7 +499,7 @@ public class SAML2Requestor implements Serializable
      * @return
      * @throws OAException 
      */
-    protected MetadataProviderConfiguration getMetadataConfigFromLDAPRequestor(RequestorEntry requestor) throws OAException
+    private MetadataProviderConfiguration getMetadataConfigFromLDAPRequestor(RequestorEntry requestor) throws OAException
     {
     	MetadataProviderConfiguration oMPC = new MetadataProviderConfiguration();
 
@@ -553,7 +515,6 @@ public class SAML2Requestor implements Serializable
         oMPC._sURL = requestor.getMetadataUrl();
         
         oMPC._iTimeout = requestor.getMetadataTimeout();
-
 
         return oMPC;
     }
