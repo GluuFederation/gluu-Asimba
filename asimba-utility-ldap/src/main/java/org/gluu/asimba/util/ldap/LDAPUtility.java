@@ -42,7 +42,6 @@ import org.gluu.asimba.util.ldap.sp.RequestorPoolEntry;
 import org.gluu.site.ldap.LDAPConnectionProvider;
 import org.gluu.site.ldap.OperationsFacade;
 import org.gluu.site.ldap.persistence.LdapEntryManager;
-import org.xdi.model.ldap.GluuLdapConfiguration;
 import org.xdi.util.StringHelper;
 import org.xdi.util.properties.FileConfiguration;
 import org.xdi.util.security.StringEncrypter;
@@ -64,7 +63,7 @@ public class LDAPUtility {
     
     private static String configurationEntryDN;
     
-    private static String getBaseDirectory() {
+    public static String getBaseDirectory() {
         if ((System.getProperty("catalina.base") != null) && (System.getProperty("catalina.base.ignore") == null)) {
             return System.getProperty("catalina.base");
         } else if (System.getProperty("catalina.home") != null) {
