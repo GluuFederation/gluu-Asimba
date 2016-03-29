@@ -179,6 +179,7 @@ public class WebProfile implements ISSOProfile, IService, IAuthority
     /**
      * @see com.alfaariss.oa.api.sso.ISSOProfile#getID()
      */
+    @Override
     public String getID()
     {
         return PROFILE_ID;
@@ -268,6 +269,7 @@ public class WebProfile implements ISSOProfile, IService, IAuthority
     /**
      * @see IAuthority#getAuthority()
      */
+    @Override
     public String getAuthority()
     {
         return AUTHORITY_NAME;
@@ -300,6 +302,7 @@ public class WebProfile implements ISSOProfile, IService, IAuthority
      *  javax.servlet.http.HttpServletRequest, 
      *  javax.servlet.http.HttpServletResponse)
      */
+    @Override
     public void service(HttpServletRequest oRequest, 
         HttpServletResponse oResponse) throws OAException
     {    
@@ -520,6 +523,7 @@ public class WebProfile implements ISSOProfile, IService, IAuthority
      * Destroys the Servlet.
      * @see javax.servlet.Servlet#destroy()
      */
+    @Override
     public void destroy()
     {
         _bStarted = false;

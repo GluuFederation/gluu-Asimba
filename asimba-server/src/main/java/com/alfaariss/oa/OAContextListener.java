@@ -69,17 +69,17 @@ import com.alfaariss.oa.engine.core.EngineLauncher;
  */
 public class OAContextListener implements ServletContextListener
 {
-	/** Name of the file that contains property-list for configuring server */
-	public static final String PROPERTIES_FILENAME = "asimba.properties";
-	
-	/** Name of the system property that specified the asimba.properties file location */
-	public static final String PROPERTIES_FILENAME_PROPERTY = "asimba.properties.file";
-	
-	/**
-	 * PathTranslator: Key for the mounting point for WebApp root directory
-	 * See: org.asimba.utility.filesystem.PathTranslator
-	 */
-	public static final String MP_WEBAPP_ROOT = "webapp.root";
+    /** Name of the file that contains property-list for configuring server */
+    public static final String PROPERTIES_FILENAME = "asimba.properties";
+
+    /** Name of the system property that specified the asimba.properties file location */
+    public static final String PROPERTIES_FILENAME_PROPERTY = "asimba.properties.file";
+
+    /**
+     * PathTranslator: Key for the mounting point for WebApp root directory
+     * See: org.asimba.utility.filesystem.PathTranslator
+     */
+    public static final String MP_WEBAPP_ROOT = "webapp.root";
 	
 
     private EngineLauncher _oEngineLauncher;
@@ -100,6 +100,7 @@ public class OAContextListener implements ServletContextListener
             _logger.error("Internal error while creating object", e);
         }
     }
+    
     /**
      * Starts the engine before all servlets are initialized.
      * 
@@ -107,6 +108,7 @@ public class OAContextListener implements ServletContextListener
      * <code>[Servlet context dir]/WEB-INF/[PROPERTIES_FILENAME]</code>
      * @see javax.servlet.ServletContextListener#contextInitialized(javax.servlet.ServletContextEvent)
      */
+    @Override
     public void contextInitialized(ServletContextEvent oServletContextEvent)
     {
         Properties pConfig = new Properties();
@@ -227,6 +229,7 @@ public class OAContextListener implements ServletContextListener
      * Stops the launcher.
      * @see javax.servlet.ServletContextListener#contextDestroyed(javax.servlet.ServletContextEvent)
      */
+    @Override
     public void contextDestroyed(ServletContextEvent arg0)
     {
         // Clean up MountingPoint from PathTranslator

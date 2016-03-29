@@ -334,6 +334,7 @@ public class KeystoreSigningFactory extends AbstractSigningFactory
     /**
      * @see AbstractSigningFactory#getKeyStore()
      */
+    @Override
     public KeyStore getKeyStore()
     {
         return _keystore;
@@ -343,6 +344,7 @@ public class KeystoreSigningFactory extends AbstractSigningFactory
      * Retrieve aliases from trust store.
      * @see AbstractSigningFactory#getAliases()
      */
+    @Override
     public Enumeration<String> getAliases() throws CryptoException
     {
         try
@@ -361,6 +363,7 @@ public class KeystoreSigningFactory extends AbstractSigningFactory
      * @see AbstractSigningFactory#getCertificateAlias(
      *  java.security.cert.Certificate)
      */
+    @Override
     public String getCertificateAlias(Certificate cert) throws CryptoException
     {
         try
@@ -379,6 +382,7 @@ public class KeystoreSigningFactory extends AbstractSigningFactory
      * @see AbstractSigningFactory#getAliasForX509Cert(
      *  java.lang.String, java.math.BigInteger)
      */
+    @Override
     public String getAliasForX509Cert(String issuer, BigInteger serialNumber)
         throws CryptoException
     {

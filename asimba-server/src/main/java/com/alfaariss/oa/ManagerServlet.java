@@ -55,6 +55,7 @@ public class ManagerServlet extends HttpServlet
      * Initializes the Servlet.
      * @see javax.servlet.Servlet#init(javax.servlet.ServletConfig)
      */
+    @Override
     public void init(ServletConfig oServletConfig) throws ServletException
     {
         try
@@ -80,6 +81,7 @@ public class ManagerServlet extends HttpServlet
      * </ul>
      * @see javax.servlet.http.HttpServlet#service(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
      */     
+    @Override
     public void service(HttpServletRequest oRequest, 
         HttpServletResponse oResponse) throws ServletException, IOException
     {
@@ -165,6 +167,7 @@ public class ManagerServlet extends HttpServlet
      * destroys the Servlet.
      * @see javax.servlet.Servlet#destroy()
      */
+    @Override
     public void destroy()
     {
         try

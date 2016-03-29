@@ -114,6 +114,7 @@ public class WebSSOServlet extends HttpServlet implements IComponent
      * Starts SSO profiles.
      * @see javax.servlet.Servlet#init(javax.servlet.ServletConfig)
      */
+    @Override
     public void init(ServletConfig oServletConfig) throws ServletException
     {
         try
@@ -150,6 +151,7 @@ public class WebSSOServlet extends HttpServlet implements IComponent
      * Start the WebSSO.
      * @see IComponent#start(IConfigurationManager, org.w3c.dom.Element)
      */
+    @Override
     public void start(IConfigurationManager configurationManager, 
         Element config) throws OAException
     {       
@@ -194,6 +196,7 @@ public class WebSSOServlet extends HttpServlet implements IComponent
      * Restart the WebSSO.
      * @see com.alfaariss.oa.api.IComponent#restart(org.w3c.dom.Element)
      */
+    @Override
     public void restart(Element eConfig) throws OAException
     {
         synchronized(this)
@@ -214,6 +217,7 @@ public class WebSSOServlet extends HttpServlet implements IComponent
      *  javax.servlet.http.HttpServletResponse)
      *  
      */
+    @Override
     public void service(HttpServletRequest oRequest, 
         HttpServletResponse oResponse) throws ServletException, IOException
     {    
@@ -261,6 +265,7 @@ public class WebSSOServlet extends HttpServlet implements IComponent
      * Destroys the Servlet.
      * @see javax.servlet.Servlet#destroy()
      */
+    @Override
     public void destroy()
     {
         stop();               
@@ -272,6 +277,7 @@ public class WebSSOServlet extends HttpServlet implements IComponent
      * Stop the WebSSO.
      * @see com.alfaariss.oa.api.IComponent#stop()
      */
+    @Override
     public synchronized void stop()
     {
         if(_authenticationManager != null)
