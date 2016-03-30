@@ -106,7 +106,7 @@
 										<li>
 											<a href='${pageContext.request.contextPath}/sso/web?asid=${requestScope.asid}&amp;saml_organization_id=<c:out value="${req.ID}"/>'>
 												<img src='${liImage == liImageValue ? imageRemote : liImage}' 
-													alt='<c:out value="${req.friendlyName}"/>'>
+													alt='<c:out value=" "/>'>
 												<c:out value="${req.friendlyName}"/>
 											</a>
 										</li>
@@ -126,7 +126,7 @@
 					<c:out value="${requestScope.serverInfo.friendlyName}"/> (<c:out value="${requestScope.serverInfo.ID}"/>)
 				</div>
 				<div id="footer2">	
-					<a href="http://www.asimba.org">Asimba</a> - Serious Open Source SSO				
+					<a href="http://www.gluu.org">Gluu Asimba</a> - Serious Open Source SSO				
 				</div>
 			</div>
 		</div>
