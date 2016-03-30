@@ -67,6 +67,7 @@ public class ConfigurationFactory implements IAttributeReleasePolicyFactory,
      * it does not exist.
      * @see IAttributeReleasePolicyFactory#getPolicy(java.lang.String)
      */
+    @Override
     public IAttributeReleasePolicy getPolicy(String sPolicy)
     {
         return _mapPolicies.get(sPolicy);
@@ -76,6 +77,7 @@ public class ConfigurationFactory implements IAttributeReleasePolicyFactory,
      * Returns TRUE if this release policy factory is enabled.
      * @see com.alfaariss.oa.api.IOptional#isEnabled()
      */
+    @Override
     public boolean isEnabled()
     {
         return _bEnabled;
@@ -85,6 +87,7 @@ public class ConfigurationFactory implements IAttributeReleasePolicyFactory,
      * Initializes the release policy factory.
      * @see IComponent#start(IConfigurationManager, org.w3c.dom.Element)
      */
+    @Override
     public void start(IConfigurationManager oConfigurationManager, Element eConfig) throws OAException
     {
         try
@@ -129,6 +132,7 @@ public class ConfigurationFactory implements IAttributeReleasePolicyFactory,
      * Restarts the release policy factory.
      * @see com.alfaariss.oa.api.IComponent#restart(org.w3c.dom.Element)
      */
+    @Override
     public void restart(Element eConfig) throws OAException
     {
         synchronized(this)
@@ -142,6 +146,7 @@ public class ConfigurationFactory implements IAttributeReleasePolicyFactory,
      * Stops the release policy factory.
      * @see com.alfaariss.oa.api.IComponent#stop()
      */
+    @Override
     public void stop()
     {
         _bEnabled = false;

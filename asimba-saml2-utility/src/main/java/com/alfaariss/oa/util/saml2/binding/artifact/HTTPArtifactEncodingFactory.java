@@ -43,8 +43,7 @@ import com.alfaariss.oa.util.saml2.storage.artifact.ArtifactStoreFactory;
 public class HTTPArtifactEncodingFactory extends AbstractEncodingFactory
 {
     /** system logger */
-    private static Log _logger = LogFactory.getLog(
-        HTTPArtifactEncodingFactory.class);
+    private static final Log _logger = LogFactory.getLog(HTTPArtifactEncodingFactory.class);
     
     /**
      * Default protected constructor.

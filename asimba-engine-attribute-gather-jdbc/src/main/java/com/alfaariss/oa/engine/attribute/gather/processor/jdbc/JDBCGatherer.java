@@ -53,28 +53,27 @@ import com.alfaariss.oa.util.database.jdbc.DataSourceFactory;
  */
 public class JDBCGatherer implements IProcessor 
 {
-    private Log _logger;
+    private static final Log _logger = LogFactory.getLog(JDBCGatherer.class);;
     private boolean _bEnabled;
     private String _sID;
     private String _sFriendlyName;
     
     private DataSource _oDataSource;
     private String _sSelectQuery;
-    private Hashtable<String, String> _htMapper;
-    private List<String> _listGather;
+    private final Hashtable<String, String> _htMapper;
+    private final List<String> _listGather;
     
-	/**
-	 * Creates the object.
-	 */
-	public JDBCGatherer()
+    /**
+     * Creates the object.
+     */
+    public JDBCGatherer()
     {
-        _logger = LogFactory.getLog(JDBCGatherer.class);
         _sID = null;
         _sFriendlyName = null;
         _bEnabled = false;
         _htMapper = new Hashtable<String, String>();
         _listGather = new Vector<String>();
-	}
+    }
 
     /**
      * Starts the object.
@@ -82,6 +81,7 @@ public class JDBCGatherer implements IProcessor
      * Reads its configuration and tests the JDBC connection.
      * @see IProcessor#start(IConfigurationManager, org.w3c.dom.Element)
      */
+    @Override
     public void start(IConfigurationManager oConfigurationManager, 
         Element eConfig) throws AttributeException
     {
@@ -276,6 +276,7 @@ public class JDBCGatherer implements IProcessor
      * Gathers attributes from JDBC storage to the supplied attributes object.
      * @see com.alfaariss.oa.engine.core.attribute.gather.processor.IProcessor#process(java.lang.String, com.alfaariss.oa.api.attribute.IAttributes)
      */
+    @Override
     public void process(String sUserId, IAttributes oAttributes) 
         throws AttributeException
     {
@@ -356,6 +357,7 @@ public class JDBCGatherer implements IProcessor
      * Stops the object.
      * @see com.alfaariss.oa.engine.core.attribute.gather.processor.IProcessor#stop()
      */
+    @Override
     public void stop()
     {
         if (_htMapper != null)
@@ -368,6 +370,7 @@ public class JDBCGatherer implements IProcessor
      * Returns the gatherer id.
      * @see com.alfaariss.oa.api.IManagebleItem#getID()
      */
+    @Override
     public String getID()
     {
         return _sID;
@@ -377,6 +380,7 @@ public class JDBCGatherer implements IProcessor
      * Returns the gatherer friendly name.
      * @see com.alfaariss.oa.api.IManagebleItem#getFriendlyName()
      */
+    @Override
     public String getFriendlyName()
     {
         return _sFriendlyName;
@@ -386,6 +390,7 @@ public class JDBCGatherer implements IProcessor
      * Returns TRUE if the gatherer is enabled.
      * @see com.alfaariss.oa.api.IManagebleItem#isEnabled()
      */
+    @Override
     public boolean isEnabled()
     {
         return _bEnabled;

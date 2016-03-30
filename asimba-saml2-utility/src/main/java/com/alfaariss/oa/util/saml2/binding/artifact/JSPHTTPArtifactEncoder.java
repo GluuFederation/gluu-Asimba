@@ -69,13 +69,13 @@ import com.alfaariss.oa.util.saml2.SAML2Constants;
 public class JSPHTTPArtifactEncoder extends BaseSAML2MessageEncoder
 {
     /** logger */
-    private Log _logger = LogFactory.getLog(JSPHTTPArtifactEncoder.class);
-    private String _sTemplateLocation;
+    private static final Log _logger = LogFactory.getLog(JSPHTTPArtifactEncoder.class);
+    private final String _sTemplateLocation;
     
     /** Use POST encoding instead of GET. */
     private boolean _bPostEncoding;
     /** Artifact map. */
-    private SAMLArtifactMap _artifactMap;
+    private final SAMLArtifactMap _artifactMap;
     
     /**
      * Create a new <code>JSPHTTPArtifactEncoder</code> with the given template 
@@ -117,6 +117,7 @@ public class JSPHTTPArtifactEncoder extends BaseSAML2MessageEncoder
      * Returns return {@link SAMLConstants#SAML2_ARTIFACT_BINDING_URI}.
      * @see org.opensaml.common.binding.encoding.SAMLMessageEncoder#getBindingURI()
      */
+    @Override
     public String getBindingURI()
     {
         return SAMLConstants.SAML2_ARTIFACT_BINDING_URI;
@@ -126,6 +127,7 @@ public class JSPHTTPArtifactEncoder extends BaseSAML2MessageEncoder
      * No message confidentiality.
      * @see org.opensaml.ws.message.encoder.MessageEncoder#providesMessageConfidentiality(org.opensaml.ws.message.MessageContext)
      */
+    @Override
     public boolean providesMessageConfidentiality(MessageContext arg0)
         throws MessageEncodingException
     {       
@@ -135,6 +137,7 @@ public class JSPHTTPArtifactEncoder extends BaseSAML2MessageEncoder
      * No message integrity.
      * @see org.opensaml.ws.message.encoder.MessageEncoder#providesMessageIntegrity(org.opensaml.ws.message.MessageContext)
      */
+    @Override
     public boolean providesMessageIntegrity(MessageContext arg0)
         throws MessageEncodingException
     {

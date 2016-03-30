@@ -54,7 +54,10 @@ public class ArtifactStoreFactory
     public static ArtifactStoreFactory getInstance()
     {
         if (_storeFactory == null)
-            _storeFactory = new ArtifactStoreFactory();
+            synchronized (ArtifactStoreFactory.class) {
+                if (_storeFactory == null)
+                    _storeFactory = new ArtifactStoreFactory();
+            }
         return _storeFactory;
     }
     

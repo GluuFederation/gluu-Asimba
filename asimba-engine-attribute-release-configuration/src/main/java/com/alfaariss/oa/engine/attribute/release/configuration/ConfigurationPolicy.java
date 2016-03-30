@@ -121,6 +121,7 @@ public class ConfigurationPolicy implements IAttributeReleasePolicy
      * Applies the policy to the given attributes.
      * @see com.alfaariss.oa.engine.core.attribute.release.IAttributeReleasePolicy#apply(com.alfaariss.oa.api.attribute.IAttributes)
      */
+    @Override
     public IAttributes apply(IAttributes oAttributes) throws AttributeException
     {
         IAttributes oReturnAttributes = new UserAttributes();
@@ -150,6 +151,7 @@ public class ConfigurationPolicy implements IAttributeReleasePolicy
      * This policy its unique ID.
      * @see com.alfaariss.oa.api.IManagebleItem#getID()
      */
+    @Override
     public String getID()
     {
         return _sID;
@@ -159,6 +161,7 @@ public class ConfigurationPolicy implements IAttributeReleasePolicy
      * This policy its friendly name.
      * @see com.alfaariss.oa.api.IManagebleItem#getFriendlyName()
      */
+    @Override
     public String getFriendlyName()
     {
         return _sFriendlyName;
@@ -168,6 +171,7 @@ public class ConfigurationPolicy implements IAttributeReleasePolicy
      * Return TRUE if this policy is enabled.
      * @see com.alfaariss.oa.api.IManagebleItem#isEnabled()
      */
+    @Override
     public boolean isEnabled()
     {
         return _bEnabled;

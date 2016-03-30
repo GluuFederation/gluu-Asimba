@@ -43,7 +43,7 @@ import org.w3c.dom.Element;
 
 public class JGroupsArtifactMapFactory extends AbstractStorageFactory implements SAMLArtifactMap 
 {
-	public static final String EL_CONFIG_CLUSTERID = "cluster_id";
+    public static final String EL_CONFIG_CLUSTERID = "cluster_id";
     public static final String EL_CONFIG_BLOCKING_MODE = "blocking_mode";
     public static final String EL_CONFIG_BLOCKING_TIMEOUT = "blocking_timeout";
     public static final String EL_CONFIG_STATE_TIMEOUT = "state_timeout";

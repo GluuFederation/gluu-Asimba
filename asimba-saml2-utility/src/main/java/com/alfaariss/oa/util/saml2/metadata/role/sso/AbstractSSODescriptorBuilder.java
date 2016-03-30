@@ -102,6 +102,7 @@ public abstract class AbstractSSODescriptorBuilder<RD extends SSODescriptor>
     /**
      * @see IRoleDescriptorBuilder#buildID()
      */
+    @Override
     public void buildID() throws OAException
     {
         try
@@ -125,6 +126,7 @@ public abstract class AbstractSSODescriptorBuilder<RD extends SSODescriptor>
     /**
      * @see IRoleDescriptorBuilder#buildProtocolSupportEnumeration()
      */
+    @Override
     public void buildProtocolSupportEnumeration()
     {
         //DD Only SAML v2 is supported
@@ -134,6 +136,7 @@ public abstract class AbstractSSODescriptorBuilder<RD extends SSODescriptor>
     /**
      * @see IRoleDescriptorBuilder#buildErrorURL()
      */
+    @Override
     public void buildErrorURL()
     {
       //TODO Build the optional <code>ErrorURL</code>.        
@@ -143,6 +146,7 @@ public abstract class AbstractSSODescriptorBuilder<RD extends SSODescriptor>
      * @see IRoleDescriptorBuilder#buildSigningKeyDescriptor(
      *  CryptoManager, String)
      */
+    @Override
     public void buildSigningKeyDescriptor(CryptoManager crypto,
         String sEntityID) throws OAException
     {
@@ -313,6 +317,7 @@ public abstract class AbstractSSODescriptorBuilder<RD extends SSODescriptor>
      * Build optional Extensions from configuration.
      * @see com.alfaariss.oa.util.saml2.metadata.role.IRoleDescriptorBuilder#buildExtensions()
      */
+    @Override
     public void buildExtensions() throws OAException
     {
         Element eMetadata = _configuration.getSection(_eProfile, "metadata");

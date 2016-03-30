@@ -45,12 +45,12 @@ public class UserInfo
      */
     public final static String USER_INFO_NAME = "userInfo";
         
-    private IUser _user;
-    private List<IAuthenticationMethod> _listAuthNMethods;
-    private List<IAuthenticationProfile> _listAuthNProfiles;
-    private List<IRequestor> _listRequestors;
-    private List<IAttribute> _listUserAttributes;
-    private Date _dExpireTime;
+    private final IUser _user;
+    private final List<IAuthenticationMethod> _listAuthNMethods;
+    private final List<IAuthenticationProfile> _listAuthNProfiles;
+    private final List<IRequestor> _listRequestors;
+    private final List<IAttribute> _listUserAttributes;
+    private final Date _dExpireTime;
     
     /**
      * Create new information for the given TGT.
@@ -87,27 +87,11 @@ public class UserInfo
     }
 
     /**
-     * @param authNProfiles the authNProfiles to set
-     */
-    public void setAuthnProfiles(List<IAuthenticationProfile> authNProfiles)
-    {
-        this._listAuthNProfiles = authNProfiles;
-    }
-
-    /**
      * @return the authNProfiles
      */
     public List<IAuthenticationProfile> getAuthnProfiles()
     {
         return _listAuthNProfiles;
-    }
-    
-    /**
-     * @param requestors the requestors to set
-     */
-    public void setRequestors(List<IRequestor> requestors)
-    {
-        this._listRequestors = requestors;
     }
 
     /**

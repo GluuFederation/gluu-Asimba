@@ -21,7 +21,6 @@
  * 
  */
 package com.alfaariss.oa.util.saml2.storage.artifact.memory;
-import java.util.Enumeration;
 import java.util.Hashtable;
 
 import org.apache.commons.logging.Log;
@@ -35,6 +34,9 @@ import com.alfaariss.oa.api.persistence.PersistenceException;
 import com.alfaariss.oa.api.storage.IStorageFactory;
 import com.alfaariss.oa.util.saml2.storage.artifact.ArtifactMapEntry;
 import com.alfaariss.oa.util.storage.factory.AbstractStorageFactory;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * OA style memory implementation of a <code>SAMLArtifactMap</code>.
@@ -52,7 +54,7 @@ public class MemoryArtifactMapFactory extends AbstractStorageFactory
     //The system logger
     private Log _logger;
     //The storage
-    private Hashtable<String, SAMLArtifactMapEntry> _storage;
+    private Map<String, SAMLArtifactMapEntry> _storage;
        
 	/**
      * Create a new <code>JDBCFactory</code>.
@@ -61,13 +63,14 @@ public class MemoryArtifactMapFactory extends AbstractStorageFactory
     {
         super();        
         _logger = LogFactory.getLog(MemoryArtifactMapFactory.class);
-        _storage = new Hashtable<String,SAMLArtifactMapEntry>();
+        _storage = new HashMap<>();
     }
 
     /**
      * Start cleaner.
      * @see IStorageFactory#start()
      */
+    @Override
     public void start() throws OAException
     {        
         if(_tCleaner != null)
@@ -77,6 +80,7 @@ public class MemoryArtifactMapFactory extends AbstractStorageFactory
     /**
      * @see org.opensaml.common.binding.artifact.SAMLArtifactMap#contains(java.lang.String)
      */
+    @Override
     public boolean contains(String artifact)
     {
         return _storage.containsKey(artifact);
@@ -85,6 +89,7 @@ public class MemoryArtifactMapFactory extends AbstractStorageFactory
     /**
      * @see org.opensaml.common.binding.artifact.SAMLArtifactMap#get(java.lang.String)
      */
+    @Override
     public SAMLArtifactMapEntry get(String artifact)
     {
         if (artifact == null) 
@@ -96,6 +101,7 @@ public class MemoryArtifactMapFactory extends AbstractStorageFactory
      * @see org.opensaml.common.binding.artifact.SAMLArtifactMap#put(
      * java.lang.String, java.lang.String, java.lang.String, org.opensaml.common.SAMLObject)
      */
+    @Override
     public void put(String artifact, String relyingPartyId, String issuerId,
         SAMLObject samlMessage) throws MarshallingException
     {
@@ -107,6 +113,7 @@ public class MemoryArtifactMapFactory extends AbstractStorageFactory
     /**
      * @see org.opensaml.common.binding.artifact.SAMLArtifactMap#remove(java.lang.String)
      */
+    @Override
     public void remove(String artifact)
     {
         if (artifact == null) 
@@ -119,12 +126,13 @@ public class MemoryArtifactMapFactory extends AbstractStorageFactory
      * Remove expired artifacts.
      * @see com.alfaariss.oa.api.storage.clean.ICleanable#removeExpired()
      */
+    @Override
     public void removeExpired() throws PersistenceException
     {
-        Enumeration<String> eArtifacts = _storage.keys();
-        while(eArtifacts.hasMoreElements()) //Thread safe iteration
+        Iterator<String> eArtifacts = _storage.keySet().iterator();
+        while(eArtifacts.hasNext()) //Thread safe iteration
         {
-            String sArtifact = eArtifacts.nextElement();
+            String sArtifact = eArtifacts.next();
             SAMLArtifactMapEntry entry = _storage.get(sArtifact);
             if(entry.isExpired())
             {

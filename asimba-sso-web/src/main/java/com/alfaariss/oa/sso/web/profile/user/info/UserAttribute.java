@@ -32,8 +32,8 @@ package com.alfaariss.oa.sso.web.profile.user.info;
  */
 public class UserAttribute implements IAttribute
 {
-    private String _sName;
-    private Object _oValue;
+    private final String _sName;
+    private final Object _oValue;
 
     /**
      * Constructor.
@@ -49,6 +49,7 @@ public class UserAttribute implements IAttribute
     /**
      * @see com.alfaariss.oa.sso.web.profile.user.info.IAttribute#getName()
      */
+    @Override
     public String getName()
     {
         return _sName;
@@ -57,6 +58,7 @@ public class UserAttribute implements IAttribute
     /**
      * @see com.alfaariss.oa.sso.web.profile.user.info.IAttribute#getValue()
      */
+    @Override
     public Object getValue()
     {
         return _oValue;

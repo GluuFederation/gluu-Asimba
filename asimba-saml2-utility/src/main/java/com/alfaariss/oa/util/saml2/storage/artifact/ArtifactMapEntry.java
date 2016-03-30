@@ -95,6 +95,7 @@ public class ArtifactMapEntry
     /**
      * @see org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry#getArtifact()
      */
+    @Override
     public String getArtifact()
     {
         return _artifact;
@@ -103,6 +104,7 @@ public class ArtifactMapEntry
     /**
      * @see org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry#getIssuerId()
      */
+    @Override
     public String getIssuerId()
     {
         return _issuer;
@@ -111,6 +113,7 @@ public class ArtifactMapEntry
     /**
      * @see org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry#getRelyingPartyId()
      */
+    @Override
     public String getRelyingPartyId()
     {
         return _relyingParty;
@@ -119,6 +122,7 @@ public class ArtifactMapEntry
     /**
      * @see org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry#getSamlMessage()
      */
+    @Override
     public SAMLObject getSamlMessage()
     {
         return _message;
@@ -127,6 +131,7 @@ public class ArtifactMapEntry
     /**
      * @see org.opensaml.util.storage.ExpiringObject#getExpirationTime()
      */
+    @Override
     public DateTime getExpirationTime()
     {
         return _expirationTime;
@@ -135,6 +140,7 @@ public class ArtifactMapEntry
     /**
      * @see org.opensaml.util.storage.ExpiringObject#isExpired()
      */
+    @Override
     public boolean isExpired()
     {
         return _expirationTime.isBeforeNow();
@@ -143,6 +149,7 @@ public class ArtifactMapEntry
     /**
      * @see org.opensaml.util.storage.ExpiringObject#onExpire()
      */
+    @Override
     public void onExpire()
     {
         // The abstract storage factory handles expiration and cleanup        

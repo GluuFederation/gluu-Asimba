@@ -138,6 +138,7 @@ public class UserProfile implements ISSOProfile, IService, IAuthority
     /**
      * @see com.alfaariss.oa.api.sso.ISSOProfile#destroy()
      */
+    @Override
     public void destroy()
     {
         _sJSPUserIndex = null;
@@ -150,6 +151,7 @@ public class UserProfile implements ISSOProfile, IService, IAuthority
     /**
      * @see com.alfaariss.oa.api.sso.ISSOProfile#getID()
      */
+    @Override
     public String getID()
     {
         return PROFILE_ID;
@@ -159,6 +161,7 @@ public class UserProfile implements ISSOProfile, IService, IAuthority
      * @param eSpecific is always supplied as NULL
      * @see com.alfaariss.oa.api.sso.ISSOProfile#init(javax.servlet.ServletContext, com.alfaariss.oa.api.configuration.IConfigurationManager, org.w3c.dom.Element, org.w3c.dom.Element)
      */
+    @Override
     public void init(ServletContext context, 
         IConfigurationManager configurationManager, Element eParent, 
         Element eSpecific) throws OAException
@@ -196,6 +199,7 @@ public class UserProfile implements ISSOProfile, IService, IAuthority
     /**
      * @see com.alfaariss.oa.api.IService#service(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
      */
+    @Override
     public void service(HttpServletRequest servletRequest,
         HttpServletResponse servletResponse) throws OAException
     {
@@ -288,6 +292,7 @@ public class UserProfile implements ISSOProfile, IService, IAuthority
     /**
      * @see com.alfaariss.oa.api.logging.IAuthority#getAuthority()
      */
+    @Override
     public String getAuthority()
     {
         return AUTHORITY_NAME;
@@ -839,8 +844,7 @@ public class UserProfile implements ISSOProfile, IService, IAuthority
             }
         }
         
-        UserInfo info = 
-            new UserInfo(oTgt, listAuthNProfiles, vRequestors, listAttributes);
+        UserInfo info =  new UserInfo(oTgt, listAuthNProfiles, vRequestors, listAttributes);
         
         return info;
     }

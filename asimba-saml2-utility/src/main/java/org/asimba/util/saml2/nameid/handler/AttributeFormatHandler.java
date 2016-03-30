@@ -65,34 +65,35 @@ public class AttributeFormatHandler implements INameIDFormatHandler {
 	 */
     private static final Log _oLogger = LogFactory.getLog(AttributeFormatHandler.class);
 
-	/**
-	 * Reference to the owner NameIDFormatter instance
-	 */
-	protected NameIDFormatter _oParentFormatter;
-	
-	/**
-	 * When set, use this as source for NameID, otherwise use
-	 * the value of UserID
-	 */
-	protected String _sAttributeName;
-	
-	/**
-	 * When attribute is specified, remove it from the user's attributes
-	 * after it was used to format the Persistent ID
-	 * Default: true
-	 */
-	protected boolean _bRemoveAfterUse;
-	
-    
-	/**
-	 * Format the value for NameID for the provided user and context
-	 * @param oUser
-	 * @param sEntityID
-	 * @param sTGTID
-	 * @param oSession
-	 * @return Formatted NameID value
-	 * @throws OAException 
-	 */
+    /**
+     * Reference to the owner NameIDFormatter instance
+     */
+    protected NameIDFormatter _oParentFormatter;
+
+    /**
+     * When set, use this as source for NameID, otherwise use
+     * the value of UserID
+     */
+    protected String _sAttributeName;
+
+    /**
+     * When attribute is specified, remove it from the user's attributes
+     * after it was used to format the Persistent ID
+     * Default: true
+     */
+    protected boolean _bRemoveAfterUse;
+
+
+    /**
+     * Format the value for NameID for the provided user and context
+     * @param oUser
+     * @param sEntityID
+     * @param sTGTID
+     * @param oSession
+     * @return Formatted NameID value
+     * @throws OAException 
+     */
+    @Override
     public String format(IUser oUser, String sEntityID, String sTGTID,
 			ISession oSession) throws OAException 
 	{
@@ -120,6 +121,7 @@ public class AttributeFormatHandler implements INameIDFormatHandler {
      * Use this to clean up context (removes attributes also removed
      * using format())
      */
+    @Override
 	public void reformat(IUser oUser, String sEntityID, String sTGTID, 
 			ISession oSession) throws OAException 
 	{
@@ -136,6 +138,7 @@ public class AttributeFormatHandler implements INameIDFormatHandler {
 	 * @param oParentFormatter
 	 * @throws OAException
 	 */
+        @Override
 	public void init(IConfigurationManager oConfigManager, Element elConfig,
 			NameIDFormatter oParentFormatter) throws OAException 
 	{
@@ -174,6 +177,7 @@ public class AttributeFormatHandler implements INameIDFormatHandler {
 	 * An Attribute Identifier is not dependent on a domain; the same attribute
 	 *   can be used as NameID value across all domains
 	 */
+        @Override
 	public boolean isDomainScoped() {
 		return false;
 	}
@@ -183,6 +187,7 @@ public class AttributeFormatHandler implements INameIDFormatHandler {
 	 * An Attribute Identifier is not generated, and therefore it is possible that
 	 *   multiple (active) TGT's can provide the same NameID value for a domain 
 	 */
+        @Override
 	public boolean isDomainUnique() {
 		return false;
 	}
@@ -190,6 +195,7 @@ public class AttributeFormatHandler implements INameIDFormatHandler {
 	/**
 	 * An Attribute Identifier is not dependent on a domain
 	 */
+        @Override
 	public String getDomain(IUser oUser, String sEntityID) {
 		return null;
 	}
