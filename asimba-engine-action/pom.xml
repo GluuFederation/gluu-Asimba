@@ -4,7 +4,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>2.4.3-SNAPSHOT</version>
+    <version>2.4.3.Final</version>
   </parent>
   <artifactId>asimba-engine-action</artifactId>
   <name>asimba-engine-action</name>
