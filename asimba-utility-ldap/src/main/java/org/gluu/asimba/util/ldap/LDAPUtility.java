@@ -42,6 +42,7 @@ import org.gluu.asimba.util.ldap.sp.RequestorPoolEntry;
 import org.gluu.site.ldap.LDAPConnectionProvider;
 import org.gluu.site.ldap.OperationsFacade;
 import org.gluu.site.ldap.persistence.LdapEntryManager;
+import org.xdi.config.oxtrust.LdapOxAsimbaConfiguration;
 import org.xdi.util.StringHelper;
 import org.xdi.util.properties.FileConfiguration;
 import org.xdi.util.security.StringEncrypter;
@@ -163,9 +164,9 @@ public class LDAPUtility {
         }
     }
     
-    public static synchronized LdapConfigurationEntry loadAsimbaConfiguration() {
+    public static synchronized LdapOxAsimbaConfiguration loadAsimbaConfiguration() {
         String applianceDn = getDnForAppliance();
-        LdapConfigurationEntry ldapConfiguration = ldapEntryManager.find(LdapConfigurationEntry.class, "ou=oxasimba,ou=configuration,"+applianceDn, null);
+        LdapOxAsimbaConfiguration ldapConfiguration = ldapEntryManager.find(LdapOxAsimbaConfiguration.class, "ou=oxasimba,ou=configuration,"+applianceDn, null);
         
         return ldapConfiguration;
     }
