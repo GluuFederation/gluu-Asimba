@@ -55,7 +55,15 @@ public class LDAPUtility {
     
     private static final Log log = LogFactory.getLog(LDAPUtility.class);
     
+    @Deprecated
     private static final String ASIMBA_LDAP_CONFIGURATION_FILENAME = "oxasimba-ldap.properties";
+    
+    private static final String OX_LDAP_CONFIGURATION_FILENAME = "ox-ldap.properties";
+    
+    @Deprecated
+    private static final String CONFIGURATION_ENTRY_DN = "configurationEntryDN";
+    
+    private static final String OXASIMBA_CONFIGURATION_ENTRY_DN = "oxasimba_ConfigurationEntryDN";
     
     private static final String SALT_FILE_NAME = "salt";
     
@@ -76,7 +84,15 @@ public class LDAPUtility {
     }
     
     private static String getConfigurationFilePath() {
-        return getBaseDirectory() + File.separator + "conf" + File.separator + ASIMBA_LDAP_CONFIGURATION_FILENAME;
+        String configurationFilePath = getBaseDirectory() + File.separator + "conf" + File.separator + ASIMBA_LDAP_CONFIGURATION_FILENAME;
+        // check availability
+        File configurationFile = new File(configurationFilePath);
+        if (!configurationFile.exists() || !configurationFile.isFile() || !configurationFile.canRead()) {
+            // read common configuration in ox-ldap.properties
+            configurationFilePath = getBaseDirectory() + File.separator + "conf" + File.separator + OX_LDAP_CONFIGURATION_FILENAME;
+        }
+        
+        return configurationFilePath;
     }
     
     private static String getSaltFilePath() {
@@ -116,7 +132,10 @@ public class LDAPUtility {
         try {
             FileConfiguration configuration = createFileConfiguration(getConfigurationFilePath(), false);
             
-            configurationEntryDN = configuration.getString("configurationEntryDN");
+            configurationEntryDN = configuration.getString(OXASIMBA_CONFIGURATION_ENTRY_DN);
+            
+            if (configurationEntryDN == null || "".equals(configurationEntryDN))
+                configurationEntryDN = configuration.getString(CONFIGURATION_ENTRY_DN);
             
             final String cryptoConfigurationSalt = loadCryptoConfigurationSalt();
             
