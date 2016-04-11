@@ -307,5 +307,9 @@ public class LDAPUtility {
         return configurationEntryDN;
     }
     
+    public static String getDnForOrganization() {
+        return loadAsimbaConfiguration().getApplicationConfiguration().getOrgInum();
+    }
+    
 
 }
