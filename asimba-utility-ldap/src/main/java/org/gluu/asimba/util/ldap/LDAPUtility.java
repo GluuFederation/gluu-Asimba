@@ -42,6 +42,7 @@ import org.gluu.asimba.util.ldap.sp.RequestorPoolEntry;
 import org.gluu.site.ldap.LDAPConnectionProvider;
 import org.gluu.site.ldap.OperationsFacade;
 import org.gluu.site.ldap.persistence.LdapEntryManager;
+import org.xdi.config.oxtrust.LdapOxAsimbaConfiguration;
 import org.xdi.util.StringHelper;
 import org.xdi.util.properties.FileConfiguration;
 import org.xdi.util.security.StringEncrypter;
@@ -163,9 +164,9 @@ public class LDAPUtility {
         }
     }
     
-    public static synchronized LdapConfigurationEntry loadAsimbaConfiguration() {
-        String applianceDn = getDnForAppliance();
-        LdapConfigurationEntry ldapConfiguration = ldapEntryManager.find(LdapConfigurationEntry.class, "ou=oxasimba,ou=configuration,"+applianceDn, null);
+    public static synchronized LdapOxAsimbaConfiguration loadAsimbaConfiguration() {
+        String applianceDn = getDnForAsimbaAppliance();
+        LdapOxAsimbaConfiguration ldapConfiguration = ldapEntryManager.find(LdapOxAsimbaConfiguration.class, applianceDn, null);
         
         return ldapConfiguration;
     }
@@ -250,11 +251,11 @@ public class LDAPUtility {
     * @throws Exception
     */
     public static String getDnForLdapIDPEntry(String inum) {
-        String applianceDn = getDnForAppliance();
+        String asimbaDn = getDnForAsimbaData();
         if (StringHelper.isEmpty(inum)) {
-                return String.format("ou=idps,%s", applianceDn);
+                return String.format("ou=idps,%s", asimbaDn);
         }
-        return String.format("inum=%s,ou=idps,%s", inum, applianceDn);
+        return String.format("inum=%s,ou=idps,%s", inum, asimbaDn);
     }
     
     /**
@@ -265,11 +266,11 @@ public class LDAPUtility {
     * @throws Exception
     */
     public static String getDnForLDAPApplicationSelectorEntry(String inum) {
-        String applianceDn = getDnForAppliance();
+        String asimbaDn = getDnForAsimbaData();
         if (StringHelper.isEmpty(inum)) {
-                return String.format("ou=selectors,%s", applianceDn);
+                return String.format("ou=selectors,%s", asimbaDn);
         }
-        return String.format("inum=%s,ou=selectors,%s", inum, applianceDn);
+        return String.format("inum=%s,ou=selectors,%s", inum, asimbaDn);
     }
     
     /**
@@ -280,7 +281,7 @@ public class LDAPUtility {
     * @throws Exception
     */
     public static String getDnForLDAPRequestorEntry(String inum) {
-        String applianceDn = getDnForAppliance();
+        String applianceDn = getDnForAsimbaData();
         if (StringHelper.isEmpty(inum)) {
                 return String.format("ou=requestors,%s", applianceDn);
         }
@@ -295,16 +296,27 @@ public class LDAPUtility {
     * @throws Exception
     */
     public static String getDnForLDAPRequestorPoolEntry(String inum) {
-        String applianceDn = getDnForAppliance();
+        String asimbaDn = getDnForAsimbaData();
         if (StringHelper.isEmpty(inum)) {
-                return String.format("ou=requestorpools,%s", applianceDn);
+                return String.format("ou=requestorpools,%s", asimbaDn);
         }
-        return String.format("inum=%s,ou=requestorpools,%s", inum, applianceDn);
+        return String.format("inum=%s,ou=requestorpools,%s", inum, asimbaDn);
     }
     
-    public static String getDnForAppliance() {
+    public static String getDnForAsimbaAppliance() {
         return configurationEntryDN;
     }
     
-
+    public static String getDnForAsimbaData() {
+        try {
+            LdapOxAsimbaConfiguration configuration = loadAsimbaConfiguration();
+            String asimbaDn = configuration.getApplicationConfiguration().getOxasimba();
+            log.info("oxasimba: " + asimbaDn);
+            return asimbaDn;
+        } catch (Exception e) {
+            log.error("Failed to load AsimbaConfiguration from LDAP Appliance", e);
+            return null;
+        }
+    }
+    
 }
