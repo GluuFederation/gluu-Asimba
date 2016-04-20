@@ -72,6 +72,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
 
     /**
      * Returns the requestor pool were the supplied request id is part of.
+     * {@inheritDoc}
      * @see IRequestorPoolFactory#getRequestorPool(java.lang.String)
      */
     @Override
@@ -87,6 +88,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
 
     /**
      * Returns the requestor specified by its ID.
+     * {@inheritDoc}
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getRequestor(java.lang.String)
      */
     @Override
@@ -96,6 +98,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     }
 
     /**
+     * {@inheritDoc}
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#isPool(java.lang.String)
      */
     @Override
@@ -109,6 +112,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
 
     /**
      * Starts the component.
+     * {@inheritDoc}
      * @see IComponent#start(IConfigurationManager, org.w3c.dom.Element)
      */
     @Override
@@ -164,6 +168,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
 
     /**
      * Restarts the component.
+     * {@inheritDoc}
      * @see com.alfaariss.oa.api.IComponent#restart(org.w3c.dom.Element)
      */
     @Override
@@ -178,6 +183,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
 
     /**
      * Stops the component.
+     * {@inheritDoc}
      * @see com.alfaariss.oa.api.IComponent#stop()
      */
     @Override
@@ -193,6 +199,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     }
 
     /**
+     * {@inheritDoc}
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllEnabledRequestorPools()
      */
     @Override
@@ -212,6 +219,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     }
     
     /**
+     * {@inheritDoc}
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllRequestorPools()
      */
     @Override
@@ -224,6 +232,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     }
 
     /**
+     * {@inheritDoc}
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllEnabledRequestors()
      */
     @Override
@@ -242,6 +251,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     }
 
     /**
+     * {@inheritDoc}
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllRequestors()
      */
     @Override
@@ -254,6 +264,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     }
 
     /**
+     * {@inheritDoc}
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#isRequestor(java.lang.String)
      */
     @Override
@@ -266,6 +277,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     }
 
     /**
+     * {@inheritDoc}
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getRequestor(java.lang.Object, java.lang.String)
      */
     @Override
@@ -308,6 +320,7 @@ public class ConfigurationFactory implements IRequestorPoolFactory, IComponent
     }
 
     /**
+     * {@inheritDoc}
      * @see com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#isRequestorIDSupported(java.lang.String)
      */
     @Override
