@@ -38,7 +38,6 @@ import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.api.requestor.IRequestor;
 import com.alfaariss.oa.engine.core.requestor.RequestorException;
 import com.alfaariss.oa.engine.core.requestor.RequestorPool;
-import com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory;
 import com.alfaariss.oa.engine.requestor.configuration.ConfigurationFactory;
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +70,7 @@ public class LDAPFactory extends ConfigurationFactory {
     /**
      * Returns the requestor pool were the supplied request id is part of.
      *
-     * @see IRequestorPoolFactory#getRequestorPool(java.lang.String)
+     * {@inheritDoc}
      */
     @Override
     public RequestorPool getRequestorPool(String sRequestor) throws RequestorException {
@@ -86,6 +85,8 @@ public class LDAPFactory extends ConfigurationFactory {
     /**
      * Returns the requestor specified by its ID.
      *
+     * {@inheritDoc}
+     * 
      * @see
      * com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getRequestor(java.lang.String)
      */
@@ -99,6 +100,8 @@ public class LDAPFactory extends ConfigurationFactory {
     }
 
     /**
+     * {@inheritDoc}
+     * 
      * @see
      * com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#isPool(java.lang.String)
      */
@@ -110,6 +113,8 @@ public class LDAPFactory extends ConfigurationFactory {
     /**
      * Starts the component.
      *
+     * {@inheritDoc}
+     * 
      * @see IComponent#start(IConfigurationManager, org.w3c.dom.Element)
      */
     @Override
@@ -175,6 +180,8 @@ public class LDAPFactory extends ConfigurationFactory {
     /**
      * Restarts the component.
      *
+     * {@inheritDoc}
+     * 
      * @see com.alfaariss.oa.api.IComponent#restart(org.w3c.dom.Element)
      */
     @Override
@@ -185,6 +192,8 @@ public class LDAPFactory extends ConfigurationFactory {
     /**
      * Stops the component.
      *
+     * {@inheritDoc}
+     * 
      * @see com.alfaariss.oa.api.IComponent#stop()
      */
     @Override
@@ -201,6 +210,8 @@ public class LDAPFactory extends ConfigurationFactory {
     }
 
     /**
+     * {@inheritDoc}
+     * 
      * @see
      * com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllEnabledRequestorPools()
      */
@@ -228,6 +239,8 @@ public class LDAPFactory extends ConfigurationFactory {
     }
 
     /**
+     * {@inheritDoc}
+     * 
      * @see
      * com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllRequestorPools()
      */
@@ -252,6 +265,8 @@ public class LDAPFactory extends ConfigurationFactory {
     }
 
     /**
+     * {@inheritDoc}
+     * 
      * @see
      * com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllEnabledRequestors()
      */
@@ -278,6 +293,8 @@ public class LDAPFactory extends ConfigurationFactory {
     }
 
     /**
+     * {@inheritDoc}
+     * 
      * @see
      * com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getAllRequestors()
      */
@@ -302,6 +319,8 @@ public class LDAPFactory extends ConfigurationFactory {
     }
 
     /**
+     * {@inheritDoc}
+     * 
      * @see
      * com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#isRequestor(java.lang.String)
      */
@@ -314,6 +333,8 @@ public class LDAPFactory extends ConfigurationFactory {
     }
 
     /**
+     * {@inheritDoc}
+     * 
      * @see
      * com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#getRequestor(java.lang.Object,
      * java.lang.String)
@@ -329,6 +350,8 @@ public class LDAPFactory extends ConfigurationFactory {
     }
 
     /**
+     * {@inheritDoc}
+     * 
      * @see
      * com.alfaariss.oa.engine.core.requestor.factory.IRequestorPoolFactory#isRequestorIDSupported(java.lang.String)
      */
