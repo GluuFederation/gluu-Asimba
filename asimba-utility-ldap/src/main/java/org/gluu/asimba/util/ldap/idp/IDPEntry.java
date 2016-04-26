@@ -28,7 +28,6 @@ import java.util.Date;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
-import lombok.Data;
 
 /**
  * SAML2 IDP Entry for XML/JSON.
@@ -37,7 +36,6 @@ import lombok.Data;
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-@Data
 public class IDPEntry implements Serializable {
     
     private String inum;
@@ -134,13 +132,237 @@ public class IDPEntry implements Serializable {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("LdapIDPEntry [id=").append(id).append(", sourceId=").append(sourceId).append(", friendlyName=").append(friendlyName)
-            .append(", metadataUrl=").append(metadataUrl).append(", metadataTimeout=").append(metadataTimeout).append(", metadataFile=").append(metadataFile)
-            .append(", enabled=").append(enabled).append(", acsIndex=").append(acsIndex).append(", scoping=").append(scoping)
-            .append(", nameIdPolicy=").append(nameIdPolicy).append(", allowCreate=").append(allowCreate).append(", nameIdFormat=").append(nameIdFormat)
-            .append(", avoidSubjConf=").append(avoidSubjectConfirmations).append(", disableSSO=").append(disableSSOForIDP).append(", dateLastModified=").append(lastModified)
+        builder.append("LdapIDPEntry [id=").append(getId()).append(", sourceId=").append(getSourceId()).append(", friendlyName=").append(getFriendlyName())
+            .append(", metadataUrl=").append(getMetadataUrl()).append(", metadataTimeout=").append(getMetadataTimeout()).append(", metadataFile=").append(getMetadataFile())
+            .append(", enabled=").append(isEnabled()).append(", acsIndex=").append(isAcsIndex()).append(", scoping=").append(isScoping())
+            .append(", nameIdPolicy=").append(isNameIdPolicy()).append(", allowCreate=").append(isAllowCreate()).append(", nameIdFormat=").append(getNameIdFormat())
+            .append(", avoidSubjConf=").append(isAvoidSubjectConfirmations()).append(", disableSSO=").append(isDisableSSOForIDP()).append(", dateLastModified=").append(getLastModified())
             .append("]");
         return builder.toString();
+    }
+
+    /**
+     * @return the inum
+     */
+    public String getInum() {
+        return inum;
+    }
+
+    /**
+     * @param inum the inum to set
+     */
+    public void setInum(String inum) {
+        this.inum = inum;
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the sourceId
+     */
+    public String getSourceId() {
+        return sourceId;
+    }
+
+    /**
+     * @param sourceId the sourceId to set
+     */
+    public void setSourceId(String sourceId) {
+        this.sourceId = sourceId;
+    }
+
+    /**
+     * @return the friendlyName
+     */
+    public String getFriendlyName() {
+        return friendlyName;
+    }
+
+    /**
+     * @param friendlyName the friendlyName to set
+     */
+    public void setFriendlyName(String friendlyName) {
+        this.friendlyName = friendlyName;
+    }
+
+    /**
+     * @return the metadataUrl
+     */
+    public String getMetadataUrl() {
+        return metadataUrl;
+    }
+
+    /**
+     * @param metadataUrl the metadataUrl to set
+     */
+    public void setMetadataUrl(String metadataUrl) {
+        this.metadataUrl = metadataUrl;
+    }
+
+    /**
+     * @return the metadataTimeout
+     */
+    public int getMetadataTimeout() {
+        return metadataTimeout;
+    }
+
+    /**
+     * @param metadataTimeout the metadataTimeout to set
+     */
+    public void setMetadataTimeout(int metadataTimeout) {
+        this.metadataTimeout = metadataTimeout;
+    }
+
+    /**
+     * @return the metadataFile
+     */
+    public String getMetadataFile() {
+        return metadataFile;
+    }
+
+    /**
+     * @param metadataFile the metadataFile to set
+     */
+    public void setMetadataFile(String metadataFile) {
+        this.metadataFile = metadataFile;
+    }
+
+    /**
+     * @return the enabled
+     */
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    /**
+     * @param enabled the enabled to set
+     */
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    /**
+     * @return the acsIndex
+     */
+    public boolean isAcsIndex() {
+        return acsIndex;
+    }
+
+    /**
+     * @param acsIndex the acsIndex to set
+     */
+    public void setAcsIndex(boolean acsIndex) {
+        this.acsIndex = acsIndex;
+    }
+
+    /**
+     * @return the scoping
+     */
+    public boolean isScoping() {
+        return scoping;
+    }
+
+    /**
+     * @param scoping the scoping to set
+     */
+    public void setScoping(boolean scoping) {
+        this.scoping = scoping;
+    }
+
+    /**
+     * @return the nameIdPolicy
+     */
+    public boolean isNameIdPolicy() {
+        return nameIdPolicy;
+    }
+
+    /**
+     * @param nameIdPolicy the nameIdPolicy to set
+     */
+    public void setNameIdPolicy(boolean nameIdPolicy) {
+        this.nameIdPolicy = nameIdPolicy;
+    }
+
+    /**
+     * @return the allowCreate
+     */
+    public boolean isAllowCreate() {
+        return allowCreate;
+    }
+
+    /**
+     * @param allowCreate the allowCreate to set
+     */
+    public void setAllowCreate(boolean allowCreate) {
+        this.allowCreate = allowCreate;
+    }
+
+    /**
+     * @return the nameIdFormat
+     */
+    public String getNameIdFormat() {
+        return nameIdFormat;
+    }
+
+    /**
+     * @param nameIdFormat the nameIdFormat to set
+     */
+    public void setNameIdFormat(String nameIdFormat) {
+        this.nameIdFormat = nameIdFormat;
+    }
+
+    /**
+     * @return the avoidSubjectConfirmations
+     */
+    public boolean isAvoidSubjectConfirmations() {
+        return avoidSubjectConfirmations;
+    }
+
+    /**
+     * @param avoidSubjectConfirmations the avoidSubjectConfirmations to set
+     */
+    public void setAvoidSubjectConfirmations(boolean avoidSubjectConfirmations) {
+        this.avoidSubjectConfirmations = avoidSubjectConfirmations;
+    }
+
+    /**
+     * @return the disableSSOForIDP
+     */
+    public boolean isDisableSSOForIDP() {
+        return disableSSOForIDP;
+    }
+
+    /**
+     * @param disableSSOForIDP the disableSSOForIDP to set
+     */
+    public void setDisableSSOForIDP(boolean disableSSOForIDP) {
+        this.disableSSOForIDP = disableSSOForIDP;
+    }
+
+    /**
+     * @return the lastModified
+     */
+    public Date getLastModified() {
+        return lastModified;
+    }
+
+    /**
+     * @param lastModified the lastModified to set
+     */
+    public void setLastModified(Date lastModified) {
+        this.lastModified = lastModified;
     }
     
 }

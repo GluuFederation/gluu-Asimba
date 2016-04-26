@@ -26,7 +26,6 @@ package org.gluu.asimba.util.ldap.sp;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
-import lombok.Data;
 import org.gluu.site.ldap.persistence.annotation.LdapJsonObject;
 import org.xdi.ldap.model.BaseEntry;
 
@@ -38,7 +37,6 @@ import org.xdi.ldap.model.BaseEntry;
  */
 @LdapEntry(sortBy = "uniqueIdentifier")
 @LdapObjectClass(values = {"top", "oxAsimbaRequestorPool"})
-@Data
 public class LDAPRequestorPoolEntry extends BaseEntry {
 
     @LdapAttribute(ignoreDuringUpdate = true)
@@ -63,25 +61,25 @@ public class LDAPRequestorPoolEntry extends BaseEntry {
     public void setEntry(RequestorPoolEntry entry) {
         this.entry = entry;
         if (entry != null) {
-            this.inum = entry.getInum();
-            this.id = entry.getId();
-            this.friendlyName = entry.getFriendlyName();
+            this.setInum(entry.getInum());
+            this.setId(entry.getId());
+            this.setFriendlyName(entry.getFriendlyName());
         }
     }
     
     public void setInum(String inum) {
         this.inum = inum;
-        this.entry.setInum(inum);
+        this.getEntry().setInum(inum);
     }
     
     public void setId(String id) {
         this.id = id;
-        this.entry.setId(id);
+        this.getEntry().setId(id);
     }
     
     public void setFriendlyName(String friendlyName) {
         this.friendlyName = friendlyName;
-        this.entry.setFriendlyName(friendlyName);
+        this.getEntry().setFriendlyName(friendlyName);
     }
     
     public void setUniqueIdentifier(String uniqueIdentifier) {
@@ -90,5 +88,33 @@ public class LDAPRequestorPoolEntry extends BaseEntry {
     
     public String getUniqueIdentifier() {
         return getId();
+    }
+
+    /**
+     * @return the inum
+     */
+    public String getInum() {
+        return inum;
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @return the friendlyName
+     */
+    public String getFriendlyName() {
+        return friendlyName;
+    }
+
+    /**
+     * @return the entry
+     */
+    public RequestorPoolEntry getEntry() {
+        return entry;
     }
 }

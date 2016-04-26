@@ -26,7 +26,6 @@ package org.gluu.asimba.util.ldap.selector;
 import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
-import lombok.Data;
 import org.gluu.site.ldap.persistence.annotation.LdapJsonObject;
 import org.xdi.ldap.model.BaseEntry;
 
@@ -38,7 +37,6 @@ import org.xdi.ldap.model.BaseEntry;
  */
 @LdapEntry(sortBy = "uniqueIdentifier")
 @LdapObjectClass(values = {"top", "oxAsimbaSelector"})
-@Data
 public class LDAPApplicationSelectorEntry extends BaseEntry {
 
     @LdapAttribute(ignoreDuringUpdate = true)
@@ -66,31 +64,31 @@ public class LDAPApplicationSelectorEntry extends BaseEntry {
     public void setEntry(ApplicationSelectorEntry entry) {
         this.entry = entry;
         if (entry != null) {
-            this.inum = entry.getInum();
-            this.id = entry.getId();
-            this.friendlyName = entry.getFriendlyName();
-            this.organizationId = entry.getOrganizationId();
+            this.setInum(entry.getInum());
+            this.setId(entry.getId());
+            this.setFriendlyName(entry.getFriendlyName());
+            this.setOrganizationId(entry.getOrganizationId());
         }
     }
     
     public void setInum(String inum) {
         this.inum = inum;
-        this.entry.setInum(inum);
+        this.getEntry().setInum(inum);
     }
     
     public void setId(String id) {
         this.id = id;
-        this.entry.setId(id);
+        this.getEntry().setId(id);
     }
     
     public void setFriendlyName(String friendlyName) {
         this.friendlyName = friendlyName;
-        this.entry.setFriendlyName(friendlyName);
+        this.getEntry().setFriendlyName(friendlyName);
     }
     
     public void setOrganizationId(String organizationId) {
         this.organizationId = organizationId;
-        this.entry.setOrganizationId(organizationId);
+        this.getEntry().setOrganizationId(organizationId);
     }
     
     public void setUniqueIdentifier(String uniqueIdentifier) {
@@ -99,5 +97,40 @@ public class LDAPApplicationSelectorEntry extends BaseEntry {
     
     public String getUniqueIdentifier() {
         return getId();
+    }
+
+    /**
+     * @return the inum
+     */
+    public String getInum() {
+        return inum;
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @return the organizationId
+     */
+    public String getOrganizationId() {
+        return organizationId;
+    }
+
+    /**
+     * @return the friendlyName
+     */
+    public String getFriendlyName() {
+        return friendlyName;
+    }
+
+    /**
+     * @return the entry
+     */
+    public ApplicationSelectorEntry getEntry() {
+        return entry;
     }
 }

@@ -28,7 +28,6 @@ import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 import org.gluu.site.ldap.persistence.annotation.LdapJsonObject;
 import org.xdi.ldap.model.BaseEntry;
-import lombok.Data;
 
 /**
  * SAML2 IDP Entry for LDAP.
@@ -38,7 +37,6 @@ import lombok.Data;
  */
 @LdapEntry(sortBy = "uniqueIdentifier")
 @LdapObjectClass(values = {"top", "oxAsimbaIDP"})
-@Data
 public class LdapIDPEntry extends BaseEntry {
 
     @LdapAttribute(ignoreDuringUpdate = true)
@@ -71,26 +69,26 @@ public class LdapIDPEntry extends BaseEntry {
     public void setEntry(IDPEntry entry) {
         this.entry = entry;
         if (entry != null) {
-            this.inum = entry.getInum();
-            this.id = entry.getId();
-            this.friendlyName = entry.getFriendlyName();
+            this.setInum(entry.getInum());
+            this.setId(entry.getId());
+            this.setFriendlyName(entry.getFriendlyName());
             //this.identificationURL = entry.getIdentificationURL();
         }
     }
     
     public void setInum(String inum) {
         this.inum = inum;
-        this.entry.setInum(inum);
+        this.getEntry().setInum(inum);
     }
     
     public void setId(String id) {
         this.id = id;
-        this.entry.setId(id);
+        this.getEntry().setId(id);
     }
     
     public void setFriendlyName(String friendlyName) {
         this.friendlyName = friendlyName;
-        this.entry.setFriendlyName(friendlyName);
+        this.getEntry().setFriendlyName(friendlyName);
     }
     
 //    public void setIdentificationURL(String identificationURL) {
@@ -104,5 +102,33 @@ public class LdapIDPEntry extends BaseEntry {
     
     public String getUniqueIdentifier() {
         return getId();
+    }
+
+    /**
+     * @return the inum
+     */
+    public String getInum() {
+        return inum;
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @return the friendlyName
+     */
+    public String getFriendlyName() {
+        return friendlyName;
+    }
+
+    /**
+     * @return the entry
+     */
+    public IDPEntry getEntry() {
+        return entry;
     }
 }

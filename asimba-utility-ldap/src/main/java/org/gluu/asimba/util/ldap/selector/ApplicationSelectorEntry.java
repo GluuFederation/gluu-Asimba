@@ -28,7 +28,6 @@ import java.util.Date;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
-import lombok.Data;
 
 /**
  * ApplicationSelector configuration mapping entry.
@@ -37,7 +36,6 @@ import lombok.Data;
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-@Data
 public class ApplicationSelectorEntry implements Serializable {
     
     private String inum;
@@ -63,5 +61,89 @@ public class ApplicationSelectorEntry implements Serializable {
      * Timestamp when Entry was last modified, or null when unknown.
      */
     private Date lastModified = new Date();
+
+    /**
+     * @return the inum
+     */
+    public String getInum() {
+        return inum;
+    }
+
+    /**
+     * @param inum the inum to set
+     */
+    public void setInum(String inum) {
+        this.inum = inum;
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the organizationId
+     */
+    public String getOrganizationId() {
+        return organizationId;
+    }
+
+    /**
+     * @param organizationId the organizationId to set
+     */
+    public void setOrganizationId(String organizationId) {
+        this.organizationId = organizationId;
+    }
+
+    /**
+     * @return the friendlyName
+     */
+    public String getFriendlyName() {
+        return friendlyName;
+    }
+
+    /**
+     * @param friendlyName the friendlyName to set
+     */
+    public void setFriendlyName(String friendlyName) {
+        this.friendlyName = friendlyName;
+    }
+
+    /**
+     * @return the enabled
+     */
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    /**
+     * @param enabled the enabled to set
+     */
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    /**
+     * @return the lastModified
+     */
+    public Date getLastModified() {
+        return lastModified;
+    }
+
+    /**
+     * @param lastModified the lastModified to set
+     */
+    public void setLastModified(Date lastModified) {
+        this.lastModified = lastModified;
+    }
 
 }
