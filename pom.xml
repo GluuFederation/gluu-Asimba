@@ -4,7 +4,7 @@
 
   <groupId>org.asimba</groupId>
   <artifactId>asimba-server-baseline</artifactId>
-  <version>2.4.3-SNAPSHOT</version>
+  <version>2.4.4-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Gluu-Asimba Server</name>
@@ -142,7 +142,7 @@
     <taglibs.c.version>1.1.2</taglibs.c.version>
     <taglibs.fn.version>1.1.1</taglibs.fn.version>
     <maven.javadoc.skip>true</maven.javadoc.skip>	<!-- it's not correct everywhere -->
-    <default.asimba.version>2.4.3-SNAPSHOT</default.asimba.version>
+    <default.asimba.version>2.4.4-SNAPSHOT</default.asimba.version>
   </properties>
 
   <build>

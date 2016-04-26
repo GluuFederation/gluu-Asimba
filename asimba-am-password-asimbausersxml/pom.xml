@@ -4,7 +4,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>2.4.3-SNAPSHOT</version>
+    <version>2.4.4-SNAPSHOT</version>
   </parent>
   <artifactId>asimba-am-password-asimbausersxml</artifactId>
   <name>asimba-am-password-asimbausersxml</name>
