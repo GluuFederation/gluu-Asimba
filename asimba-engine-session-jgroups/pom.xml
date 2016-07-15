@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.asimba</groupId>
 		<artifactId>asimba-server-baseline</artifactId>
-		<version>2.4.4.Final</version>
+		<version>2.4.4.rc1</version>
 	</parent>
 	<artifactId>asimba-engine-session-jgroups</artifactId>
 	<name>asimba-engine-session-jgroups</name>
