@@ -98,18 +98,15 @@
 	  						<fmt:message var="imageRemote" bundle="${messages}" key="image_remote" />			
 							<ul>
 								<c:forEach var="req" items="${requestScope.organizations}">
-										<c:set var="liImageName" 
-											value="image_${req.ID}"/>
-										<c:set var="liImageValue" 
-											value="???${liImageName}???" />
-										<fmt:message var="liImage" bundle="${messages}" key="${liImageName}" />
-										<li>
-											<a href='${pageContext.request.contextPath}/sso/web?asid=${requestScope.asid}&amp;saml_organization_id=<c:out value="${req.ID}"/>'>
-												<img src='${liImage == liImageValue ? imageRemote : liImage}' 
-													alt='<c:out value=" "/>'>
-												<c:out value="${req.friendlyName}"/>
-											</a>
-										</li>
+                                                                        <a href='${pageContext.request.contextPath}/sso/web?asid=${requestScope.asid}&amp;saml_organization_id=<c:out value="${req.ID}"/>'>
+                                                                            <%--- default image ---%>
+                                                                            <img src="${pageContext.request.contextPath}/${imageRemote}" >
+                                                                            <%--- individual image per IDP ---%>
+                                                                            <!---<img src='${pageContext.request.contextPath}/static/images/image_<%= ((com.alfaariss.oa.util.saml2.idp.SAML2IDP)pageContext.getAttribute("req")).getID().toString().replaceAll("\\W+", "_") %>.png' alt="" >--->
+
+                                                                            <c:out value="${req.friendlyName}"/>
+                                                                        </a>
+                                                                        <br/>
 								</c:forEach>
 							</ul>
 						</fieldset>	
