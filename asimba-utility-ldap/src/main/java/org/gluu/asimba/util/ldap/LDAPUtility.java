@@ -339,7 +339,7 @@ public class LDAPUtility {
     * @return List of scopes
     * @throws Exception
     */
-    public List<IDPEntry> searchIDPs(String pattern, int sizeLimit) throws Exception {
+    public static List<IDPEntry> searchIDPs(String pattern, int sizeLimit) throws Exception {
         // filter
         String[] targetArray = new String[] { pattern };
         Filter idFilter = Filter.createSubstringFilter(uniqueIdentifier, null, targetArray, null);
@@ -367,7 +367,7 @@ public class LDAPUtility {
     * @return List of scopes
     * @throws Exception
     */
-    public List<ApplicationSelectorEntry> searchSelectors(String pattern, int sizeLimit) throws Exception {
+    public static List<ApplicationSelectorEntry> searchSelectors(String pattern, int sizeLimit) throws Exception {
         // filter
         String[] targetArray = new String[] { pattern };
         Filter idFilter = Filter.createSubstringFilter(uniqueIdentifier, null, targetArray, null);
@@ -396,7 +396,7 @@ public class LDAPUtility {
     * @return List of scopes
     * @throws Exception
     */
-    public List<RequestorEntry> searchRequestors(String pattern, int sizeLimit) throws Exception {
+    public static List<RequestorEntry> searchRequestors(String pattern, int sizeLimit) throws Exception {
         // filter
         String[] targetArray = new String[] { pattern };
         Filter idFilter = Filter.createSubstringFilter(uniqueIdentifier, null, targetArray, null);
@@ -424,7 +424,7 @@ public class LDAPUtility {
     * @return List of scopes
     * @throws Exception
     */
-    public List<RequestorPoolEntry> searchRequestorPools(String pattern, int sizeLimit) throws Exception {
+    public static List<RequestorPoolEntry> searchRequestorPools(String pattern, int sizeLimit) throws Exception {
         // filter
         String[] targetArray = new String[] { pattern };
         Filter idFilter = Filter.createSubstringFilter(uniqueIdentifier, null, targetArray, null);
