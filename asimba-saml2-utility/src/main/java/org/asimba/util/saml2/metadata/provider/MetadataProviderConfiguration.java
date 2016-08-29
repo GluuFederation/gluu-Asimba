@@ -43,7 +43,7 @@ public class MetadataProviderConfiguration {
 	public int _iTimeout = 0;
 	/** Metadata filename; note: this is always the Full Qualified (expanded!) filename! */
 	public String _sFilename = null;
-	/** Actual metadata */
+	/** Actual metadata text */
 	public String _sMetadata = null;
 
 	

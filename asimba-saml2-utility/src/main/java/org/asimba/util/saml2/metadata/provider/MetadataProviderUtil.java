@@ -45,6 +45,15 @@ import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
 import com.alfaariss.oa.api.IComponent;
 import com.alfaariss.oa.api.configuration.IConfigurationManager;
+import java.io.PrintStream;
+import java.io.StringReader;
+import java.util.List;
+import org.gluu.asimba.util.ldap.LDAPUtility;
+import org.gluu.asimba.util.ldap.idp.IDPEntry;
+import org.opensaml.xml.XMLObject;
+import org.opensaml.xml.io.UnmarshallingException;
+import org.opensaml.xml.parse.XMLParserException;
+import org.opensaml.xml.util.XMLObjectHelper;
 
 /**
  * Utilities for working with MetadataProviders
@@ -53,15 +62,15 @@ import com.alfaariss.oa.api.configuration.IConfigurationManager;
  *
  */
 public class MetadataProviderUtil {
-	/** Configuration elements */
-	public static final String EL_MPM = "mp_manager";
-	
-	/**
-	 * Local logger instance
-	 */
-    private static final Log _oLogger = LogFactory.getLog(MetadataProviderUtil.class);
 
+    /**
+     * Local logger instance
+     */
+    private static final Log _oLogger = LogFactory.getLog(MetadataProviderUtil.class);
     
+    /** Configuration elements */
+    public static final String EL_MPM = "mp_manager";
+
     /**
      * Default time in milliseconds to wait for a response from a remote URL source
      */
@@ -150,65 +159,113 @@ public class MetadataProviderUtil {
 	public static MetadataProvider createProviderForURL(String sMetadataSource, 
 			ParserPool oParserPool, Timer oTimer, HttpClient oHttpClient)
 	{
-		// No source provided, so no MetadataProvider returned: 
-		if (sMetadataSource == null) {
-			return null;
-		}
-		
-		try {
-			new URL(sMetadataSource);
-		} catch (MalformedURLException mfue) {
-			_oLogger.error("Invalid URL provided: " + sMetadataSource);
-			return null;
-		}
-		
-		oParserPool = getParserPool(oParserPool);
-		oTimer = getTimer(oTimer);
-		
-		// Use default HttpClient when none was provided
-		if (oHttpClient == null) {
-			oHttpClient = new HttpClient();
-		}
-		
-		HTTPMetadataProvider oHTTPMetadataProvider = null;
-		
-		try {
-			oHTTPMetadataProvider = new HTTPMetadataProvider(oTimer, oHttpClient, sMetadataSource);
-			
-			oHTTPMetadataProvider.setParserPool(oParserPool);
-			oHTTPMetadataProvider.initialize();
-			
-		} catch (MetadataProviderException e) {
-			_oLogger.error("Exception when creating HTTPMetadataProvider: "+e.getMessage());
-			return null;
-		}
-		
-		return oHTTPMetadataProvider;
+            // No source provided, so no MetadataProvider returned: 
+            if (sMetadataSource == null) {
+                    return null;
+            }
+
+            try {
+                    new URL(sMetadataSource);
+            } catch (MalformedURLException mfue) {
+                    _oLogger.error("Invalid URL provided: " + sMetadataSource);
+                    return null;
+            }
+
+            oParserPool = getParserPool(oParserPool);
+            oTimer = getTimer(oTimer);
+
+            // Use default HttpClient when none was provided
+            if (oHttpClient == null) {
+                    oHttpClient = new HttpClient();
+            }
+
+            HTTPMetadataProvider oHTTPMetadataProvider = null;
+
+            try {
+                    oHTTPMetadataProvider = new HTTPMetadataProvider(oTimer, oHttpClient, sMetadataSource);
+
+                    oHTTPMetadataProvider.setParserPool(oParserPool);
+                    oHTTPMetadataProvider.initialize();
+
+            } catch (MetadataProviderException e) {
+                    _oLogger.error("Exception when creating HTTPMetadataProvider: "+e.getMessage());
+                    return null;
+            }
+
+            return oHTTPMetadataProvider;
 	}
 	
 
-	/**
-	 * Wrapper that uses default HttpProvider, parserpool and timer
-	 * @param sMetadataSource
-	 * @param oParserPool
-	 * @param oTimer
-	 * @return
-	 * @throws OAException
-	 */
+    /**
+     * Wrapper that uses default HttpProvider, parserpool and timer
+     * @param sMetadataSource
+     * @param oParserPool
+     * @param oTimer
+     * @return
+     * @throws OAException
+     */
     public static MetadataProvider createProviderForURL(String sMetadataSource)
-	{
+    {
     	return createProviderForURL(sMetadataSource, 
     			DEFAULT_PARSERPOOL, DEFAULT_TIMER, DEFAULT_HTTPCLIENT);
-	}
+    }
+	
 
-	/**
-	 * Wrapper that uses HttpProvider with specified timeout, default parserpool and timer
-	 * @param sMetadataSource
-	 * @param oParserPool
-	 * @param oTimer
-	 * @return
-	 * @throws OAException
-	 */
+    /**
+     * Wrapper that uses metadata text.
+     * @param entityID
+     * @return MetadataProvider
+     * @throws OAException
+     */
+    public static MetadataProvider createProviderForLDAPEntry(String entityID) {
+        MetadataProvider provider = null;
+        
+        try {
+            List<IDPEntry> entries = LDAPUtility.searchIDPs(entityID, 0);
+            
+            for (IDPEntry entry : entries) {
+                if (entry.getId().equalsIgnoreCase(entityID))
+                    if (entry.getMetadataXMLText() != null && !entry.getMetadataXMLText().isEmpty())
+                    {
+                        String metadataXmlText = entry.getMetadataXMLText();
+                        
+                        return createProviderForXMLText(metadataXmlText);
+                    }
+            }
+        } catch (Exception e) {
+            _oLogger.error("createProviderForLDAPEntry() exception", e);
+        }
+        
+    	return provider;
+    }
+    
+    /**
+     * Wrapper that uses metadata text.
+     * @param sMetadataSource Metadata as xml string
+     * @return MetadataProvider
+     * @throws OAException
+     */
+    public static MetadataProvider createProviderForXMLText(String sMetadata) throws XMLParserException, UnmarshallingException {
+        BasicParserPool parserPool = new BasicParserPool();
+        parserPool.setNamespaceAware(true);
+
+        StringReader oSR = new StringReader(sMetadata);
+
+        XMLObject _oMetadataXMLObject = XMLObjectHelper.unmarshallFromReader(parserPool, oSR);
+
+        XMLObjectMetadataProvider oMP = new XMLObjectMetadataProvider(_oMetadataXMLObject);
+        oMP.initialize();
+        return oMP;
+    }
+
+    /**
+     * Wrapper that uses HttpProvider with specified timeout, default parserpool and timer
+     * @param sMetadataSource
+     * @param oParserPool
+     * @param oTimer
+     * @return
+     * @throws OAException
+     */
     public static MetadataProvider createProviderForURL(String sMetadataSource, int iTimeoutMs)
 	{
     	HttpClient oHttpClient;
@@ -277,40 +334,40 @@ public class MetadataProviderUtil {
      * @param elMPMConfig
      * @return
      */
-	public static IMetadataProviderManager getMetadataProviderManagerFromConfig(
-			IConfigurationManager oConfigManager, Element elMPMConfig)
-		throws OAException
-	{
-		String sClass = oConfigManager.getParam(elMPMConfig, "class");
-		if (sClass == null) {
-			_oLogger.error("No 'class' item found in '"+EL_MPM+"' section");
-			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-		}
-	        
-		Class<?> oClass = null;
-		try {
-			oClass = Class.forName(sClass);
-		}
-		catch (Exception e) {
-			_oLogger.error("No 'class' found with name: " + sClass, e);
-			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-		}
-			
-		IMetadataProviderManager oMPM = null;
-		try {
-			oMPM = (IMetadataProviderManager) oClass.newInstance();
-		}
-		catch (Exception e) {
-			_oLogger.error("Could not create 'IMetadataProviderManager' instance of the 'class' with name: " 
-					+ sClass, e);
-			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
-		}
-	        
-		// Initialize the IMetadataProviderManager
-		((IComponent)oMPM).start(oConfigManager, elMPMConfig);
+    public static IMetadataProviderManager getMetadataProviderManagerFromConfig(
+                    IConfigurationManager oConfigManager, Element elMPMConfig)
+            throws OAException
+    {
+            String sClass = oConfigManager.getParam(elMPMConfig, "class");
+            if (sClass == null) {
+                    _oLogger.error("No 'class' item found in '"+EL_MPM+"' section");
+                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+            }
 
-		return oMPM;
-	}
+            Class<?> oClass = null;
+            try {
+                    oClass = Class.forName(sClass);
+            }
+            catch (Exception e) {
+                    _oLogger.error("No 'class' found with name: " + sClass, e);
+                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+            }
+
+            IMetadataProviderManager oMPM = null;
+            try {
+                    oMPM = (IMetadataProviderManager) oClass.newInstance();
+            }
+            catch (Exception e) {
+                    _oLogger.error("Could not create 'IMetadataProviderManager' instance of the 'class' with name: " 
+                                    + sClass, e);
+                    throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+            }
+
+            // Initialize the IMetadataProviderManager
+            ((IComponent)oMPM).start(oConfigManager, elMPMConfig);
+
+            return oMPM;
+    }
 
 
     /**
@@ -379,6 +436,12 @@ public class MetadataProviderUtil {
     	} catch (OAException oae) {
     		_oLogger.warn("Exception: '"+oae.getMessage()+"'; Could not create HTTPMetadataProvider for '"+sId+"'; skipping.");
     	}
+    	
+    	// When metadata itself is configured, return DOMMetadataProvider
+    	if (oMPC._sMetadata != null) {
+    		_oLogger.trace("Using DOMMetadataProvider for "+sId);
+    		return newDOMMetadataProvider(sId, oMPC._sMetadata, oParserPool, oMPM);
+    	}
 
     	// When a File is configured, return a NamedFilesystemMetadataProvider
     	try {
@@ -388,12 +451,6 @@ public class MetadataProviderUtil {
 	    	}
     	} catch (OAException oae) {
     		_oLogger.warn("Exception: '"+oae.getMessage()+"'; Could not create FileMetadataProvider for '"+sId+"'; skipping.");
-    	}
-    	
-    	// When metadata itself is configured, return DOMMetadataProvider
-    	if (oMPC._sMetadata != null) {
-    		_oLogger.trace("Using DOMMetadataProvider for "+sId);
-    		return newDOMMetadataProvider(sId, oMPC._sMetadata, oParserPool, oMPM);
     	}
     	
     	return null;

@@ -199,6 +199,11 @@ public class SAML2IDP extends AbstractIDP
                 entry.isAvoidSubjectConfirmations(), entry.isDisableSSOForIDP(),
                 entry.getLastModified(), _sMPMId
         );
+        
+        // IDPEntry can keep metadata as text
+        if (entry.getMetadataXMLText() != null && !"".equals(entry.getMetadataXMLText())) {
+            _sMetadata = entry.getMetadataXMLText();
+        }
     }
 
     /**
@@ -338,7 +343,6 @@ public class SAML2IDP extends AbstractIDP
             oMP.initialize();
             _oMetadataProvider = oMP;
             return oMP;
-
         }
         if (_sMetadata != null) {
             _oLogger.debug("Creating new XML-String MetadataProvider for SAML2 IDP '" + _sID + "'");

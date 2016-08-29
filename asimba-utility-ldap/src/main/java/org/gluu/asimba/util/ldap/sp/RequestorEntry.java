@@ -72,6 +72,11 @@ public class RequestorEntry implements Serializable {
     private String metadataFile;
     
     /**
+     * The copy of the metadata file text or NULL if none. 
+     */
+    private String metadataXMLText;
+    
+    /**
      * The parent requestor pool ID.
      */
     private String poolID;
@@ -241,5 +246,19 @@ public class RequestorEntry implements Serializable {
      */
     public void setLastModified(Date lastModified) {
         this.lastModified = lastModified;
+    }
+
+    /**
+     * @return the metadataXMLText
+     */
+    public String getMetadataXMLText() {
+        return metadataXMLText;
+    }
+
+    /**
+     * @param metadataXMLText the metadataXMLText to set
+     */
+    public void setMetadataXMLText(String metadataXMLText) {
+        this.metadataXMLText = metadataXMLText;
     }
 }

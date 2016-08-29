@@ -109,8 +109,12 @@ public class SAML2Confederation implements IConfederation, IComponent {
      * @author mdobrinic
      */
     class MetadataSourceDefinition {
+        public static final String TYPE_URL = "url";
+        public static final String TYPE_FILE = "file";
+        public static final String TYPE_TEXT = "text";
+        
     	public String _sId;		// ID of the MetadataSourceDefinition
-    	public String sType;	// "file" or "url"
+    	public String sType;	// "file" or "url" or "text"
     	public String _sGenericSourceLocation;
     	public String _sSpecificSourceLocation;
     }
@@ -145,19 +149,19 @@ public class SAML2Confederation implements IConfederation, IComponent {
 			MetadataSourceDefinition oMSD, Timer oRefreshTimer)
 		throws OAException
 	{
-		if ("url".equals(oMSD.sType)) {
+		if (MetadataSourceDefinition.TYPE_URL.equals(oMSD.sType)) {
 			MetadataProvider oMP = MetadataProviderUtil.createProviderForURL(sParamSourceRef, 
 					MetadataProviderUtil.DEFAULT_PARSERPOOL,
 					oRefreshTimer,
 					MetadataProviderUtil.DEFAULT_HTTPCLIENT);
 			return oMP;
-		} else if ("file".equals(oMSD.sType)) {
+		} else if (MetadataSourceDefinition.TYPE_FILE.equals(oMSD.sType)) {
 			MetadataProvider oMP = MetadataProviderUtil.createProviderForFile(sParamSourceRef, 
 					MetadataProviderUtil.DEFAULT_PARSERPOOL, 
 					oRefreshTimer);
 			
 			return oMP;
-		}
+		} 
 		
 		return null;
 	}
@@ -258,8 +262,9 @@ public class SAML2Confederation implements IConfederation, IComponent {
      */
     protected SAML2IDP getSAML2IDPFromIDP(IIDP oIDP) {
     	_oLogger.error("Not yet implemented: getSAML2IDPFromIDP()");
-    	SAML2IDP oSAML2IDP = null;
-    	return oSAML2IDP;
+        throw new UnsupportedOperationException("Not yet implemented: getSAML2IDPFromIDP()");
+//    	SAML2IDP oSAML2IDP = null;
+//    	return oSAML2IDP;
     }
     
 
@@ -372,18 +377,18 @@ public class SAML2Confederation implements IConfederation, IComponent {
 			throw new OAException(SystemErrors.ERROR_CONFIG_READ);
 		}
 		
-		Element elFile = oConfigManager.getSection(elMSD, "file");
+		Element elFile = oConfigManager.getSection(elMSD, MetadataSourceDefinition.TYPE_FILE);
 		if (elFile!=null) {
-			oMSD.sType = "file";
+			oMSD.sType = MetadataSourceDefinition.TYPE_FILE;
 			oMSD._sGenericSourceLocation = oConfigManager.getParam(elFile, "generic");
 			oMSD._sSpecificSourceLocation = oConfigManager.getParam(elFile, "specific");
 			
 			return oMSD;
 		}
 
-		Element elURL = oConfigManager.getSection(elMSD, "url");
+		Element elURL = oConfigManager.getSection(elMSD, MetadataSourceDefinition.TYPE_URL);
 		if (elURL!=null) {
-			oMSD.sType = "url";
+			oMSD.sType = MetadataSourceDefinition.TYPE_URL;
 			oMSD._sGenericSourceLocation = oConfigManager.getParam(elURL, "generic");
 			oMSD._sSpecificSourceLocation = oConfigManager.getParam(elURL, "specific");
 			

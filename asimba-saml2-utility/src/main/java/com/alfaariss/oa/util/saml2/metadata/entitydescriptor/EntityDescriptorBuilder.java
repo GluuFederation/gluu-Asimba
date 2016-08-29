@@ -163,7 +163,6 @@ public class EntityDescriptorBuilder extends AbstractMetadataBuilder
                 String sOrgName = orgInfo.getID();
                 if(sOrgName.length() <= 0)
                 {
-
                     _logger.error("Empty required OrganizationName");
                     throw new OAException(SystemErrors.ERROR_CONFIG_READ);
                 }

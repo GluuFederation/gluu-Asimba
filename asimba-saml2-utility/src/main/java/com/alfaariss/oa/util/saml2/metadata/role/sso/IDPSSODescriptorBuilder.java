@@ -1,3 +1,5 @@
+
+
 /*
  * Asimba Server
  * 
@@ -51,7 +53,7 @@ public class IDPSSODescriptorBuilder extends
     public IDPSSODescriptorBuilder (IConfigurationManager configuration, 
         Element profile, IDPSSODescriptor oIDPSSODescriptor)
     {
-        super(configuration, profile);        
+        super(configuration, profile);
         
         if(oIDPSSODescriptor == null)
         {

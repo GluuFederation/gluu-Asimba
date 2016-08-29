@@ -507,8 +507,11 @@ public class SAML2Requestor implements Serializable
         if (requestor.getMetadataFile() != null && !"".equals(requestor.getMetadataFile())) 
             oMPC._sFilename = PathTranslator.getInstance().map(requestor.getMetadataFile());            
         
-        // Establish metadata 
-        oMPC._sMetadata = null;
+        // Establish metadata
+        // RequestorEntry can keep metadata as text
+        if (requestor.getMetadataXMLText() != null && !"".equals(requestor.getMetadataXMLText())) {
+            oMPC._sMetadata = requestor.getMetadataXMLText();
+        }
         
         // Establish HTTP/URL settings
         if (requestor.getMetadataUrl() != null && !"".equals(requestor.getMetadataUrl())) 

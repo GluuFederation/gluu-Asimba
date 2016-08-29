@@ -17,7 +17,6 @@
  * along with this program.  If not, see www.gnu.org/licenses
  * 
  * Asimba - Serious Open Source SSO - More information on www.asimba.org
- * 
  */
 package org.asimba.util.saml2.metadata.provider;
 
