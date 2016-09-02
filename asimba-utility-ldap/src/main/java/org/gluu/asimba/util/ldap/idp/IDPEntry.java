@@ -134,6 +134,12 @@ public class IDPEntry implements Serializable {
     //@Deprecated
     //private String identificationURL;
     
+    
+    /**
+     * Index for view list. Lowest value will be sorted to top of IDP list.
+     */
+    private int viewPriorityIndex = 100;
+    
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -382,6 +388,20 @@ public class IDPEntry implements Serializable {
      */
     public void setMetadataXMLText(String metadataXMLText) {
         this.metadataXMLText = metadataXMLText;
+    }
+
+    /**
+     * @return the viewPriorityIndex
+     */
+    public int getViewPriorityIndex() {
+        return viewPriorityIndex;
+    }
+
+    /**
+     * @param viewPriorityIndex the viewPriorityIndex to set
+     */
+    public void setViewPriorityIndex(int viewPriorityIndex) {
+        this.viewPriorityIndex = viewPriorityIndex;
     }
     
 }
