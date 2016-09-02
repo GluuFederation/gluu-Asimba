@@ -39,7 +39,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class RequestorPoolEntry implements Serializable {
+public class RequestorPoolEntry implements Serializable, Comparable<RequestorPoolEntry> {
     
     private String inum;
     
@@ -248,5 +248,10 @@ public class RequestorPoolEntry implements Serializable {
      */
     public void setRequestors(String requestors) {
         this.requestors = requestors;
+    }
+
+    @Override
+    public int compareTo(RequestorPoolEntry entry) {
+        return this.id.compareToIgnoreCase(entry.getId());
     }
 }

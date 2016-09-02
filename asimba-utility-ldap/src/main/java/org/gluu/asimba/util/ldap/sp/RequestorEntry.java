@@ -39,7 +39,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class RequestorEntry implements Serializable {
+public class RequestorEntry implements Serializable, Comparable<RequestorEntry> {
     
     private String inum;
     
@@ -260,5 +260,10 @@ public class RequestorEntry implements Serializable {
      */
     public void setMetadataXMLText(String metadataXMLText) {
         this.metadataXMLText = metadataXMLText;
+    }
+
+    @Override
+    public int compareTo(RequestorEntry entry) {
+        return this.id.compareToIgnoreCase(entry.getId());
     }
 }

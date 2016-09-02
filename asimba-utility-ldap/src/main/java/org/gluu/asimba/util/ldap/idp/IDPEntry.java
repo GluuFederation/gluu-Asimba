@@ -36,7 +36,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class IDPEntry implements Serializable {
+public class IDPEntry implements Serializable, Comparable<IDPEntry> {
     
     private String inum;
     
@@ -402,6 +402,11 @@ public class IDPEntry implements Serializable {
      */
     public void setViewPriorityIndex(int viewPriorityIndex) {
         this.viewPriorityIndex = viewPriorityIndex;
+    }
+
+    @Override
+    public int compareTo(IDPEntry entry) {
+        return this.id.compareToIgnoreCase(entry.getId());
     }
     
 }

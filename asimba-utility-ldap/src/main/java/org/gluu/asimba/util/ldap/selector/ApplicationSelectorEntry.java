@@ -36,7 +36,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ApplicationSelectorEntry implements Serializable {
+public class ApplicationSelectorEntry implements Serializable, Comparable<ApplicationSelectorEntry> {
     
     private String inum;
     
@@ -144,6 +144,11 @@ public class ApplicationSelectorEntry implements Serializable {
      */
     public void setLastModified(Date lastModified) {
         this.lastModified = lastModified;
+    }
+    
+    @Override
+    public int compareTo(ApplicationSelectorEntry entry) {
+        return this.id.compareToIgnoreCase(entry.getId());
     }
 
 }
