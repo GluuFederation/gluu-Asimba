@@ -152,6 +152,22 @@ public class IDPEntry implements Serializable, Comparable<IDPEntry> {
         return builder.toString();
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof IDPEntry))
+            return false;
+            
+        IDPEntry entry = (IDPEntry)obj;
+        
+        if (entry == this)
+            return true;
+        
+        if (entry.getId() == null)
+            return id == null;
+        
+        return entry.getId().equals(id);
+    }
+
     /**
      * @return the inum
      */
