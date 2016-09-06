@@ -24,6 +24,7 @@
 package org.gluu.asimba.authentication.remote.saml2.idp.storage.ldap;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -37,6 +38,7 @@ import com.alfaariss.oa.api.configuration.IConfigurationManager;
 import com.alfaariss.oa.authentication.remote.saml2.idp.storage.config.IDPConfigStorage;
 import com.alfaariss.oa.engine.core.idp.storage.IIDP;
 import java.util.ArrayList;
+import java.util.Comparator;
 import org.gluu.asimba.util.ldap.LDAPUtility;
 import org.gluu.asimba.util.ldap.idp.IDPEntry;
 
@@ -104,6 +106,14 @@ abstract public class AbstractLDAPStorageDerived<IDP extends IIDP> extends IDPCo
         super.start(configManager, config);
         
         List<IDPEntry> idpEntries = LDAPUtility.loadIDPs();
+        
+        // sort by priority field
+        Collections.sort(idpEntries, new Comparator<IDPEntry>() {
+            @Override
+            public int compare(IDPEntry entry1, IDPEntry entry2) {
+                return (entry1.getViewPriorityIndex() > entry2.getViewPriorityIndex()) ? -1 : (entry1.getViewPriorityIndex() < entry2.getViewPriorityIndex()) ? 1 : 0;
+            }
+        });
         
         for (IDPEntry idpEntry : idpEntries) {
             try {
