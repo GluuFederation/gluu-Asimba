@@ -111,7 +111,7 @@ abstract public class AbstractLDAPStorageDerived<IDP extends IIDP> extends IDPCo
         Collections.sort(idpEntries, new Comparator<IDPEntry>() {
             @Override
             public int compare(IDPEntry entry1, IDPEntry entry2) {
-                return (entry1.getViewPriorityIndex() > entry2.getViewPriorityIndex()) ? -1 : (entry1.getViewPriorityIndex() < entry2.getViewPriorityIndex()) ? 1 : 0;
+                return (entry1.getViewPriorityIndex() < entry2.getViewPriorityIndex()) ? -1 : (entry1.getViewPriorityIndex() > entry2.getViewPriorityIndex()) ? 1 : 0;
             }
         });
         
