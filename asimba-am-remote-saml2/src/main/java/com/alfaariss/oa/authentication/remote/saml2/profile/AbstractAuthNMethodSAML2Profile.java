@@ -482,19 +482,23 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
             for (Attribute att : atts)
             {                
                 //DD We only support XSString (if OpenSAML does) and XSAny
+                if (att.getAttributeValues().size() < 1) {
+                     _logger.error("Empty attribute (skipped): " + att);
+                     continue;
+                }
                 XMLObject obj = att.getAttributeValues().get(0);
                 String content = null;
                 if (obj instanceof XSString)
                 {
                     //ok
-                    XSString str = (XSString)att.getAttributeValues().get(0);
+                    XSString str = (XSString)obj;
                     content = str.getValue();
                 }
                 //OpenSAML reads type=xs:string attributes as any-typed?
                 else if (obj instanceof XSAny)
                 {
                     //ok
-                    XSAny str = (XSAny)att.getAttributeValues().get(0);
+                    XSAny str = (XSAny)obj;
                     content = str.getTextContent();
                 }
                 else
