@@ -64,6 +64,7 @@ public abstract class AbstractAction implements IAuthorizationAction
     /**
      * @see IAuthorizationAction#start(IConfigurationManager, org.w3c.dom.Element)
      */
+    @Override
     public void start(IConfigurationManager oConfigurationManager,
         Element eConfig) throws OAException
     {
@@ -111,6 +112,7 @@ public abstract class AbstractAction implements IAuthorizationAction
     /**
      * @see com.alfaariss.oa.api.authorization.IAuthorizationAction#stop()
      */
+    @Override
     public void stop()
     {
         _bIsEnabled = false;
@@ -119,6 +121,7 @@ public abstract class AbstractAction implements IAuthorizationAction
     /**
      * @see com.alfaariss.oa.api.authorization.IAuthorizationAction#getID()
      */
+    @Override
     public String getID()
     {
         return _sActionID;
@@ -127,6 +130,7 @@ public abstract class AbstractAction implements IAuthorizationAction
     /**
      * @see com.alfaariss.oa.api.IManagebleItem#getFriendlyName()
      */
+    @Override
     public String getFriendlyName()
     {
         return _sFriendlyName;
@@ -135,6 +139,7 @@ public abstract class AbstractAction implements IAuthorizationAction
     /**
      * @see com.alfaariss.oa.api.IManagebleItem#isEnabled()
      */
+    @Override
     public boolean isEnabled()
     {
         return _bIsEnabled;

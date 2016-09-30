@@ -41,6 +41,7 @@ public class DenyAction extends AbstractAction
     /**
      * @see IAuthorizationAction#perform(ISession)
      */
+    @Override
     public UserEvent perform(ISession oSession) throws OAException
     {
         return UserEvent.AUTHZ_METHOD_FAILED;

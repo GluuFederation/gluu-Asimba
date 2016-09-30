@@ -65,6 +65,7 @@ public class ForceProfileAction extends AbstractAction
     /**
      * @see com.alfaariss.oa.api.authorization.IAuthorizationAction#perform(com.alfaariss.oa.api.session.ISession)
      */
+    @Override
     public UserEvent perform(ISession oSession) throws OAException
     {
         AuthenticationProfile authNProfile = _authenticationProfileFactory.getProfile(_sForceProfile);
@@ -92,6 +93,7 @@ public class ForceProfileAction extends AbstractAction
      * 
      * @see AbstractAction#start(IConfigurationManager, org.w3c.dom.Element)
      */
+    @Override
     public void start(IConfigurationManager oConfigurationManager,
         Element eConfig) throws OAException
     {
