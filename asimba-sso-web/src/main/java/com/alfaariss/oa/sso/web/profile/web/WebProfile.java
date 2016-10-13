@@ -465,6 +465,7 @@ public class WebProfile implements ISSOProfile, IService, IAuthority
                             oSession.getId(), SystemErrors.OK, 
                             "Redirect back to Profile" ));                                     
                         oResponse.sendRedirect(oSession.getProfileURL());
+                        oSession.expire();
                         break;
                     }                                                     
                 }           

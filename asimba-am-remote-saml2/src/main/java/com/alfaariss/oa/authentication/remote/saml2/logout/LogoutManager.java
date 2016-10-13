@@ -185,6 +185,7 @@ public class LogoutManager implements ITGTListener, IAuthority
     /**
      * @see com.alfaariss.oa.api.tgt.ITGTListener#processTGTEvent(com.alfaariss.oa.api.tgt.TGTListenerEvent, com.alfaariss.oa.api.tgt.ITGT)
      */
+    @Override
     public void processTGTEvent(TGTListenerEvent event, ITGT tgt) throws TGTListenerException
     {   
         if (!_bEnabled)
@@ -226,6 +227,7 @@ public class LogoutManager implements ITGTListener, IAuthority
     /**
      * @see com.alfaariss.oa.api.logging.IAuthority#getAuthority()
      */
+    @Override
     public String getAuthority()
     {
         return AUTHORITY_NAME + _sMethodID;

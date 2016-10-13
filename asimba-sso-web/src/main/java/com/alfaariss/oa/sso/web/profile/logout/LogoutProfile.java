@@ -131,6 +131,7 @@ public class LogoutProfile implements ISSOProfile, IService, IAuthority
     /**
      * @see com.alfaariss.oa.api.sso.ISSOProfile#destroy()
      */
+    @Override
     public void destroy()
     {
         if (_mapLogoutMethods != null)
@@ -145,6 +146,7 @@ public class LogoutProfile implements ISSOProfile, IService, IAuthority
     /**
      * @see ISSOProfile#getID()
      */
+    @Override
     public String getID()
     {
         return PROFILE_ID;
@@ -155,6 +157,7 @@ public class LogoutProfile implements ISSOProfile, IService, IAuthority
      * @see ISSOProfile#init(javax.servlet.ServletContext, 
      *  IConfigurationManager, org.w3c.dom.Element, org.w3c.dom.Element)
      */
+    @Override
     public void init(ServletContext context,
         IConfigurationManager configurationManager, Element eParent, 
         Element eSpecific) throws OAException
@@ -188,6 +191,7 @@ public class LogoutProfile implements ISSOProfile, IService, IAuthority
     /**
      * @see com.alfaariss.oa.api.IService#service(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
      */
+    @Override
     public void service(HttpServletRequest servletRequest,
         HttpServletResponse servletResponse) throws OAException
     {
@@ -300,6 +304,7 @@ public class LogoutProfile implements ISSOProfile, IService, IAuthority
     /**
      * @see com.alfaariss.oa.api.logging.IAuthority#getAuthority()
      */
+    @Override
     public String getAuthority()
     {
         return AUTHORITY_NAME;

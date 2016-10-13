@@ -201,6 +201,7 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
      * @see com.alfaariss.oa.authentication.remote.saml2.profile.IAuthNMethodSAML2Profile#init(com.alfaariss.oa.api.configuration.IConfigurationManager, org.w3c.dom.Element, org.opensaml.saml2.metadata.EntityDescriptor, com.alfaariss.oa.api.idmapper.IIDMapper, com.alfaariss.oa.engine.core.idp.storage.IIDPStorage, java.lang.String, com.alfaariss.oa.util.saml2.SAML2ConditionsWindow)
      * @see 
      */
+    @Override
     public void init(IConfigurationManager configurationManager, Element config,
         EntityDescriptor entityDescriptor, IIDMapper mapper, 
         IIDPStorage orgStorage, String sMethodID, String sLinkedIDPProfile,
@@ -241,6 +242,7 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
     /**
      * @see com.alfaariss.oa.authentication.remote.saml2.profile.IAuthNMethodSAML2Profile#destroy()
      */
+    @Override
     public void destroy()
     {
         //does nothing

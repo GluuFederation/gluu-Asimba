@@ -40,7 +40,6 @@ import com.alfaariss.oa.engine.core.attribute.SessionAttributes;
  * A simple session implementation which can be stored in memory.
  * @author EVB
  * @author Alfa & Ariss
- *
  */
 public abstract class AbstractSession implements ISession, Serializable
 {   

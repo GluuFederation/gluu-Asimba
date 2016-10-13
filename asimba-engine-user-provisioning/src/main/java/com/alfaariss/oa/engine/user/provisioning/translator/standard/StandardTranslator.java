@@ -191,7 +191,7 @@ public class StandardTranslator implements ITranslator, IAuthority
         }
 	}
 
-	/**
+    /**
      * Translates the user object by his existence in the external storage.
      * <br>
      * Adds a user in the internal storage if he exists in the external 
