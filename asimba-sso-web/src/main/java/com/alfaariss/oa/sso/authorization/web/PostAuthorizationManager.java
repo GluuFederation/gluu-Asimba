@@ -101,6 +101,7 @@ public class PostAuthorizationManager implements IComponent, IOptional, IAuthori
     /**
      * @see IComponent#start(IConfigurationManager, org.w3c.dom.Element)
      */
+    @Override
     public void start(IConfigurationManager oConfigurationManager,
         Element eConfig) throws OAException
     {
@@ -212,6 +213,7 @@ public class PostAuthorizationManager implements IComponent, IOptional, IAuthori
     /**
      * @see com.alfaariss.oa.api.IComponent#restart(org.w3c.dom.Element)
      */
+    @Override
     public void restart(Element eConfig) throws OAException
     {
         synchronized(this)
@@ -224,6 +226,7 @@ public class PostAuthorizationManager implements IComponent, IOptional, IAuthori
     /**
      * @see com.alfaariss.oa.api.IComponent#stop()
      */
+    @Override
     public void stop()
     {
         if (_mapMethods != null)
@@ -364,6 +367,7 @@ public class PostAuthorizationManager implements IComponent, IOptional, IAuthori
     /**
      * @see com.alfaariss.oa.api.IOptional#isEnabled()
      */
+    @Override
     public boolean isEnabled()
     {
         return _bEnabled;
@@ -372,6 +376,7 @@ public class PostAuthorizationManager implements IComponent, IOptional, IAuthori
     /**
      * @see IAuthority#getAuthority()
      */
+    @Override
     public String getAuthority()
     {
         return "Post authZ Manager";

@@ -188,6 +188,7 @@ public class WebProfile implements ISSOProfile, IService, IAuthority
     /**
      * @see com.alfaariss.oa.api.sso.ISSOProfile#init(javax.servlet.ServletContext, com.alfaariss.oa.api.configuration.IConfigurationManager, org.w3c.dom.Element, org.w3c.dom.Element)
      */
+    @Override
     public void init(ServletContext context,
         IConfigurationManager configurationManager, Element eParent, 
         Element eSpecific) throws OAException
@@ -465,7 +466,6 @@ public class WebProfile implements ISSOProfile, IService, IAuthority
                             oSession.getId(), SystemErrors.OK, 
                             "Redirect back to Profile" ));                                     
                         oResponse.sendRedirect(oSession.getProfileURL());
-                        oSession.expire();
                         break;
                     }                                                     
                 }           

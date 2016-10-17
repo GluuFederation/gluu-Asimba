@@ -213,6 +213,7 @@ public class AuthenticationManager implements IComponent
     /**
      * @see IComponent#restart(org.w3c.dom.Element)
      */
+    @Override
     public void restart(Element eConfig) throws OAException
     {
         synchronized(this)
@@ -225,6 +226,7 @@ public class AuthenticationManager implements IComponent
     /**
      * @see IComponent#start(IConfigurationManager, org.w3c.dom.Element)
      */
+    @Override
     public void start(IConfigurationManager oConfigurationManager, 
         Element eConfig) throws OAException
     {
