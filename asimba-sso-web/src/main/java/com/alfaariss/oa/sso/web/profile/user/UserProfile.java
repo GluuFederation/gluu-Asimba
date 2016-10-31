@@ -697,7 +697,7 @@ public class UserProfile implements ISSOProfile, IService, IAuthority
                 session = _sessionFactory.createSession(_sUserPageRequestorId);
                 session.persist();//resist for creating the session id
                 
-                StringBuffer sbProfileURL = new StringBuffer(sRequestURL);
+                StringBuilder sbProfileURL = new StringBuilder(sRequestURL);
                 if (!sRequestURL.endsWith("/"))
                     sbProfileURL.append("/");
                 sbProfileURL.append("?");
@@ -713,7 +713,7 @@ public class UserProfile implements ISSOProfile, IService, IAuthority
             
             servletRequest.setAttribute(ISession.ID_NAME, session);
             
-            StringBuffer sbForward = new StringBuffer(sServletPath);
+            StringBuilder sbForward = new StringBuilder(sServletPath);
             if (!sServletPath.endsWith("/"))
                 sbForward.append("/");
             sbForward.append(LogoutProfile.PROFILE_ID);
@@ -767,7 +767,7 @@ public class UserProfile implements ISSOProfile, IService, IAuthority
                 session = _sessionFactory.createSession(_sUserPageRequestorId);
                 session.persist();//resist for creating the session id
                 
-                StringBuffer sbProfileURL = new StringBuffer(sRequestURL);
+                StringBuilder sbProfileURL = new StringBuilder(sRequestURL);
                 if (!sRequestURL.endsWith("/"))
                     sbProfileURL.append("/");
                 sbProfileURL.append("?");
@@ -820,7 +820,7 @@ public class UserProfile implements ISSOProfile, IService, IAuthority
         }
         
         //create requestor list with latest added requestor first
-        Vector<IRequestor> vRequestors = new Vector<IRequestor>();
+        List<IRequestor> vRequestors = new Vector<IRequestor>();
         List<String> listRequestorIDs = oTgt.getRequestorIDs();
         for (int i = (listRequestorIDs.size() - 1); i >= 0; i--)
         {
@@ -946,7 +946,7 @@ public class UserProfile implements ISSOProfile, IService, IAuthority
         }
         
         List<String> listAuthNPoolProfiles = requestorpool.getAuthenticationProfileIDs();
-        if (listAuthNPoolProfiles.size() == 0)
+        if (listAuthNPoolProfiles.isEmpty())
         {
             _logger.debug("Requestorpool doesn't contains authN profiles: " + requestorpool.getID());
             return false;
@@ -965,7 +965,7 @@ public class UserProfile implements ISSOProfile, IService, IAuthority
         
         if (!bAuthNProfileAvailable)
         {
-            StringBuffer sbDebug = new StringBuffer("Requestorpool (");
+            StringBuilder sbDebug = new StringBuilder("Requestorpool (");
             sbDebug.append(requestorpool.getID());
             sbDebug.append(") doesn't have any authN Profiles available that are available in TGT: ");
             sbDebug.append(tgt.getId());
