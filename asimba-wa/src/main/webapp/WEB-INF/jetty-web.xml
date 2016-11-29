@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Configure PUBLIC
+    "-//Mort Bay Consulting//DTD Configure//EN"
+    "http://www.eclipse.org/jetty/configure_9_0.dtd">
+<!--
+Jetty deployment descriptor.
+-->
+
+<!--
+<Configure class="org.eclipse.jetty.server.handler.ContextHandler">
+  <Set name="contextPath">/asimba</Set>
+  <Set name="resourceBase"><SystemProperty name="jetty.home" default="."/>/asimba/</Set>
+  <Set name="attributes"><SystemProperty name="jetty.home" default="."/>/asimba/</Set>
+  <Set name="handler">
+    <New class="org.eclipse.jetty.server.handler.ResourceHandler">
+      <Set name="welcomeFiles">
+        <Array type="String">
+          <Item>index.html</Item>
+        </Array>
+      </Set>
+      <Set name="cacheControl">max-age=3600,public</Set>
+    </New>
+  </Set>
+</Configure>
+-->
+<Configure class="org.eclipse.jetty.webapp.WebAppContext">
+  <!--<Set name="war"><SystemProperty name="jetty.home" default="."/>/webapps/asimba.war</Set>-->
+  <Set name="war"><SystemProperty name="asimba.home" default="."/>/webapps/asimba.war</Set>
+  <Set name="contextPath">/asimba</Set>
+  <Set name="extractWAR">false</Set>
+  <Set name="config">
+      <Property name="configuration.handler.class" default="com.alfaariss.oa.util.configuration.handler.context.ContextResourceConfigurationHandler"/>
+      <Property name="configuration.handler.context_resource_file" default="/WEB-INF/asimba.xml"/>
+      <Property name="driverClassName" default=""/>
+      <Property name="url" default=""/>
+      <Property name="username" default=""/>
+      <Property name="password" default=""/>      
+  </Set>
+  
+  <Call name="setAttribute">
+    <Arg>configuration.handler.class</Arg>
+    <Arg>com.alfaariss.oa.util.configuration.handler.context.ContextResourceConfigurationHandler</Arg>
+  </Call>
+  <Call name="setAttribute">
+    <Arg>configuration.handler.context_resource_file</Arg>
+    <Arg>/WEB-INF/asimba.xml</Arg>
+  </Call>
+  
+    <!-- by Code -->
+  <Get name="errorHandler">
+    <Call name="addErrorPage">
+      <Arg type="int">404</Arg>
+      <Arg type="String">/error404.jsp</Arg>
+    </Call>
+  </Get>
+
+  <!-- by Exception -->
+  <Get name="errorHandler">
+    <Call name="addErrorPage">
+      <Arg>
+        <Call class="java.lang.Class" name="forName">
+          <Arg type="String">java.io.IOException</Arg>
+        </Call>
+      </Arg>
+      <Arg type="String">/error.jsp</Arg>
+    </Call>
+  </Get>
+
+  <!-- by Code Range -->
+  <Get name="errorHandler">
+    <Call name="addErrorPage">
+      <Arg type="int">500</Arg>
+      <Arg type="int">599</Arg>
+      <Arg type="String">/error.jsp</Arg>
+    </Call>
+  </Get>
+</Configure>
