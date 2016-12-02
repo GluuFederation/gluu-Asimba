@@ -95,6 +95,7 @@ public class IdentifyingAuthenticationMethod implements IWebAuthenticationMethod
      * Restarts the method.
      * @see com.alfaariss.oa.api.IComponent#restart(org.w3c.dom.Element)
      */
+    @Override
     public void restart(Element eConfig) throws OAException
     {
         synchronized(this)
@@ -108,6 +109,7 @@ public class IdentifyingAuthenticationMethod implements IWebAuthenticationMethod
      * Starts the method.
      * @see IComponent#start(IConfigurationManager, org.w3c.dom.Element)
      */
+    @Override
     public void start(IConfigurationManager oConfigurationManager, 
         Element eConfig) throws OAException
     {
@@ -224,6 +226,7 @@ public class IdentifyingAuthenticationMethod implements IWebAuthenticationMethod
      * Stops the method.
      * @see com.alfaariss.oa.api.IComponent#stop()
      */
+    @Override
     public void stop()
     {
         _sTemplatePath = null;
@@ -236,6 +239,7 @@ public class IdentifyingAuthenticationMethod implements IWebAuthenticationMethod
     /**
      * @see com.alfaariss.oa.api.IManagebleItem#getID()
      */
+    @Override
     public String getID()
     {
         return _sMethodID;
@@ -244,6 +248,7 @@ public class IdentifyingAuthenticationMethod implements IWebAuthenticationMethod
      * Returns TRUE if module is enabled.
      * @see com.alfaariss.oa.api.IManagebleItem#isEnabled()
      */
+    @Override
     public boolean isEnabled()
     { 
         return _bEnabled;
@@ -252,6 +257,7 @@ public class IdentifyingAuthenticationMethod implements IWebAuthenticationMethod
     /**
      * @see com.alfaariss.oa.api.IManagebleItem#getFriendlyName()
      */
+    @Override
     public String getFriendlyName()
     {
         return _sFriendlyName;
@@ -260,6 +266,7 @@ public class IdentifyingAuthenticationMethod implements IWebAuthenticationMethod
     /**
      * @see IAuthority#getAuthority()
      */
+    @Override
     public String getAuthority()
     {
         return AUTHORITY_NAME + _sMethodID;
@@ -270,6 +277,7 @@ public class IdentifyingAuthenticationMethod implements IWebAuthenticationMethod
      * @see IWebAuthenticationMethod#authenticate(HttpServletRequest, 
      *  HttpServletResponse, ISession)
      */
+    @Override
     public UserEvent authenticate(HttpServletRequest oRequest, 
         HttpServletResponse oResponse, ISession oSession) 
         throws OAException
@@ -416,6 +424,7 @@ public class IdentifyingAuthenticationMethod implements IWebAuthenticationMethod
     /**
      * @see IServiceAuthenticationMethod#authenticate(java.lang.String, byte[])
      */
+    @Override
     public UserEvent authenticate(String sUserID, byte[] baCredentials) 
         throws OAException
     {
