@@ -81,7 +81,7 @@ public class ContextResourceConfigurationHandler implements IConfigurationHandle
                 throw new ConfigurationException(SystemErrors.ERROR_CONFIG_READ);
             }
             
-            inputStream = getClass().getClassLoader().getResourceAsStream(sFileName);
+            inputStream = openContextResourceFile(sFileName);
 
             if (inputStream == null) {//only start initializing when config file exists
                 _logger.error("Configuration file not found: " + sFileName);
@@ -119,7 +119,7 @@ public class ContextResourceConfigurationHandler implements IConfigurationHandle
         DocumentBuilderFactory oDocumentBuilderFactory
                 = DocumentBuilderFactory.newInstance();
 
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resourceFileName)) {
+        try (InputStream inputStream = openContextResourceFile(resourceFileName)) {
             //parser
             DocumentBuilder oDocumentBuilder = oDocumentBuilderFactory.newDocumentBuilder();
             //parse
@@ -149,5 +149,24 @@ public class ContextResourceConfigurationHandler implements IConfigurationHandle
         // Not applicable for context resource
         _logger.error("saveConfiguration() is not applicable for context resource");
         throw new ConfigurationException(SystemErrors.ERROR_CONFIG_WRITE);
+    }
+    
+    private InputStream openContextResourceFile(String fileName) throws IOException {
+        InputStream inputStream = null;
+        try {
+            inputStream = getClass().getClassLoader().getResourceAsStream(fileName);
+        } catch (Exception e) {
+            inputStream = null;
+        }
+        if (inputStream != null)
+            return inputStream;
+        
+        try {
+            inputStream = getClass().getResourceAsStream(fileName);
+        } catch (Exception e) {
+            inputStream = null;
+        }
+        
+        return inputStream;
     }
 }
