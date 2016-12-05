@@ -27,7 +27,9 @@ import java.io.Serializable;
 import java.util.Date;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
 /**
  * SAML2 IDP Entry for XML/JSON.
@@ -36,7 +38,8 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class IDPEntry implements Serializable {
+@JsonIgnoreProperties(ignoreUnknown=true)
+public class IDPEntry implements Serializable, Comparable<IDPEntry> {
     
     private String inum;
     
@@ -75,6 +78,12 @@ public class IDPEntry implements Serializable {
      * The location of the metadata file or NULL if none. 
      */
     private String metadataFile;
+    
+    /**
+     * The copy of the metadata file text or NULL if none. 
+     */
+    @XmlElement(required = false)
+    private String metadataXMLText;
     
     private boolean enabled = true;
     
@@ -129,6 +138,13 @@ public class IDPEntry implements Serializable {
     //@Deprecated
     //private String identificationURL;
     
+    
+    /**
+     * Index for view list. Lowest value will be sorted to top of IDP list.
+     */
+    @XmlElement(required = false, defaultValue = "100")
+    private int viewPriorityIndex = 100;
+    
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -139,6 +155,22 @@ public class IDPEntry implements Serializable {
             .append(", avoidSubjConf=").append(isAvoidSubjectConfirmations()).append(", disableSSO=").append(isDisableSSOForIDP()).append(", dateLastModified=").append(getLastModified())
             .append("]");
         return builder.toString();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof IDPEntry))
+            return false;
+            
+        IDPEntry entry = (IDPEntry)obj;
+        
+        if (entry == this)
+            return true;
+        
+        if (entry.getId() == null)
+            return id == null;
+        
+        return entry.getId().equals(id);
     }
 
     /**
@@ -363,6 +395,39 @@ public class IDPEntry implements Serializable {
      */
     public void setLastModified(Date lastModified) {
         this.lastModified = lastModified;
+    }
+
+    /**
+     * @return the metadataXMLText
+     */
+    public String getMetadataXMLText() {
+        return metadataXMLText;
+    }
+
+    /**
+     * @param metadataXMLText the metadataXMLText to set
+     */
+    public void setMetadataXMLText(String metadataXMLText) {
+        this.metadataXMLText = metadataXMLText;
+    }
+
+    /**
+     * @return the viewPriorityIndex
+     */
+    public int getViewPriorityIndex() {
+        return viewPriorityIndex;
+    }
+
+    /**
+     * @param viewPriorityIndex the viewPriorityIndex to set
+     */
+    public void setViewPriorityIndex(int viewPriorityIndex) {
+        this.viewPriorityIndex = viewPriorityIndex;
+    }
+
+    @Override
+    public int compareTo(IDPEntry entry) {
+        return this.id.compareToIgnoreCase(entry.getId());
     }
     
 }

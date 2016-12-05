@@ -25,6 +25,7 @@ package org.gluu.asimba.util.ldap;
 
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
+import com.unboundid.ldap.sdk.Filter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,6 +68,17 @@ public class LDAPUtility {
     private static final String OXASIMBA_CONFIGURATION_ENTRY_DN = "oxasimba_ConfigurationEntryDN";
     
     private static final String SALT_FILE_NAME = "salt";
+    
+    /**
+     * oxAsimba LDAP fields
+     */
+    public static final String inum = "inum";
+    public static final String iname = "iname";
+    public static final String uniqueIdentifier = "uniqueIdentifier";
+    public static final String friendlyName = "friendlyName";
+    public static final String identificationURL = "identificationURL";
+    public static final String organizationId = "organizationId";
+    public static final String description = "description";
     
     private static final LdapEntryManager ldapEntryManager = getLDAPEntryManagerSafe();
     
@@ -317,6 +329,119 @@ public class LDAPUtility {
             log.error("Failed to load AsimbaConfiguration from LDAP Appliance", e);
             return null;
         }
+    }
+    
+    /**
+    * Search by pattern
+    * 
+    * @param pattern Pattern
+    * @param sizeLimit Maximum count of results
+    * @return List of scopes
+    * @throws Exception
+    */
+    public static List<IDPEntry> searchIDPs(String pattern, int sizeLimit) throws Exception {
+        // filter
+        String[] targetArray = new String[] { pattern };
+        Filter idFilter = Filter.createSubstringFilter(uniqueIdentifier, null, targetArray, null);
+        Filter friendlyNameFilter = Filter.createSubstringFilter(friendlyName, null, targetArray, null);
+        Filter descriptionFilter = Filter.createSubstringFilter(description, null, targetArray, null);
+        Filter inameFilter = Filter.createSubstringFilter(iname, null, targetArray, null);
+        Filter searchFilter = Filter.createORFilter(idFilter, friendlyNameFilter, descriptionFilter, inameFilter);
+
+        // search
+        final List<LdapIDPEntry> entries = ldapEntryManager.findEntries(getDnForLdapIDPEntry(null), LdapIDPEntry.class, searchFilter, sizeLimit);
+
+        // convert result
+        List<IDPEntry> ret = new ArrayList<IDPEntry>();
+        for (LdapIDPEntry entry : entries) {
+            ret.add(entry.getEntry());
+        }
+        return ret;
+    }
+    
+    /**
+    * Search by pattern
+    * 
+    * @param pattern Pattern
+    * @param sizeLimit Maximum count of results
+    * @return List of scopes
+    * @throws Exception
+    */
+    public static List<ApplicationSelectorEntry> searchSelectors(String pattern, int sizeLimit) throws Exception {
+        // filter
+        String[] targetArray = new String[] { pattern };
+        Filter idFilter = Filter.createSubstringFilter(uniqueIdentifier, null, targetArray, null);
+        Filter friendlyNameFilter = Filter.createSubstringFilter(friendlyName, null, targetArray, null);
+        Filter descriptionFilter = Filter.createSubstringFilter(description, null, targetArray, null);
+        Filter inameFilter = Filter.createSubstringFilter(iname, null, targetArray, null);
+        Filter organizationIdFilter = Filter.createSubstringFilter(organizationId, null, targetArray, null);
+        Filter searchFilter = Filter.createORFilter(idFilter, friendlyNameFilter, descriptionFilter, inameFilter, organizationIdFilter);
+
+        // search
+        List<LDAPApplicationSelectorEntry> entries = ldapEntryManager.findEntries(getDnForLDAPApplicationSelectorEntry(null), LDAPApplicationSelectorEntry.class, searchFilter, sizeLimit);
+
+        // convert result
+        List<ApplicationSelectorEntry> ret = new ArrayList<ApplicationSelectorEntry>();
+        for (LDAPApplicationSelectorEntry entry : entries) {
+            ret.add(entry.getEntry());
+        }
+        return ret;
+    }
+    
+    /**
+    * Search by pattern
+    * 
+    * @param pattern Pattern
+    * @param sizeLimit Maximum count of results
+    * @return List of scopes
+    * @throws Exception
+    */
+    public static List<RequestorEntry> searchRequestors(String pattern, int sizeLimit) throws Exception {
+        // filter
+        String[] targetArray = new String[] { pattern };
+        Filter idFilter = Filter.createSubstringFilter(uniqueIdentifier, null, targetArray, null);
+        Filter friendlyNameFilter = Filter.createSubstringFilter(friendlyName, null, targetArray, null);
+        Filter descriptionFilter = Filter.createSubstringFilter(description, null, targetArray, null);
+        Filter inameFilter = Filter.createSubstringFilter(iname, null, targetArray, null);
+        Filter searchFilter = Filter.createORFilter(idFilter, friendlyNameFilter, descriptionFilter, inameFilter);
+
+        // search
+        List<LDAPRequestorEntry> entries = ldapEntryManager.findEntries(getDnForLDAPRequestorEntry(null), LDAPRequestorEntry.class, searchFilter, sizeLimit);
+
+        // convert result
+        List<RequestorEntry> ret = new ArrayList<RequestorEntry>();
+        for (LDAPRequestorEntry entry : entries) {
+            ret.add(entry.getEntry());
+        }
+        return ret;
+    }
+    
+    /**
+    * Search by pattern
+    * 
+    * @param pattern Pattern
+    * @param sizeLimit Maximum count of results
+    * @return List of scopes
+    * @throws Exception
+    */
+    public static List<RequestorPoolEntry> searchRequestorPools(String pattern, int sizeLimit) throws Exception {
+        // filter
+        String[] targetArray = new String[] { pattern };
+        Filter idFilter = Filter.createSubstringFilter(uniqueIdentifier, null, targetArray, null);
+        Filter friendlyNameFilter = Filter.createSubstringFilter(friendlyName, null, targetArray, null);
+        Filter descriptionFilter = Filter.createSubstringFilter(description, null, targetArray, null);
+        Filter inameFilter = Filter.createSubstringFilter(iname, null, targetArray, null);
+        Filter searchFilter = Filter.createORFilter(idFilter, friendlyNameFilter, descriptionFilter, inameFilter);
+
+        // search
+        List<LDAPRequestorPoolEntry> entries = ldapEntryManager.findEntries(getDnForLDAPRequestorPoolEntry(null), LDAPRequestorPoolEntry.class, searchFilter, sizeLimit);
+
+        // convert result
+        List<RequestorPoolEntry> ret = new ArrayList<RequestorPoolEntry>();
+        for (LDAPRequestorPoolEntry entry : entries) {
+            ret.add(entry.getEntry());
+        }
+        return ret;
     }
     
 }
