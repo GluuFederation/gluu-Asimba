@@ -279,6 +279,7 @@ public class AuthenticationManager implements IComponent
     /**
      * @see IComponent#stop()
      */
+    @Override
     public void stop()
     {
         if (_mapAuthenticationMethods != null)
