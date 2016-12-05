@@ -166,6 +166,14 @@ public class ContextResourceConfigurationHandler implements IConfigurationHandle
         } catch (Exception e) {
             inputStream = null;
         }
+        if (inputStream != null)
+            return inputStream;
+        
+        try {
+            inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName); 
+        } catch (Exception e) {
+            inputStream = null;
+        }
         
         return inputStream;
     }
