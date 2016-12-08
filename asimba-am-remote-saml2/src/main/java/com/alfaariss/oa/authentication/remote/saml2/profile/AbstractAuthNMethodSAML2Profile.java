@@ -201,6 +201,7 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
      * @see com.alfaariss.oa.authentication.remote.saml2.profile.IAuthNMethodSAML2Profile#init(com.alfaariss.oa.api.configuration.IConfigurationManager, org.w3c.dom.Element, org.opensaml.saml2.metadata.EntityDescriptor, com.alfaariss.oa.api.idmapper.IIDMapper, com.alfaariss.oa.engine.core.idp.storage.IIDPStorage, java.lang.String, com.alfaariss.oa.util.saml2.SAML2ConditionsWindow)
      * @see 
      */
+    @Override
     public void init(IConfigurationManager configurationManager, Element config,
         EntityDescriptor entityDescriptor, IIDMapper mapper, 
         IIDPStorage orgStorage, String sMethodID, String sLinkedIDPProfile,
@@ -241,6 +242,7 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
     /**
      * @see com.alfaariss.oa.authentication.remote.saml2.profile.IAuthNMethodSAML2Profile#destroy()
      */
+    @Override
     public void destroy()
     {
         //does nothing
@@ -480,51 +482,51 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
         {
             List<Attribute> atts = stmt.getAttributes();
             for (Attribute att : atts)
-            {                
-                //DD We only support XSString (if OpenSAML does) and XSAny
-                XMLObject obj = att.getAttributeValues().get(0);
-                String content = null;
-                if (obj instanceof XSString)
-                {
-                    //ok
-                    XSString str = (XSString)att.getAttributeValues().get(0);
-                    content = str.getValue();
-                }
-                //OpenSAML reads type=xs:string attributes as any-typed?
-                else if (obj instanceof XSAny)
-                {
-                    //ok
-                    XSAny str = (XSAny)att.getAttributeValues().get(0);
-                    content = str.getTextContent();
-                }
-                else
-                {
-                    _logger.debug("Unrecognized type of attribute (skipped): " + obj.getClass().getName());
+            {         
+                String content = null;   
+                
+                if (att.getName() == null || att.getName().isEmpty()) {
+                     _logger.warn("Empty attribute name (skipped)");
+                     continue;
+                } else  if (att.getAttributeValues() == null || att.getAttributeValues().isEmpty()) {
+                     _logger.warn("Empty attribute value: " + att.getName());
+                     content = "";
+                } else {
+                    XMLObject obj = att.getAttributeValues().get(0);
+                    // We only support XSString (if OpenSAML does) and XSAny
+                    if (obj instanceof XSString) {
+                        //ok
+                        XSString str = (XSString)obj;
+                        content = str.getValue();
+                    }
+                    //OpenSAML reads type=xs:string attributes as any-typed?
+                    else if (obj instanceof XSAny) {
+                        //ok
+                        XSAny str = (XSAny)obj;
+                        content = str.getTextContent();
+                    } else {
+                        _logger.debug("Unrecognized type of attribute (skipped): " + obj.getClass().getName());
+                    }
                 }
                 
-                if (returnAtts.contains(att.getName()))
-                {
+                if (returnAtts.contains(att.getName())) {
                     _logger.debug("Duplicate name for attribute (skipped): " + att.getName());
-                }
-                else if (content == null) {
-                	// Workaround to not crash on null-content (i.e. when AttributeValue is not text-content)
-                	_logger.debug("No content for the value of "+att.getName()+" ("+content+"), ignoring.");
+                } else if (content == null) {
+                    // Workaround to not crash on null-content (i.e. when AttributeValue is not text-content)
+                    _logger.debug("No content for the value of "+att.getName()+" ("+content+"), ignoring.");
                 } else {
                     _logger.debug("Adding attribute to map: " + att.getName());
                     
-                    if (_bCompatible)
-                    {
+                    if (_bCompatible) {
                         //DD Unspecified name format will be ignored
-                		String sAttributeNameFormat = att.getNameFormat();
-                		if (sAttributeNameFormat != null && sAttributeNameFormat.equals(Attribute.UNSPECIFIED))
-                			sAttributeNameFormat = null;
+                        String sAttributeNameFormat = att.getNameFormat();
+                        if (sAttributeNameFormat != null && sAttributeNameFormat.equals(Attribute.UNSPECIFIED))
+                                sAttributeNameFormat = null;
             		
-            		    returnAtts.put(att.getName(), sAttributeNameFormat, content);
+                        returnAtts.put(att.getName(), sAttributeNameFormat, content);
+                    } else {
+                        returnAtts.put(att.getName(), content);
                     }
-            		else
-            		{
-            		    returnAtts.put(att.getName(), content);
-            		}
                 }
             }
         }

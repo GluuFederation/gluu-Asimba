@@ -39,7 +39,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class RequestorEntry implements Serializable {
+public class RequestorEntry implements Serializable, Comparable<RequestorEntry> {
     
     private String inum;
     
@@ -70,6 +70,11 @@ public class RequestorEntry implements Serializable {
      * The location of the metadata file or NULL if none. 
      */
     private String metadataFile;
+    
+    /**
+     * The copy of the metadata file text or NULL if none. 
+     */
+    private String metadataXMLText;
     
     /**
      * The parent requestor pool ID.
@@ -241,5 +246,24 @@ public class RequestorEntry implements Serializable {
      */
     public void setLastModified(Date lastModified) {
         this.lastModified = lastModified;
+    }
+
+    /**
+     * @return the metadataXMLText
+     */
+    public String getMetadataXMLText() {
+        return metadataXMLText;
+    }
+
+    /**
+     * @param metadataXMLText the metadataXMLText to set
+     */
+    public void setMetadataXMLText(String metadataXMLText) {
+        this.metadataXMLText = metadataXMLText;
+    }
+
+    @Override
+    public int compareTo(RequestorEntry entry) {
+        return this.id.compareToIgnoreCase(entry.getId());
     }
 }
