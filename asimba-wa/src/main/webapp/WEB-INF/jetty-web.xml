@@ -28,14 +28,6 @@ Jetty deployment descriptor.
   <Set name="war"><SystemProperty name="asimba.home" default="."/>/webapps/asimba.war</Set>
   <Set name="contextPath">/asimba</Set>
   <Set name="extractWAR">false</Set>
-  <Set name="config">
-      <Property name="configuration.handler.class" default="com.alfaariss.oa.util.configuration.handler.context.ContextResourceConfigurationHandler"/>
-      <Property name="configuration.handler.context_resource_file" default="/WEB-INF/asimba.xml"/>
-      <Property name="driverClassName" default=""/>
-      <Property name="url" default=""/>
-      <Property name="username" default=""/>
-      <Property name="password" default=""/>      
-  </Set>
   
   <Call name="setAttribute">
     <Arg>configuration.handler.class</Arg>
