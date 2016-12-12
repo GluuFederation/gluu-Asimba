@@ -60,6 +60,7 @@ public class LDAPUtility {
     @Deprecated
     private static final String ASIMBA_LDAP_CONFIGURATION_FILENAME = "oxasimba-ldap.properties";
     
+    private static final String OX_LDAP_CONFIGURATION_DIRECTORY = "/etc/gluu";
     private static final String OX_LDAP_CONFIGURATION_FILENAME = "ox-ldap.properties";
     
     @Deprecated
@@ -85,15 +86,19 @@ public class LDAPUtility {
     private static String configurationEntryDN;
     
     public static String getBaseDirectory() {
-        if ((System.getProperty("catalina.base") != null) && (System.getProperty("catalina.base.ignore") == null)) {
-            return System.getProperty("catalina.base");
-        } else if (System.getProperty("catalina.home") != null) {
-            return System.getProperty("catalina.home");
-        } else if (System.getProperty("jboss.home.dir") != null) {
-            return System.getProperty("jboss.home.dir");
-        } else {
-            return null;
-        }
+        // Tomcat or JBoss settings:
+//        if ((System.getProperty("catalina.base") != null) && (System.getProperty("catalina.base.ignore") == null)) {
+//            return System.getProperty("catalina.base");
+//        } else if (System.getProperty("catalina.home") != null) {
+//            return System.getProperty("catalina.home");
+//        } else if (System.getProperty("jboss.home.dir") != null) {
+//            return System.getProperty("jboss.home.dir");
+//        } else {
+//            return null;
+//        }
+        
+        // Jetty settings, since v 3.0.0
+        return OX_LDAP_CONFIGURATION_DIRECTORY;
     }
     
     private static String getConfigurationFilePath() {
