@@ -38,6 +38,7 @@ import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.gluu.asimba.util.ldap.LDAPUtility;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -82,18 +83,19 @@ public class ApplicationSelectorConfiguration {
 	
 		loadFileSync(confFile);
 	}
-
+    
 	public String getConfigurationFilePath() {
-		String tomcatHome = System.getProperty("catalina.home");
-		if (tomcatHome == null) {
-			log.error("Failed to load mapping from '" + CONFIGURATION_FILE_NAME + "'. The environment variable catalina.home isn't defined");
-			return null;
-		}
+            String homePath = LDAPUtility.getBaseDirectory();
+            
+            if (homePath == null) {
+                log.error("Failed to load ApplicationSelector mapping from '" + CONFIGURATION_FILE_NAME + "'. The environment variable gluu.home/catalina.home/jboss.home.dir isn't defined");
+                return null;
+            }
 		
-		String confPath = System.getProperty("catalina.home") + File.separator + "conf" + File.separator + CONFIGURATION_FILE_NAME;
-		log.info("Reading configuration from: " + confPath);
-		
-		return confPath;
+            String confPath = homePath + File.separator + "conf" + File.separator + CONFIGURATION_FILE_NAME;
+            log.info("Reading ApplicationSelector configuration from: " + confPath);
+
+            return confPath;
 	}
 
 	private void loadFileSync(File confFile) {
