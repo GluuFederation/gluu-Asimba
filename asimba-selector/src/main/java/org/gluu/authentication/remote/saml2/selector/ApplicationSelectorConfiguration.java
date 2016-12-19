@@ -85,14 +85,14 @@ public class ApplicationSelectorConfiguration {
 	}
     
 	public String getConfigurationFilePath() {
-            String homePath = LDAPUtility.getBaseDirectory();
+            final String homePath = LDAPUtility.getBaseDirectory();
             
             if (homePath == null) {
                 log.error("Failed to load ApplicationSelector mapping from '" + CONFIGURATION_FILE_NAME + "'. The environment variable gluu.home/catalina.home/jboss.home.dir isn't defined");
                 return null;
             }
 		
-            String confPath = homePath + File.separator + "conf" + File.separator + CONFIGURATION_FILE_NAME;
+            String confPath = homePath + File.separator + "conf" + File.separator + "asimba" + File.separator + CONFIGURATION_FILE_NAME;
             log.info("Reading ApplicationSelector configuration from: " + confPath);
 
             return confPath;
