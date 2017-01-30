@@ -45,7 +45,7 @@ public class PatternLayout extends org.apache.log4j.PatternLayout
     public static final String TTCC_CONVERSION_PATTERN = "%r [%t] %p %c %x - %m%n";
     
     public PatternLayout() {
-        super( DEFAULT_CONVERSION_PATTERN );    
+        super( TTCC_CONVERSION_PATTERN );    
     }
     
     /**
