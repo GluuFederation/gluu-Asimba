@@ -41,14 +41,21 @@ package com.alfaariss.oa.util.logging;
  */
 public class PatternLayout extends org.apache.log4j.PatternLayout
 {
+    public static final String DEFAULT_CONVERSION_PATTERN = "%m%n";
+    public static final String TTCC_CONVERSION_PATTERN = "%r [%t] %p %c %x - %m%n";
     
-     /**
-     * Do not write throwables outside this format. 
-     * @see org.apache.log4j.PatternLayout#ignoresThrowable()
-     */
+    public PatternLayout() {
+        super( DEFAULT_CONVERSION_PATTERN );    
+    }
+    
+    /**
+    * Do not write throwables outside this format. 
+    * @see org.apache.log4j.PatternLayout#ignoresThrowable()
+    */
+    @Override
     public boolean ignoresThrowable()
-     {
-         return false;
-     }
+    {
+        return false;
+    }
 }
 
