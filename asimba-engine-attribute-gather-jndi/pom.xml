@@ -4,7 +4,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.0</version>
   </parent>
   <artifactId>asimba-engine-attribute-gather-jndi</artifactId>
   <name>asimba-engine-attribute-gather-jndi</name>
