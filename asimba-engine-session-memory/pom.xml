@@ -4,7 +4,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>3.0.0</version>
+    <version>3.0.1</version>
   </parent>
   <artifactId>asimba-engine-session-memory</artifactId>
   <name>asimba-engine-session-memory</name>

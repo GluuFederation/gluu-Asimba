@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.asimba</groupId>
 		<artifactId>asimba-server-baseline</artifactId>
-		<version>3.0.0</version>
+		<version>3.0.1</version>
 	</parent>
 	<artifactId>asimba-engine-tgt-jgroups</artifactId>
 	<name>asimba-engine-tgt-jgroups</name>
