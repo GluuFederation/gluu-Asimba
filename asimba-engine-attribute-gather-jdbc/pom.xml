@@ -4,7 +4,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>3.0.1</version>
+    <version>3.0.2</version>
   </parent>
   <artifactId>asimba-engine-attribute-gather-jdbc</artifactId>
   <name>asimba-engine-attribute-gather-jdbc</name>
