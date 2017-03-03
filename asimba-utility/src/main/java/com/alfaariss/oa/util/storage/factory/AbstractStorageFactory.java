@@ -53,7 +53,7 @@ public abstract class AbstractStorageFactory implements IStorageFactory
     protected IConfigurationManager _configurationManager;
     /** configuration section */
     protected Element _eConfig;
-    /** maximum */
+    /** Maximum count of unexpired objects in memory, 0=infinity */
     protected long _lMax;
     /** expire time */
     protected long _lExpiration;
@@ -122,8 +122,7 @@ public abstract class AbstractStorageFactory implements IStorageFactory
             factory._lInterval = Long.parseLong(sInterval);
             if(factory._lInterval <= 0)
             {
-                _logger.info(
-                "Storage cleaner interval less then or equal to zero, cleaning is disabled.");
+                _logger.info("Storage cleaner interval less then or equal to zero, cleaning is disabled.");
             }
             else
             {
