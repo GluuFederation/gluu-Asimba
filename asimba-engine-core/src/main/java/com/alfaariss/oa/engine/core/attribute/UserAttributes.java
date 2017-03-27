@@ -39,31 +39,33 @@ public class UserAttributes implements IAttributes
 {
     /** serialVersionUID */
     private static final long serialVersionUID = 3322934500217377616L;
-    private Hashtable<String, Object> _htAttributes;
-    private Hashtable<String, String> _htAttributeFormats;
+    private final Hashtable<String, Object> _htAttributes;
+    private final Hashtable<String, String> _htAttributeFormats;
 
-	/**
-	 * Create new empty attributes.
-	 */
-	public UserAttributes()
+    /**
+     * Create new empty attributes.
+     */
+    public UserAttributes()
     {
         _htAttributes = new Hashtable<String, Object>();
         _htAttributeFormats = new Hashtable<String,String>();
-	}
+    }
 
 	/**
      * Returns the attribute with the supplied name.
 	 * @see com.alfaariss.oa.api.attribute.IAttributes#get(java.lang.String)
 	 */
+    @Override
 	public Object get(String sName)
     {
         return _htAttributes.get(sName);
-	}
+    }
 
-	/**
-	 * Returns all attribute names as an <code>Enumeration</code>.
-	 * @see com.alfaariss.oa.api.attribute.IAttributes#getNames()
-	 */
+    /**
+     * Returns all attribute names as an <code>Enumeration</code>.
+     * @see com.alfaariss.oa.api.attribute.IAttributes#getNames()
+     */
+    @Override
 	public Enumeration<?> getNames()
     {
         return _htAttributes.keys();
@@ -71,8 +73,9 @@ public class UserAttributes implements IAttributes
 
     /**
      * Removes the attribute with the supplied name.
-	 * @see com.alfaariss.oa.api.attribute.IAttributes#remove(java.lang.String)
-	 */
+     * @see com.alfaariss.oa.api.attribute.IAttributes#remove(java.lang.String)
+    */
+    @Override
 	public void remove(String sName)
     {
 	    _htAttributes.remove(sName);
@@ -83,6 +86,7 @@ public class UserAttributes implements IAttributes
      * Checks if the attribute with the supplied name exists.
      * @see com.alfaariss.oa.api.attribute.IAttributes#contains(java.lang.String)
      */
+    @Override
     public boolean contains(String sName)
     {
         return _htAttributes.containsKey(sName);
@@ -92,6 +96,7 @@ public class UserAttributes implements IAttributes
      * Stores or overwrites the supplied attribute.
      * @see com.alfaariss.oa.api.attribute.IAttributes#put(java.lang.String, java.lang.Object)
      */
+    @Override
     public void put(String sName, Object oValue)
     {
         _htAttributes.put(sName, oValue);
@@ -101,6 +106,7 @@ public class UserAttributes implements IAttributes
      * Return the hash code of the attributes.
      * @see java.lang.Object#hashCode()
      */
+    @Override
     public int hashCode()
     {
         return _htAttributes.hashCode();
@@ -110,6 +116,7 @@ public class UserAttributes implements IAttributes
      * Compare with another object.
      * @see java.lang.Object#equals(java.lang.Object)
      */
+    @Override
     public boolean equals(Object other)
     {
         if(!(other instanceof UserAttributes))
@@ -121,6 +128,7 @@ public class UserAttributes implements IAttributes
      * Return all attributes in a <code>String</code>.
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString()
     { 
         return _htAttributes.toString();
@@ -129,6 +137,7 @@ public class UserAttributes implements IAttributes
     /**
      * @see com.alfaariss.oa.api.attribute.IAttributes#size()
      */
+    @Override
     public int size()
     {
         return _htAttributes.size();
@@ -137,6 +146,7 @@ public class UserAttributes implements IAttributes
     /**
      * @see com.alfaariss.oa.api.attribute.IAttributes#getFormat(java.lang.String)
      */
+    @Override
     public String getFormat(String name)
     {
         return _htAttributeFormats.get(name);
@@ -145,6 +155,7 @@ public class UserAttributes implements IAttributes
     /**
      * @see com.alfaariss.oa.api.attribute.IAttributes#put(java.lang.String, java.lang.String, java.lang.Object)
      */
+    @Override
     public void put(String name, String format, Object value)
     {
         _htAttributes.put(name, value);
@@ -157,6 +168,7 @@ public class UserAttributes implements IAttributes
     /**
      * @see com.alfaariss.oa.api.attribute.IAttributes#removeFormat(java.lang.String)
      */
+    @Override
     public void removeFormat(String name)
     {
         _htAttributeFormats.remove(name);
@@ -165,6 +177,7 @@ public class UserAttributes implements IAttributes
     /**
      * @see com.alfaariss.oa.api.attribute.IAttributes#setFormat(java.lang.String, java.lang.String)
      */
+    @Override
     public void setFormat(String name, String format)
     {
         if (_htAttributes.containsKey(name))

@@ -124,6 +124,7 @@ import com.alfaariss.oa.util.saml2.crypto.SAML2CryptoUtils;
 import com.alfaariss.oa.util.saml2.idp.SAML2IDP;
 import com.alfaariss.oa.util.saml2.proxy.ProxyAttributes;
 import com.alfaariss.oa.util.saml2.proxy.SAML2IDPEntry;
+import java.util.ArrayList;
 
 /**
  * Basics for SAML2 Profile implementations.
@@ -483,7 +484,7 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
             List<Attribute> atts = stmt.getAttributes();
             for (Attribute att : atts)
             {         
-                String content = null;   
+                Object content = null;   
                 
                 if (att.getName() == null || att.getName().isEmpty()) {
                      _logger.warn("Empty attribute name (skipped)");
@@ -492,21 +493,45 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
                      _logger.warn("Empty attribute value: " + att.getName());
                      content = "";
                 } else {
-                    XMLObject obj = att.getAttributeValues().get(0);
-                    // We only support XSString (if OpenSAML does) and XSAny
-                    if (obj instanceof XSString) {
-                        //ok
-                        XSString str = (XSString)obj;
-                        content = str.getValue();
+                    List<XMLObject> attrValuesXML = att.getAttributeValues();
+                    
+                    List<String> attrValues = new ArrayList<>();
+                    
+                    for (XMLObject obj : attrValuesXML) {
+                        // We only support XSString (if OpenSAML does) and XSAny
+                        if (obj instanceof XSString) {
+                            //ok
+                            XSString str = (XSString)obj;
+                            attrValues.add(str.getValue());
+                            
+                        }
+                        //OpenSAML reads type=xs:string attributes as any-typed?
+                        else if (obj instanceof XSAny) {
+                            //ok
+                            XSAny str = (XSAny)obj;
+                            attrValues.add(str.getTextContent());
+                        } else {
+                            _logger.debug("Unrecognized type of attribute (skipped): " + obj.getClass().getName());
+                        }
                     }
-                    //OpenSAML reads type=xs:string attributes as any-typed?
-                    else if (obj instanceof XSAny) {
-                        //ok
-                        XSAny str = (XSAny)obj;
-                        content = str.getTextContent();
-                    } else {
-                        _logger.debug("Unrecognized type of attribute (skipped): " + obj.getClass().getName());
-                    }
+                    
+                    content = attrValues;
+                    
+//                    XMLObject obj = att.getAttributeValues().get(0);
+//                    // We only support XSString (if OpenSAML does) and XSAny
+//                    if (obj instanceof XSString) {
+//                        //ok
+//                        XSString str = (XSString)obj;
+//                        content = str.getValue();
+//                    }
+//                    //OpenSAML reads type=xs:string attributes as any-typed?
+//                    else if (obj instanceof XSAny) {
+//                        //ok
+//                        XSAny str = (XSAny)obj;
+//                        content = str.getTextContent();
+//                    } else {
+//                        _logger.debug("Unrecognized type of attribute (skipped): " + obj.getClass().getName());
+//                    }
                 }
                 
                 if (returnAtts.contains(att.getName())) {
