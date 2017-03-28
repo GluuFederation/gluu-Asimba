@@ -613,6 +613,7 @@
 				Asimba Baseline keeps the password in the same format as the attributes, so
 				allowing all attributes to be released, would expose the password as well!
 			 -->
+                         <attribute name="*" />
 		</policy>
 	</attributerelease>
 	

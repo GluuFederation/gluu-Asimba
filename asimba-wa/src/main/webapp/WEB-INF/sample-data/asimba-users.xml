@@ -3,14 +3,14 @@
  -->
 <asimba-users version="1.1">
 	<!-- global: define attributes that are applied to all the users -->
-	<global>
-		<country>Netherlands</country>
-	</global>
+	<!--<global>
+		<country>USA</country>
+	</global>-->
 	
 	<!-- user : define user instances with their attributes, 
 				see baseline documentation for more information 
 	-->
-	<user id="asimba1" org="Asimba-Laboratory">
+	<!--<user id="asimba1" org="Asimba-Laboratory">
 		<authMethod type="password-plain">
 			<property name="password">asimba1</property>
 		</authMethod>
@@ -35,5 +35,5 @@
 		<lastname>User</lastname>
 		<email>no@email.com</email>
 		<role>guest</role>
-	</user>
+	</user>-->
 </asimba-users>
