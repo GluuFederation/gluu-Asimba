@@ -602,11 +602,7 @@
 	
 	<attributerelease class="com.alfaariss.oa.engine.attribute.release.configuration.ConfigurationFactory">
 		<policy id="asimba.releasepolicy.1" friendlyname="Default Attribute Release policy" enabled="true">
-			<attribute name="firstname" />
-			<attribute name="lastname" />
-			<attribute name="email" />
-			<attribute name="role" />
-			<attribute name="country" />	<!-- country is defined in <global ..> attribute section -->
+			<attribute name="country" />	<!-- country is defined in <global ..> attribute section. See asimba-users.xml -->
 			<!-- when all available attributes can be released, use the wildcard "*" for name,
 				like:
 				<attribute name="*" />
