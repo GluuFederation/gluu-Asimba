@@ -155,10 +155,15 @@ public class LDAPUtility {
             final String cryptoConfigurationSalt = loadCryptoConfigurationSalt();
             
             Properties properties = configuration.getProperties();
+            // LDAP properties
             properties.setProperty("bindDN", configuration.getString("bindDN"));
             properties.setProperty("bindPassword", StringEncrypter.defaultInstance().decrypt(configuration.getString("bindPassword"), cryptoConfigurationSalt));
             properties.setProperty("servers", configuration.getString("servers"));
             properties.setProperty("useSSL", configuration.getString("useSSL"));
+            // key properties
+            properties.setProperty("ssl.trustStoreFile", configuration.getString("ssl.trustStoreFile"));
+            properties.setProperty("ssl.trustStorePin", StringEncrypter.defaultInstance().decrypt(configuration.getString("ssl.trustStorePin"), cryptoConfigurationSalt));
+            properties.setProperty("ssl.trustStoreFormat", configuration.getString("ssl.trustStoreFormat"));
             
             final LDAPConnectionProvider provider = new LDAPConnectionProvider(properties);
             final OperationsFacade ops = new OperationsFacade(provider, null);
