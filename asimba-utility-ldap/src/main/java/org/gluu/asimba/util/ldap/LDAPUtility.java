@@ -57,13 +57,7 @@ public class LDAPUtility {
     
     private static final Log log = LogFactory.getLog(LDAPUtility.class);
     
-    @Deprecated
-    private static final String ASIMBA_LDAP_CONFIGURATION_FILENAME = "oxasimba-ldap.properties";
-    
     private static final String OX_LDAP_CONFIGURATION_FILENAME = "ox-ldap.properties";
-    
-    @Deprecated
-    private static final String CONFIGURATION_ENTRY_DN = "configurationEntryDN";
     
     private static final String OXASIMBA_CONFIGURATION_ENTRY_DN = "oxasimba_ConfigurationEntryDN";
     
@@ -99,13 +93,8 @@ public class LDAPUtility {
     }
     
     private static String getConfigurationFilePath() {
-        String configurationFilePath = getBaseDirectory() + File.separator + "conf" + File.separator + ASIMBA_LDAP_CONFIGURATION_FILENAME;
-        // check availability
-        File configurationFile = new File(configurationFilePath);
-        if (!configurationFile.exists() || !configurationFile.isFile() || !configurationFile.canRead()) {
-            // read common configuration in ox-ldap.properties
-            configurationFilePath = getBaseDirectory() + File.separator + "conf" + File.separator + OX_LDAP_CONFIGURATION_FILENAME;
-        }
+        // read common configuration in ox-ldap.properties
+        String configurationFilePath = getBaseDirectory() + File.separator + "conf" + File.separator + OX_LDAP_CONFIGURATION_FILENAME;
         
         return configurationFilePath;
     }
@@ -149,8 +138,10 @@ public class LDAPUtility {
             
             configurationEntryDN = configuration.getString(OXASIMBA_CONFIGURATION_ENTRY_DN);
             
-            if (configurationEntryDN == null || "".equals(configurationEntryDN))
-                configurationEntryDN = configuration.getString(CONFIGURATION_ENTRY_DN);
+            if (configurationEntryDN == null || "".equals(configurationEntryDN)) {
+                log.error("Cannot find Asimba LDAP entry property: " + OXASIMBA_CONFIGURATION_ENTRY_DN);
+                throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+            }
             
             final String cryptoConfigurationSalt = loadCryptoConfigurationSalt();
             
