@@ -4,7 +4,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>3.1.0.Final</version>
+    <version>3.1.1-SNAPSHOT</version>
   </parent>
   <artifactId>asimba-engine-tgt-memory</artifactId>
   <name>asimba-engine-tgt-memory</name>
