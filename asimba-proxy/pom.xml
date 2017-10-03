@@ -4,7 +4,7 @@
     <parent>
         <artifactId>asimba-server-baseline</artifactId>
         <groupId>org.asimba</groupId>
-        <version>3.1.1.Final</version>
+        <version>3.1.2-SNAPSHOT</version>
     </parent>
     <groupId>org.xdi</groupId>
     <artifactId>oxasimba-proxy</artifactId>
@@ -20,7 +20,7 @@
         <dependency>
             <groupId>org.xdi</groupId>
             <artifactId>oxasimba-selector</artifactId>
-            <version>3.1.1.Final</version>
+            <version>3.1.2-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <artifactId>*</artifactId>

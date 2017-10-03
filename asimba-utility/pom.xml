@@ -4,7 +4,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>3.1.1.Final</version>
+    <version>3.1.2-SNAPSHOT</version>
   </parent>
   <artifactId>asimba-utility</artifactId>
   <name>asimba-utility</name>
@@ -46,12 +46,12 @@
     <dependency>
         <groupId>org.xdi</groupId>
         <artifactId>oxcore-ldap</artifactId>
-        <version>3.1.1.Final</version>
+        <version>3.1.2-SNAPSHOT</version>
     </dependency>
     <dependency>
         <groupId>org.xdi</groupId>
         <artifactId>oxcore-ldap-annotations</artifactId>
-        <version>3.1.1.Final</version>
+        <version>3.1.2-SNAPSHOT</version>
     </dependency>
   </dependencies>
 </project>
