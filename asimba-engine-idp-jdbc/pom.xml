@@ -4,7 +4,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>3.1.1-SNAPSHOT</version>
+    <version>3.1.1.Final</version>
   </parent>
   <artifactId>asimba-engine-idp-jdbc</artifactId>
   <name>asimba-engine-idp-jdbc</name>
