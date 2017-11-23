@@ -125,6 +125,7 @@ import com.alfaariss.oa.util.saml2.idp.SAML2IDP;
 import com.alfaariss.oa.util.saml2.proxy.ProxyAttributes;
 import com.alfaariss.oa.util.saml2.proxy.SAML2IDPEntry;
 import java.util.ArrayList;
+import org.opensaml.saml2.core.AuthenticatingAuthority;
 
 /**
  * Basics for SAML2 Profile implementations.
@@ -373,6 +374,23 @@ public abstract class AbstractAuthNMethodSAML2Profile implements IAuthNMethodSAM
         {
             _logger.debug("AuthN statement check failed: issue instant not in acceptable window.");
             return false;
+        }
+        
+        // check AuthnContext
+        AuthnContext authnContext = stmt.getAuthnContext();
+        if (authnContext == null) 
+        {
+            _logger.debug("AuthN statement check failed: empty AuthnContext section.");
+            return false;
+        }
+        
+        for (AuthenticatingAuthority authority : authnContext.getAuthenticatingAuthorities()) 
+        {
+            if (authority.getURI() == null && authority.getURI().isEmpty()) 
+            {
+                _logger.debug("AuthN statement check failed: empty AuthenticatingAuthority URI.");
+                return false;
+            }            
         }
 
         return true;
