@@ -25,7 +25,6 @@ package org.gluu.asimba.util.ldap;
 
 import com.alfaariss.oa.OAException;
 import com.alfaariss.oa.SystemErrors;
-import com.unboundid.ldap.sdk.Filter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,9 +39,9 @@ import org.gluu.asimba.util.ldap.sp.LDAPRequestorEntry;
 import org.gluu.asimba.util.ldap.sp.LDAPRequestorPoolEntry;
 import org.gluu.asimba.util.ldap.sp.RequestorEntry;
 import org.gluu.asimba.util.ldap.sp.RequestorPoolEntry;
-import org.gluu.site.ldap.LDAPConnectionProvider;
-import org.gluu.site.ldap.OperationsFacade;
-import org.gluu.site.ldap.persistence.LdapEntryManager;
+import org.gluu.persist.ldap.impl.LdapEntryManager;
+import org.gluu.persist.ldap.impl.LdapEntryManagerFactory;
+import org.gluu.search.filter.Filter;
 import org.xdi.config.oxtrust.LdapOxAsimbaConfiguration;
 import org.xdi.util.StringHelper;
 import org.xdi.util.properties.FileConfiguration;
@@ -130,7 +129,7 @@ public class LDAPUtility {
             return null;
         }
     }
-    
+
     public static synchronized LdapEntryManager getLDAPEntryManager() throws OAException {
         // connect
         try {
@@ -156,9 +155,8 @@ public class LDAPUtility {
             properties.setProperty("ssl.trustStorePin", StringEncrypter.defaultInstance().decrypt(configuration.getString("ssl.trustStorePin"), cryptoConfigurationSalt));
             properties.setProperty("ssl.trustStoreFormat", configuration.getString("ssl.trustStoreFormat"));
             
-            final LDAPConnectionProvider provider = new LDAPConnectionProvider(properties);
-            final OperationsFacade ops = new OperationsFacade(provider, null);
-            return new LdapEntryManager(ops);
+            final LdapEntryManagerFactory ldapEntryManagerFactory = new LdapEntryManagerFactory(); 
+            return ldapEntryManagerFactory.createEntryManager(properties);
         } catch (Exception e) {
             log.error("cannot open LdapEntryManager", e);
             throw new OAException(SystemErrors.ERROR_CONFIG_READ);

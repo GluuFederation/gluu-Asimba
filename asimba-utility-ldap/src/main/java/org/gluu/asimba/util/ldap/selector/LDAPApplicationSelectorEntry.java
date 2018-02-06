@@ -27,7 +27,7 @@ import org.gluu.site.ldap.persistence.annotation.LdapAttribute;
 import org.gluu.site.ldap.persistence.annotation.LdapEntry;
 import org.gluu.site.ldap.persistence.annotation.LdapObjectClass;
 import org.gluu.site.ldap.persistence.annotation.LdapJsonObject;
-import org.xdi.ldap.model.BaseEntry;
+import org.gluu.persist.model.base.BaseEntry;
 
 /**
  * ApplicationSelector configuration mapping entry.
