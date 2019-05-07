@@ -4,7 +4,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>3.1.6.Final</version>
+    <version>3.1.6.sp1</version>
   </parent>
   <artifactId>asimba-engine-crypto-keystore</artifactId>
   <name>asimba-engine-crypto-keystore</name>
