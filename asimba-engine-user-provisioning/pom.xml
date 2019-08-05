@@ -4,7 +4,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>3.1.6.sp1</version>
+    <version>3.1.7.Final</version>
   </parent>
   <artifactId>asimba-engine-user-provisioning</artifactId>
   <name>asimba-engine-user-provisioning</name>
