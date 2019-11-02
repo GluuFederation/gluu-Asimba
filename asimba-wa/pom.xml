@@ -18,7 +18,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<asimba.version>${default.asimba.version}</asimba.version>
 		<!-- for integration testing -->
-		<jetty.version>9.2.2.v20140723</jetty.version>
+		<jetty.version>9.4.22.v20191022</jetty.version>
 		<test.data.db>asimba-wa-db</test.data.db>
 		<test.data.user>username</test.data.user>
 		<test.data.pass>password</test.data.pass>
