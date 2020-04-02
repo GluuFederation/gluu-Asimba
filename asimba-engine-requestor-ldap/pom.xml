@@ -4,7 +4,7 @@
   <parent>
     <artifactId>asimba-server-baseline</artifactId>
     <groupId>org.asimba</groupId>
-    <version>3.1.7.Final</version>
+    <version>3.1.8.Final</version>
   </parent>
   <artifactId>asimba-engine-requestor-ldap</artifactId>
   <name>asimba-engine-requestor-ldap</name>
