@@ -71,6 +71,8 @@ public class SAML2TimestampWindow implements Serializable {
      * Allowed skew after current time, in milliseconds
      */
     protected long _lAfterOffset;
+
+	private boolean _lSkip = false;
     
     
     /**
@@ -122,6 +124,12 @@ public class SAML2TimestampWindow implements Serializable {
             if (sAfter == null) {
                 _oLogger.error("No 'after_offset' item in 'window' section configured");
                 throw new OAException(SystemErrors.ERROR_CONFIG_READ);
+            }
+
+            String sSkip = oConfigManager.getParam(elWindow, "skip");
+            if (sAfter != null) {
+            	_lSkip = Boolean.parseBoolean(sSkip);
+            	_oLogger.info("'skip' item is enabled in 'window' section");
             }
             
             try {
@@ -202,7 +210,12 @@ public class SAML2TimestampWindow implements Serializable {
      */
     public boolean canAccept(DateTime dateTime)
     {
-        DateTime dtBefore = new DateTime().minus(_lBeforeOffset);
+    	if (_lSkip) {
+        	_oLogger.info("Skipping check if time in range");
+    		return true;
+    	}
+
+    	DateTime dtBefore = new DateTime().minus(_lBeforeOffset);
         DateTime dtAfter = new DateTime().plus(_lAfterOffset);
         
         return (!dateTime.isBefore(dtBefore) && !dateTime.isAfter(dtAfter));
