@@ -19,3 +19,5 @@ hs_err_pid*
 /asimba-selector/target/
 /asimba-selector-ldap/target/
 /asimba-utility-ldap/target/
+
+*.claspath
